@@ -29,6 +29,29 @@ export function authenticate(req, res, next) {
 }
 
 /**
+ * Optional authentication - extracts user if valid token present, but does not block guests.
+ */
+export function optionalAuthenticate(req, res, next) {
+  let token = null;
+
+  const authHeader = req.headers?.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
+
+  if (token) {
+    try {
+      req.user = verifyToken(token);
+    } catch {
+      // Invalid/expired token ignored in optional mode; proceed as guest
+    }
+  }
+  next();
+}
+
+/**
  * Authorizes request if req.user has one of the allowed roles.
  * Usage: authorizeRoles('admin', 'instructor')
  */

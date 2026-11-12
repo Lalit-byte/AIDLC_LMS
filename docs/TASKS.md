@@ -39,29 +39,29 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 ## 4. Milestone 2 — Course management
 
 - [x] M2-01 Design and implement course/category data models. ([#19](https://github.com/Lalit-byte/AIDLC_LMS/issues/19))
-- [ ] M2-02 Implement public course list, filtering, pagination, and details.
-- [ ] M2-03 Implement instructor course create/update.
-- [ ] M2-04 Implement sections and lessons.
-- [ ] M2-05 Implement course submission and admin review/publishing.
-- [ ] M2-06 Build public catalogue and course detail UI.
+- [x] M2-02 Implement public course list, filtering, pagination, and details. ([#21](https://github.com/Lalit-byte/AIDLC_LMS/issues/21)) — `@Lalit-byte`
+- [ ] M2-03 Implement instructor course create/update. ([#22](https://github.com/Lalit-byte/AIDLC_LMS/issues/22)) — `@tarun077-R`
+- [ ] M2-04 Implement sections and lessons. ([#23](https://github.com/Lalit-byte/AIDLC_LMS/issues/23)) — `@tarun077-R`
+- [ ] M2-05 Implement course submission and admin review/publishing. ([#24](https://github.com/Lalit-byte/AIDLC_LMS/issues/24)) — `@Lalit-byte`
+- [ ] M2-06 Build public catalogue and course detail UI. ([#25](https://github.com/Lalit-byte/AIDLC_LMS/issues/25)) — `@tarun077-R`
 - [ ] M2-07 Build instructor course-management UI.
 - [ ] M2-08 Build admin course-review UI.
 
 ## 5. Milestone 3 — Payments and enrollment
 
-- [ ] M3-01 Confirm Razorpay account, test-mode credentials, and webhook setup.
-- [ ] M3-02 Implement server-side Razorpay order creation using database price.
-- [ ] M3-03 Implement backend checkout signature verification.
-- [ ] M3-04 Implement webhook signature verification and idempotent event processing.
+- [ ] M3-01 Confirm Razorpay account, test-mode credentials, and webhook setup. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
+- [ ] M3-02 Implement server-side Razorpay order creation using database price. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
+- [ ] M3-03 Implement backend checkout signature verification. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
+- [ ] M3-04 Implement webhook signature verification and idempotent event processing. ([#27](https://github.com/Lalit-byte/AIDLC_LMS/issues/27)) — `@Lalit-byte`
 - [ ] M3-05 Implement payment state and enrollment activation rules.
 - [ ] M3-06 Build checkout UI and payment result states.
 - [ ] M3-07 Test success, failure, cancel, invalid signature, duplicate webhook, and delayed webhook.
 
 ## 6. Milestone 4 — Learning experience
 
-- [ ] M4-01 Implement student enrollment list.
-- [ ] M4-02 Implement protected lesson/content access.
-- [ ] M4-03 Implement lesson completion and progress persistence.
+- [ ] M4-01 Implement student enrollment list. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
+- [ ] M4-02 Implement protected lesson/content access. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
+- [ ] M4-03 Implement lesson completion and progress persistence. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
 - [ ] M4-04 Build student dashboard and course player.
 - [ ] M4-05 Add instructor dashboard basics.
 - [ ] M4-06 Add admin user/category/enrollment views.
