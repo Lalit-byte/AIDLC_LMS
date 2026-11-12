@@ -22,7 +22,7 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 - [x] M0-04 Confirm product decisions in PRD.
 - [x] M0-05 Approve architecture and design.
 - [x] M0-06 Configure AIDLC for the chosen supported harness; run its doctor/validation command. (aidlc configured and validated)
-- [ ] M0-07 Configure GitHub MCP for each developer using individual GitHub authentication and least privilege.
+- [x] M0-07 Configure GitHub MCP for each developer using individual GitHub authentication and least privilege. (Official Go github-mcp-server v2.1.0 installed & configured)
 - [ ] M0-08 Create GitHub Project board, labels, milestones, and issue templates.
 - [ ] M0-09 Agree branch protection, PR review, CI, and coding conventions.
 
