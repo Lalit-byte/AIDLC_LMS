@@ -27,6 +27,9 @@ These rules apply to every team member and every AI coding agent in Antigravity.
 
 - One accountable developer per issue.
 - Work only on assigned tasks unless reassigned.
+- Never suggest tasks to a developer that are assigned to someone else.
+- If a developer asks to work on a task assigned to another team member, inform them that the task is already assigned to that collaborator.
+- Never implement an unassigned or another developer's task without first asking for explicit approval and communicating/coordinating with the assigned developer.
 - Update issue status when starting, blocked, ready for review, and completed.
 - A blocker update must include what is blocked, evidence, and help required.
 - Do not mark work done just because code was generated.
@@ -68,6 +71,8 @@ These rules apply to every team member and every AI coding agent in Antigravity.
 ## 7. Antigravity / AI agent rules
 
 - Read project docs and assigned issue before coding.
+- Only suggest and work on issues assigned to the active developer.
+- If requested to implement a task assigned to someone else, immediately notify the developer who owns it and require explicit confirmation/coordination before taking any action.
 - First report understanding, files likely affected, assumptions, and plan.
 - Do not implement outside the assigned issue.
 - Do not invent routes, schemas, environment values, or acceptance criteria.
