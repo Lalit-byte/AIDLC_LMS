@@ -4,6 +4,8 @@ import helmet from 'helmet';
 import { requestLogger } from './middleware/logger.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
+import courseRoutes from './routes/courseRoutes.js';
+import { getCategories } from './controllers/courseController.js';
 
 export function createApp(configureRoutes = null) {
   const app = express();
@@ -34,6 +36,8 @@ export function createApp(configureRoutes = null) {
 
   // Core API routes
   app.use('/api/auth', authRoutes);
+  app.use('/api/courses', courseRoutes);
+  app.get('/api/categories', getCategories);
 
   // Mount custom routes or feature routers if provided
   if (typeof configureRoutes === 'function') {
