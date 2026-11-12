@@ -53,6 +53,7 @@
 - DECIDED: Free (₹0) courses are supported with direct server-side enrollment activation bypassing Razorpay (Stage inception, 2026-11-12)
 - DECIDED: Instructor onboarding requires admin approval/role assignment; instructor courses require admin review before publishing (Stage inception, 2026-11-12)
 - DECIDED: Two-phase execution sequence: Frontend-First (Phase 1) with mock service layer, followed by Backend Server (Phase 2) (Stage inception, 2026-11-12)
+- DECIDED: Always ask project owner for explicit confirmation before pushing any branch to remote (Stage inception, 2026-11-12)
 - DECIDED: Development lifecycle follows manual AIDLC workflow structured with Antigravity and repository docs (Stage inception, 2026-11-12)
 
 ## Scope Overrides
