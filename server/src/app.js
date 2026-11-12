@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { requestLogger } from './middleware/logger.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
+import authRoutes from './routes/authRoutes.js';
 
 export function createApp(configureRoutes = null) {
   const app = express();
@@ -30,6 +31,9 @@ export function createApp(configureRoutes = null) {
       timestamp: new Date().toISOString()
     });
   });
+
+  // Core API routes
+  app.use('/api/auth', authRoutes);
 
   // Mount custom routes or feature routers if provided
   if (typeof configureRoutes === 'function') {
