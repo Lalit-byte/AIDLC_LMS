@@ -5,6 +5,7 @@ import { requestLogger } from './middleware/logger.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 import { getCategories } from './controllers/courseController.js';
 
 export function createApp(configureRoutes = null) {
@@ -37,6 +38,7 @@ export function createApp(configureRoutes = null) {
   // Core API routes
   app.use('/api/auth', authRoutes);
   app.use('/api/courses', courseRoutes);
+  app.use('/api/admin', adminRoutes);
   app.get('/api/categories', getCategories);
 
   // Mount custom routes or feature routers if provided
