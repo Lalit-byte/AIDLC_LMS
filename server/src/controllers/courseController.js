@@ -125,3 +125,49 @@ export async function getCategories(req, res, next) {
     next(err);
   }
 }
+
+export async function submitCourseForReview(req, res, next) {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw ApiError.badRequest('Invalid course ID.');
+    }
+
+    const course = await Course.findById(id);
+    if (!course) {
+      throw ApiError.notFound('Course not found.');
+    }
+
+    // Ensure user is the instructor or an admin
+    if (req.user.role !== 'admin' && course.instructor.toString() !== req.user.id.toString()) {
+      throw ApiError.forbidden('Access denied: You do not own this course.');
+    }
+
+    if (course.status === 'published') {
+      throw ApiError.badRequest('Course is already published.');
+    }
+
+    // Must have at least one section and at least one lesson
+    const hasSections = course.sections && course.sections.length > 0;
+    const totalLessons = hasSections
+      ? course.sections.reduce((sum, s) => sum + (s.lessons ? s.lessons.length : 0), 0)
+      : 0;
+
+    if (!hasSections || totalLessons === 0) {
+      throw ApiError.badRequest('A course must contain at least one section and one lesson before submitting for review.');
+    }
+
+    course.status = 'pending_review';
+    course.rejectionReason = '';
+    await course.save();
+
+    res.json({
+      success: true,
+      data: {
+        course
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
