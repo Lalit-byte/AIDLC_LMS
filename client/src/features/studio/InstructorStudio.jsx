@@ -17,16 +17,16 @@ export default function InstructorStudio() {
   });
   const [activeSectionId, setActiveSectionId] = useState(null);
 
-  useEffect(() => {
-    loadCourses();
-  }, []);
-
   const loadCourses = () => {
     api.getInstructorCourses()
       .then(setCourses)
       .catch(console.error)
       .finally(() => setLoading(false));
   };
+
+  useEffect(() => {
+    loadCourses();
+  }, []);
 
   const handleStartNewCourse = () => {
     setEditingCourse({
