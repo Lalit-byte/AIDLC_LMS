@@ -1,0 +1,85 @@
+.details-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 3rem;
+  padding: 3rem 0;
+}
+
+@media (max-width: 840px) {
+  .details-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.curriculum-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.section-item {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-surface);
+}
+
+.section-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background-color: var(--color-surface-hover);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text-main);
+  text-align: left;
+}
+
+.section-header:hover {
+  background-color: #e2e8f0;
+}
+
+.lesson-list {
+  list-style: none;
+}
+
+.lesson-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.9375rem;
+}
+
+.lesson-row:hover {
+  background-color: var(--color-bg);
+}
+
+.preview-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-full);
+  margin-left: 0.75rem;
+}
+
+.preview-btn:hover {
+  background-color: #dbeafe;
+}
+
+.course-sidebar-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  height: fit-content;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 5.5rem;
+}
