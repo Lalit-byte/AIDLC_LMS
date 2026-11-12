@@ -34,7 +34,7 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 - [x] M1-04 Configure shared error handling, logging, and request validation. ([#4](https://github.com/Lalit-byte/AIDLC_LMS/issues/4))
 - [x] M1-05 Implement registration/login/password hashing/JWT lifecycle. ([#5](https://github.com/Lalit-byte/AIDLC_LMS/issues/5))
 - [x] M1-06 Implement role and ownership middleware. ([#6](https://github.com/Lalit-byte/AIDLC_LMS/issues/6))
-- [ ] M1-07 Add automated test and build/lint workflows. ([#7](https://github.com/Lalit-byte/AIDLC_LMS/issues/7))
+- [x] M1-07 Add automated test and build/lint workflows. ([#7](https://github.com/Lalit-byte/AIDLC_LMS/issues/7))
 
 ## 4. Milestone 2 — Course management
 
