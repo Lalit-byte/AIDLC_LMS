@@ -30,7 +30,12 @@ export default function Dashboard() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
           {courses.map((course) => (
-            <CourseCard key={course.id} course={course} />
+            <CourseCard
+              key={course.id}
+              course={course}
+              actionLabel="Resume Course ➔"
+              actionUrl={`/learn/${course.id}`}
+            />
           ))}
         </div>
       )}

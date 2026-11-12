@@ -42,5 +42,35 @@ export const api = {
       body: JSON.stringify(credentials)
     });
     return res.json();
+  },
+
+  // Progress tracking endpoints
+  async getCourseProgress(courseId) {
+    if (USE_MOCK_API) {
+      const stored = localStorage.getItem(`progress_${courseId}`);
+      return Promise.resolve(stored ? JSON.parse(stored) : []);
+    }
+    const res = await fetch(`${API_BASE_URL}/courses/${courseId}/progress`);
+    return res.json();
+  },
+
+  async toggleLessonProgress(courseId, lessonId) {
+    if (USE_MOCK_API) {
+      const stored = localStorage.getItem(`progress_${courseId}`);
+      let list = stored ? JSON.parse(stored) : [];
+      if (list.includes(lessonId)) {
+        list = list.filter((id) => id !== lessonId);
+      } else {
+        list.push(lessonId);
+      }
+      localStorage.setItem(`progress_${courseId}`, JSON.stringify(list));
+      return Promise.resolve(list);
+    }
+    const res = await fetch(`${API_BASE_URL}/courses/${courseId}/progress`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lessonId })
+    });
+    return res.json();
   }
 };
