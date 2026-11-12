@@ -16,7 +16,7 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 
 ## 2. Milestone 0 — Project bootstrap
 
-- [ ] M0-01 Create new GitHub repository and protect `main`. (Local git repo initialized; remote GitHub repository pending creation)
+- [x] M0-01 Connect GitHub repository (https://github.com/Lalit-byte/AIDLC_LMS.git) and push `main`.
 - [x] M0-02 Create project folder and initial README.
 - [x] M0-03 Add this `docs/` package.
 - [x] M0-04 Confirm product decisions in PRD.
