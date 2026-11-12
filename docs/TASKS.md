@@ -49,9 +49,9 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 
 ## 5. Milestone 3 — Payments and enrollment
 
-- [ ] M3-01 Confirm Razorpay account, test-mode credentials, and webhook setup. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
-- [ ] M3-02 Implement server-side Razorpay order creation using database price. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
-- [ ] M3-03 Implement backend checkout signature verification. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
+- [x] M3-01 Confirm Razorpay account, test-mode credentials, and webhook setup. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
+- [x] M3-02 Implement server-side Razorpay order creation using database price. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
+- [x] M3-03 Implement backend checkout signature verification. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
 - [ ] M3-04 Implement webhook signature verification and idempotent event processing. ([#27](https://github.com/Lalit-byte/AIDLC_LMS/issues/27)) — `@Lalit-byte`
 - [ ] M3-05 Implement payment state and enrollment activation rules.
 - [ ] M3-06 Build checkout UI and payment result states.

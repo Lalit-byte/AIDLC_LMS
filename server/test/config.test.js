@@ -18,6 +18,17 @@ test('validateEnv throws in production if JWT_SECRET is unset or default', () =>
   );
 });
 
+test('validateEnv throws in production if Razorpay keys are unset', () => {
+  assert.throws(
+    () => validateEnv({
+      NODE_ENV: 'production',
+      MONGO_URI: 'mongodb://localhost:27017',
+      JWT_SECRET: 'super_secure_jwt_secret_123'
+    }),
+    /RAZORPAY_KEY_ID is required in production/
+  );
+});
+
 test('sanitizeMongoUri masks credentials cleanly', () => {
   const raw = 'mongodb://user:super_secret_password@cluster0.abc.mongodb.net/dbname';
   const masked = sanitizeMongoUri(raw);
