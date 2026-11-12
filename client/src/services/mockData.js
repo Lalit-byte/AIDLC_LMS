@@ -37,6 +37,7 @@ export const MOCK_COURSES = [
             title: 'Development Environment Setup',
             duration: '18 min',
             type: 'text',
+            content: 'In this lesson, we configure our local workspace. Ensure you have Node.js 20+ installed, along with Git and a code editor. We will initialize our project structure and verify that our package runner operates smoothly.',
             isPreview: false
           }
         ]
@@ -94,6 +95,7 @@ export const MOCK_COURSES = [
             title: 'Tokens and Responsive Layouts',
             duration: '22 min',
             type: 'text',
+            content: 'CSS Variables allow centralizing design decisions into maintainable tokens. By defining colors, radii, spacing, and font sizes at the root, components stay cohesive without depending on heavy third-party CSS utility frameworks.',
             isPreview: true
           }
         ]

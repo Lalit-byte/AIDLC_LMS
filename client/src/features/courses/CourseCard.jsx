@@ -2,8 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './CourseCard.css';
 
-export default function CourseCard({ course }) {
+export default function CourseCard({ course, actionLabel, actionUrl }) {
   const isFree = course.price === 0;
+  const targetUrl = actionUrl || `/courses/${course.id}`;
+  const targetLabel = actionLabel || 'View Details';
 
   return (
     <article className="course-card">
@@ -21,8 +23,8 @@ export default function CourseCard({ course }) {
           <div className="course-price">
             {isFree ? 'Free' : `₹${course.price.toLocaleString('en-IN')}`}
           </div>
-          <Link to={`/courses/${course.id}`} className="btn btn-outline">
-            View Details
+          <Link to={targetUrl} className="btn btn-outline">
+            {targetLabel}
           </Link>
         </div>
       </div>
