@@ -6,6 +6,7 @@ import CourseList from '../features/courses/CourseList';
 import CourseDetails from '../features/courses/CourseDetails';
 import LessonPlayer from '../features/lessons/LessonPlayer';
 import Dashboard from '../features/dashboard/Dashboard';
+import InstructorStudio from '../features/studio/InstructorStudio';
 import Login from '../features/auth/Login';
 import Register from '../features/auth/Register';
 
@@ -20,19 +21,9 @@ export default function AppRouter() {
             <Route path="/courses/:id" element={<CourseDetails />} />
             <Route path="/learn/:courseId" element={<LessonPlayer />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/studio" element={<InstructorStudio />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route
-              path="/studio"
-              element={
-                <div className="container" style={{ padding: '4rem 1.5rem', textAlign: 'center' }}>
-                  <h1>Instructor Studio</h1>
-                  <p style={{ color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
-                    Course authoring, section/lesson management, and review submissions.
-                  </p>
-                </div>
-              }
-            />
           </Routes>
         </main>
         <Footer />
