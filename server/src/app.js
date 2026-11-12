@@ -6,6 +6,7 @@ import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import courseRoutes from './routes/courseRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import { getCategories } from './controllers/courseController.js';
 
 export function createApp(configureRoutes = null) {
@@ -39,6 +40,7 @@ export function createApp(configureRoutes = null) {
   app.use('/api/auth', authRoutes);
   app.use('/api/courses', courseRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/payments', paymentRoutes);
   app.get('/api/categories', getCategories);
 
   // Mount custom routes or feature routers if provided
