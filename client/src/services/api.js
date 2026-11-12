@@ -72,5 +72,61 @@ export const api = {
       body: JSON.stringify({ lessonId })
     });
     return res.json();
+  },
+
+  // Instructor Studio endpoints
+  async getInstructorCourses() {
+    if (USE_MOCK_API) {
+      const stored = localStorage.getItem('instructor_courses');
+      if (stored) return Promise.resolve(JSON.parse(stored));
+      localStorage.setItem('instructor_courses', JSON.stringify(MOCK_COURSES));
+      return Promise.resolve([...MOCK_COURSES]);
+    }
+    const res = await fetch(`${API_BASE_URL}/instructor/courses`);
+    return res.json();
+  },
+
+  async saveInstructorCourse(course) {
+    if (USE_MOCK_API) {
+      const stored = localStorage.getItem('instructor_courses');
+      let list = stored ? JSON.parse(stored) : [...MOCK_COURSES];
+      const index = list.findIndex((c) => c.id === course.id);
+      if (index >= 0) {
+        list[index] = { ...list[index], ...course };
+      } else {
+        const newCourse = {
+          ...course,
+          id: `crs_${Date.now()}`,
+          status: 'draft',
+          sections: course.sections || []
+        };
+        list.unshift(newCourse);
+      }
+      localStorage.setItem('instructor_courses', JSON.stringify(list));
+      return Promise.resolve(list);
+    }
+    const res = await fetch(`${API_BASE_URL}/instructor/courses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(course)
+    });
+    return res.json();
+  },
+
+  async submitCourseForReview(courseId) {
+    if (USE_MOCK_API) {
+      const stored = localStorage.getItem('instructor_courses');
+      let list = stored ? JSON.parse(stored) : [...MOCK_COURSES];
+      const index = list.findIndex((c) => c.id === courseId);
+      if (index >= 0) {
+        list[index].status = 'pending_review';
+        localStorage.setItem('instructor_courses', JSON.stringify(list));
+      }
+      return Promise.resolve(list);
+    }
+    const res = await fetch(`${API_BASE_URL}/instructor/courses/${courseId}/submit`, {
+      method: 'POST'
+    });
+    return res.json();
   }
 };
