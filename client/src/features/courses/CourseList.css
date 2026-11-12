@@ -1,5 +1,5 @@
 .catalogue-hero {
-  padding: 3rem 0;
+  padding: 3rem 0 2rem;
   text-align: center;
 }
 
@@ -17,9 +17,81 @@
   margin: 0 auto;
 }
 
+.catalogue-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.search-and-pricing {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.catalogue-search {
+  flex: 1;
+  min-width: 240px;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  background-color: var(--color-surface);
+  color: var(--color-text-main);
+}
+
+.catalogue-search:focus, .catalogue-select:focus {
+  outline: 2px solid var(--color-primary);
+  border-color: transparent;
+}
+
+.catalogue-select {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  font-size: 0.875rem;
+  color: var(--color-text-main);
+}
+
+.category-pills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pill-btn {
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+}
+
+.pill-btn:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-main);
+}
+
+.pill-btn.active {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
 .course-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 2rem;
   padding-bottom: 4rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--color-text-muted);
 }
