@@ -1,8 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { requestLogger } from './middleware/logger.js';
+import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 
-export function createApp() {
+export function createApp(configureRoutes = null) {
   const app = express();
 
   // Security headers & CORS
@@ -15,6 +17,11 @@ export function createApp() {
   // JSON request body parser
   app.use(express.json());
 
+  // Request logger (skip in automated test environment to keep logs clean)
+  if (process.env.NODE_ENV !== 'test') {
+    app.use(requestLogger);
+  }
+
   // Health check endpoint
   app.get('/api/health', (req, res) => {
     res.json({
@@ -24,13 +31,16 @@ export function createApp() {
     });
   });
 
-  // 404 handler
-  app.use((req, res) => {
-    res.status(404).json({
-      success: false,
-      error: { code: 'NOT_FOUND', message: `Route ${req.method} ${req.url} not found` }
-    });
-  });
+  // Mount custom routes or feature routers if provided
+  if (typeof configureRoutes === 'function') {
+    configureRoutes(app);
+  }
+
+  // 404 Not Found handler
+  app.use(notFoundHandler);
+
+  // Centralized Error handler
+  app.use(errorHandler);
 
   return app;
 }
