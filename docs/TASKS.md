@@ -38,7 +38,7 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 
 ## 4. Milestone 2 — Course management
 
-- [ ] M2-01 Design and implement course/category data models.
+- [x] M2-01 Design and implement course/category data models. ([#19](https://github.com/Lalit-byte/AIDLC_LMS/issues/19))
 - [ ] M2-02 Implement public course list, filtering, pagination, and details.
 - [ ] M2-03 Implement instructor course create/update.
 - [ ] M2-04 Implement sections and lessons.
