@@ -28,7 +28,7 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 
 ## 3. Milestone 1 — Foundation
 
-- [ ] M1-01 Initialize React + Vite client. ([#1](https://github.com/Lalit-byte/AIDLC_LMS/issues/1))
+- [x] M1-01 Initialize React + Vite client. ([#1](https://github.com/Lalit-byte/AIDLC_LMS/issues/1))
 - [ ] M1-02 Initialize Express server. ([#2](https://github.com/Lalit-byte/AIDLC_LMS/issues/2))
 - [ ] M1-03 Configure MongoDB connection and environment validation. ([#3](https://github.com/Lalit-byte/AIDLC_LMS/issues/3))
 - [ ] M1-04 Configure shared error handling, logging, and request validation. ([#4](https://github.com/Lalit-byte/AIDLC_LMS/issues/4))
