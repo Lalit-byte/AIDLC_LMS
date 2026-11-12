@@ -1,0 +1,25 @@
+.catalogue-hero {
+  padding: 3rem 0;
+  text-align: center;
+}
+
+.catalogue-hero h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  color: var(--color-text-main);
+}
+
+.catalogue-hero p {
+  font-size: 1.125rem;
+  color: var(--color-text-muted);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.course-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  padding-bottom: 4rem;
+}

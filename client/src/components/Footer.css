@@ -1,0 +1,25 @@
+.footer {
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  padding: 3rem 0 2rem;
+  margin-top: auto;
+}
+
+.footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+  text-align: center;
+}
+
+.footer-brand {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: var(--color-text-main);
+}
+
+.footer-copy {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}

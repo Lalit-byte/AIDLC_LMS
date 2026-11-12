@@ -40,6 +40,7 @@ Do not introduce these without an explicit project-owner decision.
 - **Free vs. paid courses:** Both supported. Paid courses use server-authoritative Razorpay flow; free (₹0) courses bypass Razorpay order creation and activate enrollment directly via the backend.
 - **Instructor onboarding:** Registered users can apply or be assigned instructor role by Admin. Courses created by instructors require Admin review before publishing.
 - **Language & Styling:** JavaScript (ES Modules, no TypeScript initially) and modular CSS (no Tailwind initially).
+- **Development sequence:** Two-phase execution — Phase 1 focuses entirely on Frontend (React client, UI components, course catalogue, lesson viewer, dashboards, and mock service layer), followed by Phase 2 for Backend (Node.js + Express REST API, MongoDB Mongoose models, JWT authentication, and Razorpay payment integration).
 - **Lifecycle execution:** AIDLC manual workflow aligned with Google Antigravity and repository docs.
 
 ## 6. Decisions still open / deferred
