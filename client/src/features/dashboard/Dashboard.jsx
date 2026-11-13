@@ -8,12 +8,28 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.getCurrentUser(), api.getCourses()])
-      .then(([userData, courseList]) => {
+    let active = true;
+    Promise.all([api.getCurrentUser().catch(() => null), api.getEnrolledCourses().catch(() => [])])
+      .then(([userData, enrolledCourses]) => {
+        if (!active) return;
         setUser(userData);
-        setCourses(courseList.filter((c) => userData.enrolledCourseIds.includes(c.id)));
+        if (enrolledCourses && enrolledCourses.length) {
+          setCourses(enrolledCourses);
+        } else if (userData?.enrolledCourseIds) {
+          api.getCourses().then((all) => {
+            if (active) {
+              setCourses(all.filter((c) => userData.enrolledCourseIds.includes(c.id)));
+            }
+          });
+        }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (

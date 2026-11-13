@@ -59,9 +59,9 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 
 ## 6. Milestone 4 — Learning experience
 
-- [ ] M4-01 Implement student enrollment list. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
-- [ ] M4-02 Implement protected lesson/content access. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
-- [ ] M4-03 Implement lesson completion and progress persistence. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
+- [x] M4-01 Implement student enrollment list. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
+- [x] M4-02 Implement protected lesson/content access. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
+- [x] M4-03 Implement lesson completion and progress persistence. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
 - [ ] M4-04 Build student dashboard and course player.
 - [ ] M4-05 Add instructor dashboard basics.
 - [ ] M4-06 Add admin user/category/enrollment views.

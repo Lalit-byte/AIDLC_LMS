@@ -7,39 +7,60 @@ export default function LessonPlayer() {
   const { courseId } = useParams();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeLesson, setActiveLesson] = useState(null);
   const [completedLessonIds, setCompletedLessonIds] = useState([]);
 
   useEffect(() => {
+    let active = true;
     Promise.all([api.getCourseById(courseId), api.getCourseProgress(courseId)])
       .then(([courseData, progressData]) => {
+        if (!active) return;
         setCourse(courseData);
-        setCompletedLessonIds(progressData);
+        setCompletedLessonIds(Array.isArray(progressData) ? progressData : []);
         // Default to first lesson in first section
-        if (courseData?.sections?.length && courseData.sections[0].lessons?.length) {
-          setActiveLesson(courseData.sections[0].lessons[0]);
+        const firstLesson = courseData?.sections?.[0]?.lessons?.[0];
+        if (firstLesson) {
+          setActiveLesson(firstLesson);
         }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (!active) return;
+        setError(err.message || 'Unable to load course classroom.');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [courseId]);
 
   // Flattened list of all lessons for linear navigation
   const allLessons = useMemo(() => {
     if (!course?.sections) return [];
-    return course.sections.flatMap((sec) => sec.lessons);
+    return course.sections.flatMap((sec) =>
+      (sec.lessons || []).map((l) => ({
+        ...l,
+        id: l.id || l._id
+      }))
+    );
   }, [course]);
 
-  const currentIndex = allLessons.findIndex((l) => l.id === activeLesson?.id);
+  const activeLessonId = activeLesson?.id || activeLesson?._id;
+  const currentIndex = allLessons.findIndex((l) => (l.id || l._id) === activeLessonId);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
-  const nextLesson = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
+  const nextLesson = currentIndex >= 0 && currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 
-  const isCompleted = activeLesson ? completedLessonIds.includes(activeLesson.id) : false;
+  const isCompleted = activeLessonId ? completedLessonIds.includes(activeLessonId) : false;
 
   const handleToggleComplete = () => {
-    if (!activeLesson) return;
-    api.toggleLessonProgress(courseId, activeLesson.id)
-      .then(setCompletedLessonIds)
+    if (!activeLessonId) return;
+    api.toggleLessonProgress(courseId, activeLessonId)
+      .then((updated) => {
+        setCompletedLessonIds(Array.isArray(updated) ? updated : []);
+      })
       .catch(console.error);
   };
 
@@ -48,7 +69,14 @@ export default function LessonPlayer() {
     : 0;
 
   if (loading) return <div style={{ padding: '4rem', textAlign: 'center' }}>Loading classroom...</div>;
-  if (!course) return <div style={{ padding: '4rem', textAlign: 'center' }}>Course not found.</div>;
+  if (error || !course) {
+    return (
+      <div style={{ padding: '4rem', textAlign: 'center' }}>
+        <h2 style={{ marginBottom: '1rem' }}>{error || 'Course not found.'}</h2>
+        <Link to="/dashboard" className="btn btn-outline">Back to My Learning</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="player-layout">
@@ -123,27 +151,31 @@ export default function LessonPlayer() {
         </div>
 
         <div className="sidebar-content">
-          {course.sections.map((section) => (
-            <div key={section.id}>
-              <div className="sidebar-section-title">{section.title}</div>
-              {section.lessons.map((lesson) => {
-                const active = lesson.id === activeLesson?.id;
-                const completed = completedLessonIds.includes(lesson.id);
-                return (
-                  <button
-                    key={lesson.id}
-                    className={`sidebar-lesson-item ${active ? 'active' : ''}`}
-                    onClick={() => setActiveLesson(lesson)}
-                  >
-                    <span>
-                      {lesson.type === 'video' ? '🎬' : '📄'} {lesson.title}
-                    </span>
-                    {completed && <span className="completed-check">✓</span>}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+          {(course.sections || []).map((section) => {
+            const secKey = section.id || section._id;
+            return (
+              <div key={secKey}>
+                <div className="sidebar-section-title">{section.title}</div>
+                {(section.lessons || []).map((lesson) => {
+                  const lesKey = lesson.id || lesson._id;
+                  const active = lesKey === activeLessonId;
+                  const completed = completedLessonIds.includes(lesKey);
+                  return (
+                    <button
+                      key={lesKey}
+                      className={`sidebar-lesson-item ${active ? 'active' : ''}`}
+                      onClick={() => setActiveLesson(lesson)}
+                    >
+                      <span>
+                        {lesson.type === 'video' ? '🎬' : '📄'} {lesson.title}
+                      </span>
+                      {completed && <span className="completed-check">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
       </aside>
     </div>

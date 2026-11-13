@@ -123,18 +123,80 @@ export const api = {
     return res.json();
   },
 
-  // Progress tracking endpoints
-  async getCourseProgress(courseId) {
-    if (USE_MOCK_API) {
-      const stored = localStorage.getItem(`progress_${courseId}`);
-      return Promise.resolve(stored ? JSON.parse(stored) : []);
+  // Enrollment & Learning endpoints
+  async getEnrolledCourses() {
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await fetch(`${API_BASE_URL}/enrollments/my-courses`, { headers });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to fetch enrolled courses.');
     }
-    const res = await fetch(`${API_BASE_URL}/courses/${courseId}/progress`);
+    const json = await res.json();
+    return json.data?.courses || [];
+  },
+
+  async enrollFreeCourse(courseId) {
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+    const res = await fetch(`${API_BASE_URL}/enrollments/${courseId}/free`, {
+      method: 'POST',
+      headers
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Enrollment failed.');
+    }
     return res.json();
   },
 
+  // Progress tracking endpoints
+  async getCourseProgress(courseId) {
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      const res = await fetch(`${API_BASE_URL}/enrollments/${courseId}/progress`, { headers });
+      if (!res.ok) {
+        const stored = localStorage.getItem(`progress_${courseId}`);
+        return stored ? JSON.parse(stored) : [];
+      }
+      const json = await res.json();
+      return json.data?.completedLessons || [];
+    } catch {
+      const stored = localStorage.getItem(`progress_${courseId}`);
+      return stored ? JSON.parse(stored) : [];
+    }
+  },
+
   async toggleLessonProgress(courseId, lessonId) {
-    if (USE_MOCK_API) {
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+    try {
+      const res = await fetch(`${API_BASE_URL}/enrollments/${courseId}/progress`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ lessonId })
+      });
+      if (!res.ok) {
+        const stored = localStorage.getItem(`progress_${courseId}`);
+        let list = stored ? JSON.parse(stored) : [];
+        if (list.includes(lessonId)) {
+          list = list.filter((id) => id !== lessonId);
+        } else {
+          list.push(lessonId);
+        }
+        localStorage.setItem(`progress_${courseId}`, JSON.stringify(list));
+        return list;
+      }
+      const json = await res.json();
+      return json.data?.completedLessons || [];
+    } catch {
       const stored = localStorage.getItem(`progress_${courseId}`);
       let list = stored ? JSON.parse(stored) : [];
       if (list.includes(lessonId)) {
@@ -143,14 +205,8 @@ export const api = {
         list.push(lessonId);
       }
       localStorage.setItem(`progress_${courseId}`, JSON.stringify(list));
-      return Promise.resolve(list);
+      return list;
     }
-    const res = await fetch(`${API_BASE_URL}/courses/${courseId}/progress`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lessonId })
-    });
-    return res.json();
   },
 
   // Instructor Studio endpoints
