@@ -1,43 +1,62 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { api } from '../../services/api';
 import CourseCard from './CourseCard';
 import './CourseList.css';
 
 export default function CourseList() {
   const [courses, setCourses] = useState([]);
+  const [categories, setCategories] = useState(['All']);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [pricing, setPricing] = useState('all');
 
+  // Load available categories once on mount
   useEffect(() => {
-    api.getCourses()
-      .then(setCourses)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    api.getCategories()
+      .then((cats) => {
+        if (Array.isArray(cats) && cats.length) {
+          setCategories(cats);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  const categories = useMemo(() => {
-    const list = Array.from(new Set(courses.map((c) => c.category))).filter(Boolean);
-    return ['All', ...list];
-  }, [courses]);
+  const fetchCourses = useCallback(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
 
-  const filteredCourses = useMemo(() => {
-    return courses.filter((course) => {
-      const matchCat = category === 'All' || course.category === category;
-      const matchPricing =
-        pricing === 'all' ||
-        (pricing === 'free' && course.price === 0) ||
-        (pricing === 'paid' && course.price > 0);
-      const query = search.toLowerCase().trim();
-      const matchSearch =
-        !query ||
-        course.title.toLowerCase().includes(query) ||
-        course.description.toLowerCase().includes(query) ||
-        course.instructor.toLowerCase().includes(query);
-      return matchCat && matchPricing && matchSearch;
-    });
-  }, [courses, category, pricing, search]);
+    api.getCourses({ search, category, price: pricing })
+      .then((data) => {
+        if (active) {
+          setCourses(data);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setError(err.message || 'Unable to load courses. Please try again.');
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [search, category, pricing]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchCourses();
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [fetchCourses]);
 
   const resetFilters = () => {
     setSearch('');
@@ -87,7 +106,14 @@ export default function CourseList() {
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '3rem' }}>Loading catalogue...</div>
-      ) : filteredCourses.length === 0 ? (
+      ) : error ? (
+        <div className="empty-state" style={{ color: 'var(--color-danger, #ef4444)' }}>
+          <p style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>{error}</p>
+          <button className="btn btn-outline" onClick={fetchCourses}>
+            Try Again
+          </button>
+        </div>
+      ) : courses.length === 0 ? (
         <div className="empty-state">
           <p style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>No courses match your active filters.</p>
           <button className="btn btn-outline" onClick={resetFilters}>
@@ -96,8 +122,8 @@ export default function CourseList() {
         </div>
       ) : (
         <section className="course-grid">
-          {filteredCourses.map((course) => (
-            <CourseCard key={course.id} course={course} />
+          {courses.map((course) => (
+            <CourseCard key={course.id || course.slug || course._id} course={course} />
           ))}
         </section>
       )}
