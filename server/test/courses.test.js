@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import mongoose from 'mongoose';
 import { createApp } from '../src/app.js';
 import { Course } from '../src/models/Course.js';
 import { Category } from '../src/models/Category.js';
+import { signToken } from '../src/utils/token.js';
 
 test('GET /api/categories returns active categories', async () => {
   const originalFind = Category.find;
@@ -179,6 +181,204 @@ test('GET /api/courses/:slugOrId returns 404 when course is not found', async ()
     assert.strictEqual(body.error.code, 'NOT_FOUND');
   } finally {
     Course.findOne = originalFindOne;
+    server.close();
+  }
+});
+
+test('POST /api/courses creates course in draft status with instructor ownership', async () => {
+  const originalCreate = Course.create;
+  const originalExists = Course.exists;
+
+  const instructorId = new mongoose.Types.ObjectId().toString();
+  const instructorToken = signToken({ id: instructorId, role: 'instructor', name: 'Professor Oak', email: 'oak@test.com' });
+  const studentToken = signToken({ id: 'stu_1', role: 'student', email: 'stu@test.com' });
+
+  Course.exists = async () => false;
+  Course.create = async (doc) => ({
+    _id: new mongoose.Types.ObjectId().toString(),
+    ...doc,
+    createdAt: new Date().toISOString()
+  });
+
+  const app = createApp();
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    // 1. Student cannot create course (403)
+    const res1 = await fetch(`http://127.0.0.1:${port}/api/courses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${studentToken}`
+      },
+      body: JSON.stringify({ title: 'Course 1', description: 'Desc', category: 'Dev' })
+    });
+    assert.strictEqual(res1.status, 403);
+
+    // 2. Instructor missing required title (400)
+    const res2 = await fetch(`http://127.0.0.1:${port}/api/courses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${instructorToken}`
+      },
+      body: JSON.stringify({ description: 'Desc', category: 'Dev' })
+    });
+    assert.strictEqual(res2.status, 400);
+
+    // 3. Valid course creation
+    const res3 = await fetch(`http://127.0.0.1:${port}/api/courses`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${instructorToken}`
+      },
+      body: JSON.stringify({
+        title: 'Node.js Masterclass',
+        description: 'Comprehensive Node.js guide',
+        category: 'Development',
+        price: 999,
+        thumbnail: 'https://img.example.com/node.png'
+      })
+    });
+    assert.strictEqual(res3.status, 201);
+    const body = await res3.json();
+    assert.strictEqual(body.success, true);
+    assert.strictEqual(body.data.course.title, 'Node.js Masterclass');
+    assert.strictEqual(body.data.course.status, 'draft');
+    assert.strictEqual(body.data.course.instructor, instructorId);
+    assert.strictEqual(body.data.course.instructorName, 'Professor Oak');
+    assert.strictEqual(body.data.course.slug, 'node-js-masterclass');
+    assert.strictEqual(body.data.course.price, 999);
+  } finally {
+    Course.create = originalCreate;
+    Course.exists = originalExists;
+    server.close();
+  }
+});
+
+test('PUT /api/courses/:id allows owner to update details and rejects non-owners', async () => {
+  const originalFindById = Course.findById;
+  const originalExists = Course.exists;
+
+  const ownerId = new mongoose.Types.ObjectId().toString();
+  const otherInstructorId = new mongoose.Types.ObjectId().toString();
+  const courseId = new mongoose.Types.ObjectId().toString();
+
+  const ownerToken = signToken({ id: ownerId, role: 'instructor', email: 'owner@test.com' });
+  const otherToken = signToken({ id: otherInstructorId, role: 'instructor', email: 'other@test.com' });
+
+  const mockCourse = {
+    _id: courseId,
+    title: 'Original Title',
+    slug: 'original-title',
+    description: 'Original description',
+    category: 'Development',
+    price: 0,
+    currency: 'INR',
+    thumbnail: '',
+    instructor: ownerId,
+    status: 'draft',
+    save: async function () { return this; }
+  };
+
+  Course.findById = async (id) => (id === courseId ? mockCourse : null);
+  Course.exists = async () => false;
+
+  const app = createApp();
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    // 1. Non-owner instructor receives 403 Forbidden
+    const res1 = await fetch(`http://127.0.0.1:${port}/api/courses/${courseId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${otherToken}`
+      },
+      body: JSON.stringify({ title: 'Hacked Title' })
+    });
+    assert.strictEqual(res1.status, 403);
+
+    // 2. Owner can update details
+    const res2 = await fetch(`http://127.0.0.1:${port}/api/courses/${courseId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${ownerToken}`
+      },
+      body: JSON.stringify({
+        title: 'Updated Title',
+        description: 'Updated Description',
+        category: 'Design',
+        price: 499,
+        thumbnail: 'https://img.example.com/updated.png'
+      })
+    });
+    assert.strictEqual(res2.status, 200);
+    const body = await res2.json();
+    assert.strictEqual(body.success, true);
+    assert.strictEqual(body.data.course.title, 'Updated Title');
+    assert.strictEqual(body.data.course.slug, 'updated-title');
+    assert.strictEqual(body.data.course.category, 'Design');
+    assert.strictEqual(body.data.course.price, 499);
+    assert.strictEqual(body.data.course.thumbnail, 'https://img.example.com/updated.png');
+  } finally {
+    Course.findById = originalFindById;
+    Course.exists = originalExists;
+    server.close();
+  }
+});
+
+test('GET /api/courses/instructor/my-courses returns all courses for instructor', async () => {
+  const originalFind = Course.find;
+
+  const instructorId = new mongoose.Types.ObjectId().toString();
+  const instructorToken = signToken({ id: instructorId, role: 'instructor', email: 'inst@test.com' });
+  const studentToken = signToken({ id: 'student_1', role: 'student', email: 'stu@test.com' });
+
+  Course.find = (filter) => ({
+    sort: async () => [
+      {
+        _id: 'c1',
+        title: 'Draft Course',
+        status: 'draft',
+        instructor: filter.instructor
+      },
+      {
+        _id: 'c2',
+        title: 'Published Course',
+        status: 'published',
+        instructor: filter.instructor
+      }
+    ]
+  });
+
+  const app = createApp();
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    // 1. Student role rejected (403)
+    const res1 = await fetch(`http://127.0.0.1:${port}/api/courses/instructor/my-courses`, {
+      headers: { Authorization: `Bearer ${studentToken}` }
+    });
+    assert.strictEqual(res1.status, 403);
+
+    // 2. Instructor gets all courses (all statuses)
+    const res2 = await fetch(`http://127.0.0.1:${port}/api/courses/instructor/my-courses`, {
+      headers: { Authorization: `Bearer ${instructorToken}` }
+    });
+    assert.strictEqual(res2.status, 200);
+    const body = await res2.json();
+    assert.strictEqual(body.success, true);
+    assert.strictEqual(body.data.courses.length, 2);
+    assert.strictEqual(body.data.courses[0].status, 'draft');
+    assert.strictEqual(body.data.courses[1].status, 'published');
+  } finally {
+    Course.find = originalFind;
     server.close();
   }
 });
