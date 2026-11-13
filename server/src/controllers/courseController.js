@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { Course } from '../models/Course.js';
+import { Course, slugify } from '../models/Course.js';
 import { Category } from '../models/Category.js';
 import { ApiError } from '../utils/ApiError.js';
 
@@ -165,6 +165,143 @@ export async function submitCourseForReview(req, res, next) {
       success: true,
       data: {
         course
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function createCourse(req, res, next) {
+  try {
+    const { title, description, category, price, currency, thumbnail } = req.body;
+
+    if (!title || !title.trim()) {
+      throw ApiError.badRequest('Course title is required.');
+    }
+    if (!description || !description.trim()) {
+      throw ApiError.badRequest('Course description is required.');
+    }
+    if (!category || !category.trim()) {
+      throw ApiError.badRequest('Category is required.');
+    }
+
+    const parsedPrice = price !== undefined ? Number(price) : 0;
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      throw ApiError.badRequest('Course price must be a non-negative number.');
+    }
+
+    const baseSlug = slugify(title);
+    let slug = baseSlug;
+    let counter = 1;
+    while (await Course.exists({ slug })) {
+      slug = `${baseSlug}-${counter++}`;
+    }
+
+    const course = await Course.create({
+      title: title.trim(),
+      slug,
+      description: description.trim(),
+      category: category.trim(),
+      price: parsedPrice,
+      currency: currency || 'INR',
+      thumbnail: thumbnail ? thumbnail.trim() : '',
+      status: 'draft',
+      instructor: req.user.id,
+      instructorName: req.user.name || ''
+    });
+
+    res.status(201).json({
+      success: true,
+      data: {
+        course
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateCourse(req, res, next) {
+  try {
+    const { id } = req.params;
+    const course = req.course || await Course.findById(id);
+    if (!course) {
+      throw ApiError.notFound('Course not found.');
+    }
+
+    // Double check ownership if middleware wasn't invoked
+    if (req.user.role !== 'admin' && course.instructor.toString() !== req.user.id.toString()) {
+      throw ApiError.forbidden('Access denied: You do not own this course.');
+    }
+
+    const { title, description, category, price, currency, thumbnail } = req.body;
+
+    if (title !== undefined) {
+      if (!title.trim()) {
+        throw ApiError.badRequest('Course title cannot be empty.');
+      }
+      course.title = title.trim();
+      const baseSlug = slugify(title);
+      let slug = baseSlug;
+      let counter = 1;
+      while (await Course.exists({ slug, _id: { $ne: course._id } })) {
+        slug = `${baseSlug}-${counter++}`;
+      }
+      course.slug = slug;
+    }
+
+    if (description !== undefined) {
+      if (!description.trim()) {
+        throw ApiError.badRequest('Course description cannot be empty.');
+      }
+      course.description = description.trim();
+    }
+
+    if (category !== undefined) {
+      if (!category.trim()) {
+        throw ApiError.badRequest('Category cannot be empty.');
+      }
+      course.category = category.trim();
+    }
+
+    if (price !== undefined) {
+      const parsedPrice = Number(price);
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        throw ApiError.badRequest('Course price must be a non-negative number.');
+      }
+      course.price = parsedPrice;
+    }
+
+    if (currency !== undefined) {
+      course.currency = currency;
+    }
+
+    if (thumbnail !== undefined) {
+      course.thumbnail = thumbnail.trim();
+    }
+
+    await course.save();
+
+    res.json({
+      success: true,
+      data: {
+        course
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getInstructorCourses(req, res, next) {
+  try {
+    const courses = await Course.find({ instructor: req.user.id }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: {
+        courses
       }
     });
   } catch (err) {
