@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 import { Course } from '../models/Course.js';
 import { Payment } from '../models/Payment.js';
 import { Enrollment } from '../models/Enrollment.js';
-import { getRazorpayClient, verifyCheckoutSignature } from '../config/razorpay.js';
+import { WebhookEvent } from '../models/WebhookEvent.js';
+import { getRazorpayClient, verifyCheckoutSignature, verifyWebhookSignature } from '../config/razorpay.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export async function createPaymentOrder(req, res, next) {
@@ -153,4 +154,143 @@ export function getRazorpayKey(req, res) {
       keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_placeholder'
     }
   });
+}
+
+export async function handleRazorpayWebhook(req, res, next) {
+  try {
+    const signature = req.headers['x-razorpay-signature'];
+    if (!signature) {
+      throw ApiError.badRequest('Missing x-razorpay-signature header.');
+    }
+
+    const rawBody = req.rawBody || JSON.stringify(req.body);
+    const isValid = verifyWebhookSignature({ rawBody, signature });
+
+    if (!isValid) {
+      throw ApiError.badRequest('Invalid webhook signature.');
+    }
+
+    const payload = req.body || {};
+    const event = payload.event;
+    const paymentEntity = payload.payload?.payment?.entity;
+    const orderEntity = payload.payload?.order?.entity;
+
+    const orderId = orderEntity?.id || paymentEntity?.order_id || '';
+    const paymentId = paymentEntity?.id || '';
+
+    // Generate or extract a deterministic unique event ID
+    const eventId =
+      req.headers['x-razorpay-event-id'] ||
+      payload.id ||
+      payload.event_id ||
+      `${event}_${orderId}_${paymentId}`;
+
+    // Deduplication check: return 200 OK immediately if already processed
+    const existingEvent = await WebhookEvent.findOne({ eventId });
+    if (existingEvent) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          message: 'Webhook event already processed (idempotent duplicate).',
+          eventId
+        }
+      });
+    }
+
+    // Process recognized payment success events
+    if (event === 'payment.captured' || event === 'order.paid') {
+      let payment = null;
+      if (orderId) {
+        payment = await Payment.findOne({ orderId });
+      }
+
+      if (payment) {
+        payment.status = 'paid';
+        if (paymentId && !payment.paymentId) {
+          payment.paymentId = paymentId;
+        }
+        await payment.save();
+
+        // Idempotently activate enrollment
+        await Enrollment.findOneAndUpdate(
+          { user: payment.user, course: payment.course },
+          {
+            user: payment.user,
+            course: payment.course,
+            payment: payment._id,
+            status: 'active',
+            enrolledAt: new Date()
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      } else if (paymentEntity?.notes?.userId && paymentEntity?.notes?.courseId) {
+        const userId = paymentEntity.notes.userId;
+        const courseId = paymentEntity.notes.courseId;
+
+        const newPayment = await Payment.create({
+          orderId: orderId || `ord_${Date.now()}`,
+          paymentId: paymentId || '',
+          user: userId,
+          course: courseId,
+          amount: paymentEntity.amount ? paymentEntity.amount / 100 : 0,
+          currency: paymentEntity.currency || 'INR',
+          status: 'paid'
+        });
+
+        await Enrollment.findOneAndUpdate(
+          { user: userId, course: courseId },
+          {
+            user: userId,
+            course: courseId,
+            payment: newPayment._id,
+            status: 'active',
+            enrolledAt: new Date()
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      }
+    } else if (event === 'payment.failed') {
+      if (orderId) {
+        const payment = await Payment.findOne({ orderId });
+        if (payment) {
+          payment.status = 'failed';
+          payment.errorDetails = paymentEntity?.error_description || 'Payment failed';
+          await payment.save();
+        }
+      }
+    }
+
+    // Persist event record for deduplication
+    try {
+      await WebhookEvent.create({
+        eventId,
+        event: event || 'unknown',
+        orderId,
+        paymentId,
+        status: 'processed'
+      });
+    } catch (err) {
+      if (err.code === 11000) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            message: 'Webhook event acknowledged as concurrent duplicate.',
+            eventId
+          }
+        });
+      }
+      throw err;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        message: 'Webhook processed successfully.',
+        event,
+        eventId
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
 }

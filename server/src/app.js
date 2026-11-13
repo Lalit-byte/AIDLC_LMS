@@ -20,8 +20,12 @@ export function createApp(configureRoutes = null) {
     credentials: true
   }));
 
-  // JSON request body parser
-  app.use(express.json());
+  // JSON request body parser with rawBody buffer capture for webhook signature verification
+  app.use(express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf;
+    }
+  }));
 
   // Request logger (skip in automated test environment to keep logs clean)
   if (process.env.NODE_ENV !== 'test') {
