@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { Course, slugify } from '../models/Course.js';
 import { Category } from '../models/Category.js';
+import { Enrollment } from '../models/Enrollment.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export async function getPublicCourses(req, res, next) {
@@ -74,9 +75,21 @@ export async function getCourseDetails(req, res, next) {
       throw ApiError.notFound('Course not found.');
     }
 
+    let isEnrolled = false;
+    if (req.user) {
+      isEnrolled = Boolean(
+        await Enrollment.exists({
+          user: req.user.id,
+          course: course._id,
+          status: { $in: ['active', 'completed'] }
+        })
+      );
+    }
+
     const canViewAll = req.user && (
       req.user.role === 'admin' ||
-      req.user.id?.toString() === course.instructor?._id?.toString()
+      req.user.id?.toString() === course.instructor?._id?.toString() ||
+      isEnrolled
     );
 
     const courseObj = course.toObject();
