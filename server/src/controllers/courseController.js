@@ -308,3 +308,246 @@ export async function getInstructorCourses(req, res, next) {
     next(err);
   }
 }
+
+export async function addSection(req, res, next) {
+  try {
+    const course = req.course || await Course.findById(req.params.id);
+    if (!course) {
+      throw ApiError.notFound('Course not found.');
+    }
+
+    const { title, order } = req.body;
+    if (!title || !title.trim()) {
+      throw ApiError.badRequest('Section title is required.');
+    }
+
+    const newSection = {
+      _id: new mongoose.Types.ObjectId(),
+      title: title.trim(),
+      order: order !== undefined ? Number(order) : (course.sections?.length || 0),
+      lessons: []
+    };
+
+    if (!course.sections) {
+      course.sections = [];
+    }
+    course.sections.push(newSection);
+    await course.save();
+
+    const createdSection = course.sections[course.sections.length - 1];
+    res.status(201).json({
+      success: true,
+      data: {
+        section: createdSection,
+        sections: course.sections
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateSection(req, res, next) {
+  try {
+    const course = req.course || await Course.findById(req.params.id);
+    if (!course) {
+      throw ApiError.notFound('Course not found.');
+    }
+
+    const section = course.sections?.find((s) => s._id.toString() === req.params.sectionId);
+    if (!section) {
+      throw ApiError.notFound('Section not found.');
+    }
+
+    const { title, order } = req.body;
+    if (title !== undefined) {
+      if (!title.trim()) {
+        throw ApiError.badRequest('Section title cannot be empty.');
+      }
+      section.title = title.trim();
+    }
+    if (order !== undefined) {
+      section.order = Number(order);
+    }
+
+    await course.save();
+
+    res.json({
+      success: true,
+      data: {
+        section,
+        sections: course.sections
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteSection(req, res, next) {
+  try {
+    const course = req.course || await Course.findById(req.params.id);
+    if (!course) {
+      throw ApiError.notFound('Course not found.');
+    }
+
+    const exists = course.sections?.some((s) => s._id.toString() === req.params.sectionId);
+    if (!exists) {
+      throw ApiError.notFound('Section not found.');
+    }
+
+    course.sections = course.sections.filter((s) => s._id.toString() !== req.params.sectionId);
+    await course.save();
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Section removed successfully.',
+        sections: course.sections,
+        totalLessons: course.totalLessons
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function addLesson(req, res, next) {
+  try {
+    const course = req.course || await Course.findById(req.params.id);
+    if (!course) {
+      throw ApiError.notFound('Course not found.');
+    }
+
+    const section = course.sections?.find((s) => s._id.toString() === req.params.sectionId);
+    if (!section) {
+      throw ApiError.notFound('Section not found.');
+    }
+
+    const { title, duration, type, embedUrl, content, isPreview, order } = req.body;
+    if (!title || !title.trim()) {
+      throw ApiError.badRequest('Lesson title is required.');
+    }
+
+    const lessonType = type === 'text' ? 'text' : 'video';
+    const newLesson = {
+      _id: new mongoose.Types.ObjectId(),
+      title: title.trim(),
+      duration: duration ? duration.trim() : '',
+      type: lessonType,
+      embedUrl: embedUrl ? embedUrl.trim() : '',
+      content: content ? content.trim() : '',
+      isPreview: Boolean(isPreview),
+      order: order !== undefined ? Number(order) : (section.lessons?.length || 0)
+    };
+
+    if (!section.lessons) {
+      section.lessons = [];
+    }
+    section.lessons.push(newLesson);
+    await course.save();
+
+    const createdLesson = section.lessons[section.lessons.length - 1];
+    res.status(201).json({
+      success: true,
+      data: {
+        lesson: createdLesson,
+        totalLessons: course.totalLessons
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateLesson(req, res, next) {
+  try {
+    const course = req.course || await Course.findById(req.params.id);
+    if (!course) {
+      throw ApiError.notFound('Course not found.');
+    }
+
+    const section = course.sections?.find((s) => s._id.toString() === req.params.sectionId);
+    if (!section) {
+      throw ApiError.notFound('Section not found.');
+    }
+
+    const lesson = section.lessons?.find((l) => l._id.toString() === req.params.lessonId);
+    if (!lesson) {
+      throw ApiError.notFound('Lesson not found.');
+    }
+
+    const { title, duration, type, embedUrl, content, isPreview, order } = req.body;
+    if (title !== undefined) {
+      if (!title.trim()) {
+        throw ApiError.badRequest('Lesson title cannot be empty.');
+      }
+      lesson.title = title.trim();
+    }
+    if (duration !== undefined) {
+      lesson.duration = duration.trim();
+    }
+    if (type !== undefined) {
+      if (!['video', 'text'].includes(type)) {
+        throw ApiError.badRequest("Lesson type must be 'video' or 'text'.");
+      }
+      lesson.type = type;
+    }
+    if (embedUrl !== undefined) {
+      lesson.embedUrl = embedUrl.trim();
+    }
+    if (content !== undefined) {
+      lesson.content = content.trim();
+    }
+    if (isPreview !== undefined) {
+      lesson.isPreview = Boolean(isPreview);
+    }
+    if (order !== undefined) {
+      lesson.order = Number(order);
+    }
+
+    await course.save();
+
+    res.json({
+      success: true,
+      data: {
+        lesson,
+        totalLessons: course.totalLessons
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteLesson(req, res, next) {
+  try {
+    const course = req.course || await Course.findById(req.params.id);
+    if (!course) {
+      throw ApiError.notFound('Course not found.');
+    }
+
+    const section = course.sections?.find((s) => s._id.toString() === req.params.sectionId);
+    if (!section) {
+      throw ApiError.notFound('Section not found.');
+    }
+
+    const exists = section.lessons?.some((l) => l._id.toString() === req.params.lessonId);
+    if (!exists) {
+      throw ApiError.notFound('Lesson not found.');
+    }
+
+    section.lessons = section.lessons.filter((l) => l._id.toString() !== req.params.lessonId);
+    await course.save();
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Lesson removed successfully.',
+        totalLessons: course.totalLessons
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
