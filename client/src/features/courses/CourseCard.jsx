@@ -4,7 +4,8 @@ import './CourseCard.css';
 
 export default function CourseCard({ course, actionLabel, actionUrl }) {
   const isFree = course.price === 0;
-  const targetUrl = actionUrl || `/courses/${course.id}`;
+  const courseId = course.id || course.slug || course._id;
+  const targetUrl = actionUrl || `/courses/${courseId}`;
   const targetLabel = actionLabel || 'View Details';
 
   return (

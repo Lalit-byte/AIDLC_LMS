@@ -1,26 +1,105 @@
 import { MOCK_COURSES, MOCK_USER } from './mockData';
 
-// Toggle between mock and real API when backend is ready in Phase 2
+// Toggle mock mode: courses live by default (Issue #25)
+const USE_MOCK_COURSES = false;
 const USE_MOCK_API = true;
 const API_BASE_URL = '/api';
 
+export function normalizeCourse(c) {
+  if (!c) return c;
+  return {
+    ...c,
+    id: c.id || c.slug || c._id?.toString(),
+    instructor:
+      typeof c.instructor === 'object'
+        ? c.instructor?.name || c.instructorName || 'Instructor'
+        : c.instructorName || c.instructor || 'Instructor',
+    sections: (c.sections || []).map((s) => ({
+      ...s,
+      id: s.id || s._id?.toString(),
+      lessons: (s.lessons || []).map((l) => ({
+        ...l,
+        id: l.id || l._id?.toString()
+      }))
+    }))
+  };
+}
+
 export const api = {
   // Course endpoints
-  async getCourses() {
-    if (USE_MOCK_API) {
-      return Promise.resolve([...MOCK_COURSES]);
+  async getCourses(params = {}) {
+    if (USE_MOCK_COURSES) {
+      let result = [...MOCK_COURSES];
+      if (params.category && params.category !== 'All') {
+        result = result.filter((c) => c.category === params.category);
+      }
+      if (params.price === 'free') {
+        result = result.filter((c) => c.price === 0);
+      } else if (params.price === 'paid') {
+        result = result.filter((c) => c.price > 0);
+      }
+      if (params.search) {
+        const q = params.search.toLowerCase();
+        result = result.filter(
+          (c) =>
+            c.title?.toLowerCase().includes(q) ||
+            c.description?.toLowerCase().includes(q)
+        );
+      }
+      return Promise.resolve(result.map(normalizeCourse));
     }
-    const res = await fetch(`${API_BASE_URL}/courses`);
-    return res.json();
+
+    const query = new URLSearchParams();
+    if (params.search) query.set('search', params.search);
+    if (params.category && params.category !== 'All') query.set('category', params.category);
+    if (params.price && params.price !== 'all') query.set('price', params.price);
+    if (params.page) query.set('page', params.page);
+    if (params.limit) query.set('limit', params.limit);
+
+    const qs = query.toString();
+    const res = await fetch(`${API_BASE_URL}/courses${qs ? `?${qs}` : ''}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `Failed to fetch courses: ${res.status}`);
+    }
+    const json = await res.json();
+    const list = json.data?.courses || json.data || [];
+    return list.map(normalizeCourse);
   },
 
   async getCourseById(id) {
-    if (USE_MOCK_API) {
-      const course = MOCK_COURSES.find((c) => c.id === id);
-      return course ? Promise.resolve(course) : Promise.reject(new Error('Course not found'));
+    if (USE_MOCK_COURSES) {
+      const course = MOCK_COURSES.find((c) => c.id === id || c.slug === id);
+      return course
+        ? Promise.resolve(normalizeCourse(course))
+        : Promise.reject(new Error('Course not found'));
     }
+
     const res = await fetch(`${API_BASE_URL}/courses/${id}`);
-    return res.json();
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `Course not found (${res.status})`);
+    }
+    const json = await res.json();
+    const course = json.data?.course || json.data;
+    return normalizeCourse(course);
+  },
+
+  async getCategories() {
+    if (USE_MOCK_COURSES) {
+      const unique = Array.from(new Set(MOCK_COURSES.map((c) => c.category))).filter(Boolean);
+      return Promise.resolve(['All', ...unique]);
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/categories`);
+      if (!res.ok) return ['All'];
+      const json = await res.json();
+      const categories = json.data?.categories || [];
+      return ['All', ...categories.map((c) => c.name)];
+    } catch {
+      return ['All'];
+    }
   },
 
   // Auth endpoints

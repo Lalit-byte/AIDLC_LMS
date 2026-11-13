@@ -43,7 +43,7 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 - [x] M2-03 Implement instructor course create/update. ([#22](https://github.com/Lalit-byte/AIDLC_LMS/issues/22)) — `@tarun077-R`
 - [x] M2-04 Implement sections and lessons. ([#23](https://github.com/Lalit-byte/AIDLC_LMS/issues/23)) — `@tarun077-R`
 - [x] M2-05 Implement course submission and admin review/publishing. ([#24](https://github.com/Lalit-byte/AIDLC_LMS/issues/24)) — `@Lalit-byte`
-- [ ] M2-06 Build public catalogue and course detail UI. ([#25](https://github.com/Lalit-byte/AIDLC_LMS/issues/25)) — `@tarun077-R`
+- [x] M2-06 Build public catalogue and course detail UI. ([#25](https://github.com/Lalit-byte/AIDLC_LMS/issues/25)) — `@tarun077-R`
 - [ ] M2-07 Build instructor course-management UI.
 - [ ] M2-08 Build admin course-review UI.
 
