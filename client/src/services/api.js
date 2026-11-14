@@ -1,15 +1,46 @@
-import { MOCK_COURSES, MOCK_USER } from './mockData';
+import { MOCK_COURSES } from './mockData';
 
 // Toggle mock mode: courses live by default (Issue #25)
 const USE_MOCK_COURSES = false;
-const USE_MOCK_API = true;
 const API_BASE_URL = '/api';
+
+export function isDirectVideo(url) {
+  if (!url || typeof url !== 'string') return false;
+  return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url.trim());
+}
+
+export function formatEmbedUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (trimmed.includes('youtube.com/embed/') || trimmed.includes('player.vimeo.com/video/')) {
+    return trimmed;
+  }
+  const shortMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (shortMatch) {
+    return `https://www.youtube.com/embed/${shortMatch[1]}`;
+  }
+  const watchMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  if (watchMatch) {
+    return `https://www.youtube.com/embed/${watchMatch[1]}`;
+  }
+  const shortsMatch = trimmed.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
+  if (shortsMatch) {
+    return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+  }
+  const vimeoMatch = trimmed.match(/vimeo\.com\/([0-9]+)/);
+  if (vimeoMatch) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  }
+  return trimmed;
+}
 
 export function normalizeCourse(c) {
   if (!c) return c;
   return {
     ...c,
     id: c.id || c.slug || c._id?.toString(),
+    price: typeof c.price === 'number' ? c.price : Number(c.price || 0),
+    category: typeof c.category === 'object' ? c.category?.name || 'General' : c.category || 'General',
     instructor:
       typeof c.instructor === 'object'
         ? c.instructor?.name || c.instructorName || 'Instructor'
@@ -19,10 +50,20 @@ export function normalizeCourse(c) {
       id: s.id || s._id?.toString(),
       lessons: (s.lessons || []).map((l) => ({
         ...l,
-        id: l.id || l._id?.toString()
+        id: l.id || l._id?.toString(),
+        embedUrl: formatEmbedUrl(l.embedUrl || l.videoUrl || l.url)
       }))
     }))
   };
+}
+
+function getStoredToken() {
+  return (
+    localStorage.getItem('token') ||
+    localStorage.getItem('auth_token') ||
+    sessionStorage.getItem('auth_token') ||
+    null
+  );
 }
 
 export const api = {
@@ -75,7 +116,10 @@ export const api = {
         : Promise.reject(new Error('Course not found'));
     }
 
-    const res = await fetch(`${API_BASE_URL}/courses/${id}`);
+    const token = getStoredToken();
+    const res = token
+      ? await fetch(`${API_BASE_URL}/courses/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+      : await fetch(`${API_BASE_URL}/courses/${id}`);
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error?.message || `Course not found (${res.status})`);
@@ -103,41 +147,69 @@ export const api = {
   },
 
   // Auth endpoints
-  async getCurrentUser() {
-    if (USE_MOCK_API) {
-      return Promise.resolve(MOCK_USER);
+  async getCurrentUser(token) {
+    const authToken = token || getStoredToken();
+    if (!authToken) {
+      return null;
     }
-    const res = await fetch(`${API_BASE_URL}/auth/me`);
-    return res.json();
+    const res = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`
+      }
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error?.message || 'Failed to authenticate');
+    }
+    return data.data.user;
   },
 
   async login(credentials) {
-    if (USE_MOCK_API) {
-      return Promise.resolve({ user: MOCK_USER, token: 'mock-jwt-token' });
-    }
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials)
     });
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error?.message || 'Login failed');
+    }
+    return data.data; // { user, token }
+  },
+
+  async register(userData) {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      const details = data.error?.details
+        ? ` (${Array.isArray(data.error.details) ? data.error.details.join(', ') : data.error.details})`
+        : '';
+      throw new Error((data.error?.message || 'Registration failed') + details);
+    }
+    return data.data; // { user, token }
   },
 
   // Enrollment & Learning endpoints
   async getEnrolledCourses() {
-    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const token = getStoredToken();
+    if (!token) return [];
+    const headers = { Authorization: `Bearer ${token}` };
     const res = await fetch(`${API_BASE_URL}/enrollments/my-courses`, { headers });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error?.message || 'Failed to fetch enrolled courses.');
     }
     const json = await res.json();
-    return json.data?.courses || [];
+    const list = json.data?.courses || [];
+    return list.map(normalizeCourse);
   },
 
   async enrollFreeCourse(courseId) {
-    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    const token = getStoredToken();
     const headers = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -153,9 +225,46 @@ export const api = {
     return res.json();
   },
 
+  // Payment endpoints
+  async createPaymentOrder(courseId) {
+    const token = getStoredToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+    const res = await fetch(`${API_BASE_URL}/payments/create-order`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ courseId })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to create payment order.');
+    }
+    return res.json();
+  },
+
+  async verifyCheckout(payload) {
+    const token = getStoredToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+    const res = await fetch(`${API_BASE_URL}/payments/verify-checkout`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Payment verification failed.');
+    }
+    return res.json();
+  },
+
   // Progress tracking endpoints
   async getCourseProgress(courseId) {
-    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     try {
       const res = await fetch(`${API_BASE_URL}/enrollments/${courseId}/progress`, { headers });
@@ -172,7 +281,7 @@ export const api = {
   },
 
   async toggleLessonProgress(courseId, lessonId) {
-    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    const token = getStoredToken();
     const headers = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {})
@@ -210,58 +319,223 @@ export const api = {
   },
 
   // Instructor Studio endpoints
-  async getInstructorCourses() {
-    if (USE_MOCK_API) {
-      const stored = localStorage.getItem('instructor_courses');
-      if (stored) return Promise.resolve(JSON.parse(stored));
-      localStorage.setItem('instructor_courses', JSON.stringify(MOCK_COURSES));
-      return Promise.resolve([...MOCK_COURSES]);
+  async getInstructorDashboard() {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      const res = await fetch(`${API_BASE_URL}/courses/instructor/dashboard`, { headers });
+      if (res.ok) {
+        const json = await res.json();
+        return {
+          ...json.data,
+          courses: (json.data?.courses || []).map(normalizeCourse)
+        };
+      }
+    } catch {
+      // fallback
     }
-    const res = await fetch(`${API_BASE_URL}/instructor/courses`);
-    return res.json();
+    const localCourses = JSON.parse(localStorage.getItem('instructor_courses') || '[]');
+    return {
+      stats: {
+        totalEnrolments: 0,
+        totalCourses: localCourses.length,
+        totalEarnings: 0
+      },
+      courses: localCourses.map(normalizeCourse),
+      latestEnrolments: [],
+      allEnrolments: []
+    };
+  },
+
+  async getInstructorCourses() {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      const res = await fetch(`${API_BASE_URL}/courses/instructor/my-courses`, { headers });
+      if (res.ok) {
+        const json = await res.json();
+        return (json.data?.courses || []).map(normalizeCourse);
+      }
+    } catch {
+      // fallback
+    }
+    const stored = localStorage.getItem('instructor_courses');
+    if (stored) return JSON.parse(stored).map(normalizeCourse);
+    return [];
   },
 
   async saveInstructorCourse(course) {
-    if (USE_MOCK_API) {
-      const stored = localStorage.getItem('instructor_courses');
-      let list = stored ? JSON.parse(stored) : [...MOCK_COURSES];
-      const index = list.findIndex((c) => c.id === course.id);
-      if (index >= 0) {
-        list[index] = { ...list[index], ...course };
-      } else {
-        const newCourse = {
-          ...course,
-          id: `crs_${Date.now()}`,
-          status: 'draft',
-          sections: course.sections || []
-        };
-        list.unshift(newCourse);
+    const token = getStoredToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+    const courseId = course._id || course.id;
+
+    if (token) {
+      const isExisting = courseId && !courseId.startsWith('crs_');
+      const url = isExisting ? `${API_BASE_URL}/courses/${courseId}` : `${API_BASE_URL}/courses`;
+      const method = isExisting ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers,
+        body: JSON.stringify(course)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || (isExisting ? 'Failed to update course.' : 'Failed to create course.'));
       }
-      localStorage.setItem('instructor_courses', JSON.stringify(list));
-      return Promise.resolve(list);
+
+      return this.getInstructorDashboard();
     }
-    const res = await fetch(`${API_BASE_URL}/instructor/courses`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(course)
-    });
-    return res.json();
+
+    const stored = localStorage.getItem('instructor_courses');
+    let list = stored ? JSON.parse(stored) : [...MOCK_COURSES];
+    const index = list.findIndex((c) => (c.id || c._id) === courseId);
+    if (index >= 0) {
+      list[index] = { ...list[index], ...course };
+    } else {
+      list.unshift({
+        ...course,
+        id: `crs_${Date.now()}`,
+        status: 'draft',
+        sections: course.sections || []
+      });
+    }
+    localStorage.setItem('instructor_courses', JSON.stringify(list));
+    return this.getInstructorDashboard();
   },
 
   async submitCourseForReview(courseId) {
-    if (USE_MOCK_API) {
-      const stored = localStorage.getItem('instructor_courses');
-      let list = stored ? JSON.parse(stored) : [...MOCK_COURSES];
-      const index = list.findIndex((c) => c.id === courseId);
-      if (index >= 0) {
-        list[index].status = 'pending_review';
-        localStorage.setItem('instructor_courses', JSON.stringify(list));
+    const token = getStoredToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+
+    if (token && courseId && !courseId.startsWith('crs_')) {
+      const res = await fetch(`${API_BASE_URL}/courses/${courseId}/submit`, {
+        method: 'PATCH',
+        headers
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || 'Failed to submit course for review.');
       }
-      return Promise.resolve(list);
+      return this.getInstructorDashboard();
     }
-    const res = await fetch(`${API_BASE_URL}/instructor/courses/${courseId}/submit`, {
-      method: 'POST'
+
+    const stored = localStorage.getItem('instructor_courses');
+    let list = stored ? JSON.parse(stored) : [];
+    const index = list.findIndex((c) => (c.id || c._id) === courseId);
+    if (index >= 0) {
+      list[index].status = 'pending_review';
+      localStorage.setItem('instructor_courses', JSON.stringify(list));
+    }
+    return this.getInstructorDashboard();
+  },
+
+  async addSection(courseId, sectionData) {
+    const token = getStoredToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+    const res = await fetch(`${API_BASE_URL}/courses/${courseId}/sections`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(sectionData)
     });
-    return res.json();
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to add section.');
+    }
+    return (await res.json()).data;
+  },
+
+  async addLesson(courseId, sectionId, lessonData) {
+    const token = getStoredToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+    const res = await fetch(`${API_BASE_URL}/courses/${courseId}/sections/${sectionId}/lessons`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(lessonData)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to add lesson.');
+    }
+    return (await res.json()).data;
+  },
+
+  // Admin Portal endpoints
+  async getAdminOverview() {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/overview`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to fetch admin overview.');
+    }
+    const json = await res.json();
+    return json.data;
+  },
+
+  async getPendingCourses() {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/courses/pending`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to fetch pending courses.');
+    }
+    const json = await res.json();
+    return json.data?.courses || [];
+  },
+
+  async approveCourse(courseId) {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/courses/${courseId}/approve`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to approve course.');
+    }
+    const json = await res.json();
+    return json.data?.course;
+  },
+
+  async rejectCourse(courseId, reason) {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/courses/${courseId}/reject`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ reason })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to reject course.');
+    }
+    const json = await res.json();
+    return json.data?.course;
   }
 };

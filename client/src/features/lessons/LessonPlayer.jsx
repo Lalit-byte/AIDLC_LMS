@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { api } from '../../services/api';
+import { api, formatEmbedUrl, isDirectVideo } from '../../services/api';
 import './LessonPlayer.css';
 
 export default function LessonPlayer() {
@@ -118,23 +118,35 @@ export default function LessonPlayer() {
           </div>
         </header>
 
-        {activeLesson?.type === 'video' ? (
-          <div className="video-frame-container">
-            <iframe
-              src={activeLesson.embedUrl}
-              title={activeLesson.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        ) : (
-          <article className="text-lesson-card">
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: 'var(--color-primary)' }}>
-              Lesson Reading & Instructions
-            </h2>
-            <p>{activeLesson?.content || 'No text content available for this lesson.'}</p>
-          </article>
-        )}
+        {(() => {
+          const activeLessonVideoUrl = formatEmbedUrl(activeLesson?.embedUrl || activeLesson?.videoUrl || activeLesson?.url || '');
+          return activeLesson?.type === 'video' ? (
+            <div className="video-frame-container">
+              {isDirectVideo(activeLessonVideoUrl) ? (
+                <video
+                  src={activeLessonVideoUrl}
+                  controls
+                  playsInline
+                />
+              ) : (
+                <iframe
+                  src={activeLessonVideoUrl}
+                  title={activeLesson?.title || 'Lesson Video'}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              )}
+            </div>
+          ) : (
+            <article className="text-lesson-card">
+              <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: 'var(--color-primary)' }}>
+                Lesson Reading & Instructions
+              </h2>
+              <p>{activeLesson?.content || 'No text content available for this lesson.'}</p>
+            </article>
+          );
+        })()}
       </section>
 
       {/* Curriculum & progress sidebar */}

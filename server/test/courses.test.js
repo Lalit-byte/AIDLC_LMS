@@ -4,6 +4,8 @@ import mongoose from 'mongoose';
 import { createApp } from '../src/app.js';
 import { Course } from '../src/models/Course.js';
 import { Category } from '../src/models/Category.js';
+import { Enrollment } from '../src/models/Enrollment.js';
+import { Payment } from '../src/models/Payment.js';
 import { signToken } from '../src/utils/token.js';
 
 test('GET /api/categories returns active categories', async () => {
@@ -302,7 +304,7 @@ test('PUT /api/courses/:id allows owner to update details and rejects non-owners
     });
     assert.strictEqual(res1.status, 403);
 
-    // 2. Owner can update details
+    // 2. Owner can update details including curriculum sections and lessons
     const res2 = await fetch(`http://127.0.0.1:${port}/api/courses/${courseId}`, {
       method: 'PUT',
       headers: {
@@ -314,7 +316,16 @@ test('PUT /api/courses/:id allows owner to update details and rejects non-owners
         description: 'Updated Description',
         category: 'Design',
         price: 499,
-        thumbnail: 'https://img.example.com/updated.png'
+        thumbnail: 'https://img.example.com/updated.png',
+        sections: [
+          {
+            title: 'Section 1: Foundations',
+            lessons: [
+              { title: 'Intro to Design', duration: '12 min', type: 'video' },
+              { title: 'Color Theory', duration: '15 min', type: 'video' }
+            ]
+          }
+        ]
       })
     });
     assert.strictEqual(res2.status, 200);
@@ -325,6 +336,8 @@ test('PUT /api/courses/:id allows owner to update details and rejects non-owners
     assert.strictEqual(body.data.course.category, 'Design');
     assert.strictEqual(body.data.course.price, 499);
     assert.strictEqual(body.data.course.thumbnail, 'https://img.example.com/updated.png');
+    assert.strictEqual(body.data.course.sections.length, 1);
+    assert.strictEqual(body.data.course.totalLessons, 2);
   } finally {
     Course.findById = originalFindById;
     Course.exists = originalExists;
@@ -498,6 +511,70 @@ test('Curriculum management: sections and lessons CRUD with ownership & lesson c
     assert.strictEqual(body7.data.totalLessons, 0);
   } finally {
     Course.findById = originalFindById;
+    server.close();
+  }
+});
+
+test('GET /api/courses/instructor/dashboard returns aggregated educator stats and enrolments', async () => {
+  const originalCourseFind = Course.find;
+  const originalEnrollmentFind = Enrollment.find;
+  const originalPaymentFind = Payment.find;
+
+  const instructorId = new mongoose.Types.ObjectId().toString();
+  const token = signToken({ id: instructorId, role: 'instructor', email: 'inst@example.com' });
+  const courseId = new mongoose.Types.ObjectId();
+
+  Course.find = () => ({
+    sort: () => ({
+      lean: async () => [
+        { _id: courseId, title: 'Master Node', instructor: instructorId, price: 999 }
+      ]
+    })
+  });
+
+  Enrollment.find = () => ({
+    populate: () => ({
+      populate: () => ({
+        sort: () => ({
+          lean: async () => [
+            {
+              _id: new mongoose.Types.ObjectId(),
+              user: { name: 'Alice Student', email: 'alice@example.com' },
+              course: { title: 'Master Node', price: 999 },
+              enrolledAt: new Date(),
+              status: 'active'
+            }
+          ]
+        })
+      })
+    })
+  });
+
+  Payment.find = () => ({
+    lean: async () => [{ amount: 999, status: 'paid' }]
+  });
+
+  const app = createApp();
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/courses/instructor/dashboard`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    assert.strictEqual(res.status, 200);
+    const body = await res.json();
+    assert.strictEqual(body.success, true);
+    assert.strictEqual(body.data.stats.totalCourses, 1);
+    assert.strictEqual(body.data.stats.totalEnrolments, 1);
+    assert.strictEqual(body.data.stats.totalEarnings, 999);
+    assert.strictEqual(body.data.latestEnrolments.length, 1);
+    assert.strictEqual(body.data.latestEnrolments[0].studentName, 'Alice Student');
+    assert.strictEqual(body.data.latestEnrolments[0].courseTitle, 'Master Node');
+  } finally {
+    Course.find = originalCourseFind;
+    Enrollment.find = originalEnrollmentFind;
+    Payment.find = originalPaymentFind;
     server.close();
   }
 });

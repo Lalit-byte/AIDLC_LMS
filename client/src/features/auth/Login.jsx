@@ -1,13 +1,27 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/useAuth';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Mock Login Submitted for: ' + email);
+    setError('');
+    setSubmitting(true);
+    try {
+      await login(email, password);
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -17,6 +31,12 @@ export default function Login() {
         <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '2rem', textAlign: 'center' }}>
           Enter your credentials to access your courses
         </p>
+
+        {error && (
+          <div style={{ color: 'var(--color-danger, #ef4444)', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div>
@@ -43,8 +63,8 @@ export default function Login() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
-            Sign In
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }} disabled={submitting}>
+            {submitting ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 

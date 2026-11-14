@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import mongoose from 'mongoose';
 import { createApp } from '../src/app.js';
 import { Course } from '../src/models/Course.js';
+import { User } from '../src/models/User.js';
 import { signToken } from '../src/utils/token.js';
 
 test('PATCH /api/courses/:id/submit validates authorization and curriculum', async () => {
@@ -179,6 +180,47 @@ test('PATCH /api/admin/courses/:id/approve and reject transitions status', async
     assert.strictEqual(bodyReject.data.course.rejectionReason, 'Needs higher resolution preview video');
   } finally {
     Course.findById = originalFindById;
+    server.close();
+  }
+});
+
+test('GET /api/admin/overview returns aggregated stats and all courses', async () => {
+  const originalFind = Course.find;
+  const originalCount = Course.countDocuments;
+  const originalUserCount = User.countDocuments;
+  const adminToken = signToken({ id: 'admin_1', role: 'admin', email: 'admin@test.com' });
+
+  Course.countDocuments = async () => 3;
+  User.countDocuments = async () => 10;
+  Course.find = () => ({
+    sort: () => ({
+      populate: () => ({
+        lean: async () => [
+          { _id: 'c1', title: 'Course 1', status: 'published' },
+          { _id: 'c2', title: 'Course 2', status: 'pending_review' }
+        ]
+      })
+    })
+  });
+
+  const app = createApp();
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/admin/overview`, {
+      headers: { Authorization: `Bearer ${adminToken}` }
+    });
+    assert.strictEqual(res.status, 200);
+    const body = await res.json();
+    assert.strictEqual(body.success, true);
+    assert.strictEqual(body.data.courses.length, 2);
+    assert.strictEqual(typeof body.data.stats.totalCourses, 'number');
+    assert.strictEqual(body.data.stats.totalUsers, 10);
+  } finally {
+    Course.find = originalFind;
+    Course.countDocuments = originalCount;
+    User.countDocuments = originalUserCount;
     server.close();
   }
 });

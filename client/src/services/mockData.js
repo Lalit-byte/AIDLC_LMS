@@ -29,7 +29,7 @@ export const MOCK_COURSES = [
             title: 'Course Introduction & Architecture',
             duration: '12 min',
             type: 'video',
-            embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            embedUrl: 'https://www.youtube.com/embed/bMknfKXIFA8',
             isPreview: true
           },
           {
@@ -66,7 +66,7 @@ export const MOCK_COURSES = [
             title: 'What is Cloud Native?',
             duration: '15 min',
             type: 'video',
-            embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
+            embedUrl: 'https://www.youtube.com/embed/bMknfKXIFA8',
             isPreview: true
           }
         ]

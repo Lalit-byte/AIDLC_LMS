@@ -63,7 +63,9 @@ export default function CourseDetails() {
     );
   }
 
-  const isFree = course.price === 0;
+  const price = typeof course.price === 'number' ? course.price : Number(course.price || 0);
+  const isFree = price === 0;
+  const categoryName = typeof course.category === 'object' ? course.category?.name : course.category;
   const instructorDisplay =
     typeof course.instructor === 'object'
       ? course.instructor?.name || course.instructorName || 'Instructor'
@@ -77,7 +79,7 @@ export default function CourseDetails() {
     <div className="container">
       <div className="details-layout">
         <div>
-          <span className="badge badge-paid" style={{ marginBottom: '1rem' }}>{course.category}</span>
+          <span className="badge badge-paid" style={{ marginBottom: '1rem' }}>{categoryName || 'General'}</span>
           <h1 style={{ fontSize: '2.25rem', fontWeight: 800, marginBottom: '1rem', lineHeight: 1.2 }}>{course.title}</h1>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '1.125rem', marginBottom: '2rem' }}>
             {course.description}
@@ -143,15 +145,25 @@ export default function CourseDetails() {
             style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}
           />
           <div style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '1rem', color: 'var(--color-text-main)' }}>
-            {isFree ? 'Free' : `₹${course.price.toLocaleString('en-IN')}`}
+            {isFree ? 'Free' : `₹${price.toLocaleString('en-IN')}`}
           </div>
-          <button
-            className="btn btn-primary"
-            style={{ width: '100%', padding: '0.875rem', fontSize: '1rem', marginBottom: '1rem' }}
-            onClick={() => setShowCheckout(true)}
-          >
-            {isFree ? 'Enroll for Free' : 'Enroll Now'}
-          </button>
+          {course.isEnrolled ? (
+            <Link
+              to={`/learn/${course.id || course.slug || course._id}`}
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '0.875rem', fontSize: '1rem', marginBottom: '1rem', display: 'block', textAlign: 'center' }}
+            >
+              Go to Classroom ➔
+            </Link>
+          ) : (
+            <button
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '0.875rem', fontSize: '1rem', marginBottom: '1rem' }}
+              onClick={() => setShowCheckout(true)}
+            >
+              {isFree ? 'Enroll for Free' : 'Enroll Now'}
+            </button>
+          )}
           <div style={{ color: 'var(--color-text-muted)', fontSize: '0.8125rem', textAlign: 'center', lineHeight: 1.4 }}>
             Lifetime access &bull; Verified certificate &bull; Self-paced
           </div>

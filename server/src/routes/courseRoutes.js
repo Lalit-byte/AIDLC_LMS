@@ -8,6 +8,7 @@ import {
   createCourse,
   updateCourse,
   getInstructorCourses,
+  getInstructorDashboard,
   addSection,
   updateSection,
   deleteSection,
@@ -36,7 +37,8 @@ const checkCourseOwnership = checkOwnership(async (req) => {
 // Categories catalogue endpoint
 router.get('/categories', getCategories);
 
-// Instructor courses listing (must be before :slugOrId)
+// Instructor courses & dashboard endpoints (must be before :slugOrId)
+router.get('/instructor/dashboard', authenticate, authorizeRoles('instructor', 'admin'), getInstructorDashboard);
 router.get('/instructor/my-courses', authenticate, authorizeRoles('instructor', 'admin'), getInstructorCourses);
 
 // Create new course in draft mode

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { Course, slugify } from '../models/Course.js';
 import { Category } from '../models/Category.js';
 import { Enrollment } from '../models/Enrollment.js';
+import { Payment } from '../models/Payment.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export async function getPublicCourses(req, res, next) {
@@ -93,6 +94,7 @@ export async function getCourseDetails(req, res, next) {
     );
 
     const courseObj = course.toObject();
+    courseObj.isEnrolled = isEnrolled;
 
     // Sanitize non-preview lesson contents for visitors / un-enrolled guests
     if (!canViewAll) {
@@ -187,7 +189,7 @@ export async function submitCourseForReview(req, res, next) {
 
 export async function createCourse(req, res, next) {
   try {
-    const { title, description, category, price, currency, thumbnail } = req.body;
+    const { title, description, category, price, currency, thumbnail, sections } = req.body;
 
     if (!title || !title.trim()) {
       throw ApiError.badRequest('Course title is required.');
@@ -218,8 +220,11 @@ export async function createCourse(req, res, next) {
       category: category.trim(),
       price: parsedPrice,
       currency: currency || 'INR',
-      thumbnail: thumbnail ? thumbnail.trim() : '',
+      thumbnail: thumbnail && thumbnail.trim()
+        ? thumbnail.trim()
+        : 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80',
       status: 'draft',
+      sections: Array.isArray(sections) ? sections : [],
       instructor: req.user.id,
       instructorName: req.user.name || ''
     });
@@ -294,6 +299,14 @@ export async function updateCourse(req, res, next) {
       course.thumbnail = thumbnail.trim();
     }
 
+    if (req.body.sections !== undefined && Array.isArray(req.body.sections)) {
+      course.sections = req.body.sections;
+      course.totalLessons = req.body.sections.reduce(
+        (sum, sec) => sum + (sec.lessons ? sec.lessons.length : 0),
+        0
+      );
+    }
+
     await course.save();
 
     res.json({
@@ -315,6 +328,61 @@ export async function getInstructorCourses(req, res, next) {
       success: true,
       data: {
         courses
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getInstructorDashboard(req, res, next) {
+  try {
+    const instructorId = req.user.id;
+    const filter = req.user.role === 'admin' ? {} : { instructor: instructorId };
+
+    const courses = await Course.find(filter).sort({ createdAt: -1 }).lean();
+    const courseIds = courses.map((c) => c._id);
+    const totalCourses = courses.length;
+
+    const enrollments = await Enrollment.find({
+      course: { $in: courseIds },
+      status: { $in: ['active', 'completed'] }
+    })
+      .populate('user', 'name email')
+      .populate('course', 'title price currency')
+      .sort({ enrolledAt: -1 })
+      .lean();
+
+    const totalEnrolments = enrollments.length;
+
+    const payments = await Payment.find({
+      course: { $in: courseIds },
+      status: 'paid'
+    }).lean();
+
+    const totalEarnings = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+    const mappedEnrolments = enrollments.map((e, idx) => ({
+      index: idx + 1,
+      id: e._id,
+      studentName: e.user?.name || 'Student',
+      studentEmail: e.user?.email || '',
+      courseTitle: e.course?.title || 'Course',
+      enrolledAt: e.enrolledAt,
+      status: e.status
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        stats: {
+          totalEnrolments,
+          totalCourses,
+          totalEarnings
+        },
+        courses,
+        latestEnrolments: mappedEnrolments.slice(0, 10),
+        allEnrolments: mappedEnrolments
       }
     });
   } catch (err) {

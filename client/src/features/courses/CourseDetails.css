@@ -8,6 +8,17 @@
 @media (max-width: 840px) {
   .details-layout {
     grid-template-columns: 1fr;
+    gap: 1.75rem;
+    padding: 1.5rem 0;
+  }
+
+  .course-sidebar-card {
+    position: static;
+  }
+
+  .lesson-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 }
 

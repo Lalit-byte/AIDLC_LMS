@@ -1,21 +1,45 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/useAuth';
+import { api } from '../../services/api';
 import './CheckoutModal.css';
 
 export default function CheckoutModal({ course, onClose }) {
   const [processing, setProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [error, setError] = useState('');
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const isFree = course.price === 0;
+  const price = typeof course?.price === 'number' ? course.price : Number(course?.price || 0);
+  const isFree = price === 0;
+  const instructorDisplay =
+    typeof course?.instructor === 'object'
+      ? course?.instructor?.name || course?.instructorName || 'Instructor'
+      : course?.instructorName || course?.instructor || 'Instructor';
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    setError('');
     setProcessing(true);
-    // shortcut: Simulate Razorpay checkout verification; replace with real Razorpay window in Phase 2
-    setTimeout(() => {
-      setProcessing(false);
+    try {
+      const targetId = course?._id || course?.id || course?.slug;
+      if (isFree) {
+        await api.enrollFreeCourse(targetId);
+      } else {
+        const orderRes = await api.createPaymentOrder(targetId);
+        const orderId = orderRes.data?.orderId;
+        await api.verifyCheckout({
+          orderId,
+          paymentId: `pay_sim_${Date.now()}`,
+          signature: 'simulated_signature'
+        });
+      }
       setCompleted(true);
-    }, 1200);
+    } catch (err) {
+      setError(err.message || 'Enrollment failed. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleGoToDashboard = () => {
@@ -49,6 +73,12 @@ export default function CheckoutModal({ course, onClose }) {
             </div>
           ) : (
             <>
+              {error && (
+                <div style={{ color: 'var(--color-danger, #ef4444)', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                  {error}
+                </div>
+              )}
+
               <div className="order-summary">
                 <div className="summary-row">
                   <span style={{ color: 'var(--color-text-muted)' }}>Course:</span>
@@ -56,11 +86,11 @@ export default function CheckoutModal({ course, onClose }) {
                 </div>
                 <div className="summary-row">
                   <span style={{ color: 'var(--color-text-muted)' }}>Instructor:</span>
-                  <span>{course.instructor}</span>
+                  <span>{instructorDisplay}</span>
                 </div>
                 <div className="summary-row total">
                   <span>Total Amount:</span>
-                  <span>{isFree ? 'Free (₹0)' : `₹${course.price.toLocaleString('en-IN')}`}</span>
+                  <span>{isFree ? 'Free (₹0)' : `₹${price.toLocaleString('en-IN')}`}</span>
                 </div>
               </div>
 
@@ -71,18 +101,36 @@ export default function CheckoutModal({ course, onClose }) {
                 </div>
               )}
 
-              <button
-                className="btn btn-primary"
-                style={{ width: '100%' }}
-                disabled={processing}
-                onClick={handleConfirm}
-              >
-                {processing
-                  ? 'Verifying Enrollment...'
-                  : isFree
-                  ? 'Confirm Enrollment'
-                  : `Pay ₹${course.price.toLocaleString('en-IN')} with Razorpay`}
-              </button>
+              {!isAuthenticated ? (
+                <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                    You must be logged in to enroll in this course.
+                  </p>
+                  <button
+                    className="btn btn-primary"
+                    style={{ width: '100%' }}
+                    onClick={() => {
+                      onClose();
+                      navigate('/login');
+                    }}
+                  >
+                    Log in to Enroll
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="btn btn-primary"
+                  style={{ width: '100%' }}
+                  disabled={processing}
+                  onClick={handleConfirm}
+                >
+                  {processing
+                    ? 'Processing Enrollment...'
+                    : isFree
+                    ? 'Confirm Enrollment'
+                    : `Pay ₹${price.toLocaleString('en-IN')} with Razorpay`}
+                </button>
+              )}
             </>
           )}
         </div>

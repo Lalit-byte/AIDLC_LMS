@@ -9,6 +9,31 @@ export function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
+export function formatEmbedUrl(url) {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (trimmed.includes('youtube.com/embed/') || trimmed.includes('player.vimeo.com/video/')) {
+    return trimmed;
+  }
+  const shortMatch = trimmed.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (shortMatch) {
+    return `https://www.youtube.com/embed/${shortMatch[1]}`;
+  }
+  const watchMatch = trimmed.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  if (watchMatch) {
+    return `https://www.youtube.com/embed/${watchMatch[1]}`;
+  }
+  const shortsMatch = trimmed.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
+  if (shortsMatch) {
+    return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+  }
+  const vimeoMatch = trimmed.match(/vimeo\.com\/([0-9]+)/);
+  if (vimeoMatch) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+  }
+  return trimmed;
+}
+
 const lessonSchema = new mongoose.Schema(
   {
     title: {
@@ -164,8 +189,19 @@ courseSchema.pre('save', function (next) {
       (sum, sec) => sum + (sec.lessons ? sec.lessons.length : 0),
       0
     );
+    for (const sec of this.sections) {
+      if (sec.lessons && Array.isArray(sec.lessons)) {
+        for (const lsn of sec.lessons) {
+          if (lsn.embedUrl) {
+            lsn.embedUrl = formatEmbedUrl(lsn.embedUrl);
+          }
+        }
+      }
+    }
   }
-  next();
+  if (typeof next === 'function') {
+    next();
+  }
 });
 
 export const Course = mongoose.models.Course || mongoose.model('Course', courseSchema);

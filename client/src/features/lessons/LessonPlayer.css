@@ -49,13 +49,15 @@
   margin-bottom: 2rem;
 }
 
-.video-frame-container iframe {
+.video-frame-container iframe,
+.video-frame-container video {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   border: 0;
+  object-fit: contain;
 }
 
 .text-lesson-card {
@@ -152,4 +154,13 @@
   color: var(--color-accent);
   font-weight: 700;
   font-size: 1rem;
+}
+
+@media (max-width: 640px) {
+  .player-main {
+    padding: 1rem;
+  }
+  .text-lesson-card {
+    padding: 1.25rem;
+  }
 }

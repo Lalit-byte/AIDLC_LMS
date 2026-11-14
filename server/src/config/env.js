@@ -2,7 +2,7 @@ export function validateEnv(env = process.env) {
   const errors = [];
 
   const config = {
-    PORT: Number(env.PORT) || 5000,
+    PORT: Number(env.PORT) || 5050,
     NODE_ENV: env.NODE_ENV || 'development',
     CLIENT_URL: env.CLIENT_URL || 'http://localhost:5173',
     MONGO_URI: env.MONGO_URI || 'mongodb://localhost:27017/aidlc_lms',
