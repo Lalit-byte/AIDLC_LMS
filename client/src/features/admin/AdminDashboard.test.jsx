@@ -26,6 +26,8 @@ describe('AdminDashboard Component', () => {
     expect(html).toContain('Platform Administrator');
     expect(html).toContain('Pending Reviews');
     expect(html).toContain('Live Published Courses');
+    expect(html).toContain('Categories');
+    expect(html).toContain('Users');
     expect(html).toContain('Student Workspace');
     expect(html).toContain('Educator Studio');
   });

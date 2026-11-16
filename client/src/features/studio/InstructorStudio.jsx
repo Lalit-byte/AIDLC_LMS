@@ -39,6 +39,7 @@ export default function InstructorStudio() {
   });
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [notification, setNotification] = useState('');
+  const [availableCategories, setAvailableCategories] = useState(['Development', 'Cloud', 'Design', 'Business']);
 
   const loadDashboard = useCallback(() => {
     api.getInstructorDashboard()
@@ -54,6 +55,12 @@ export default function InstructorStudio() {
   useEffect(() => {
     if (isAuthenticated && (user?.role === 'instructor' || user?.role === 'admin')) {
       loadDashboard();
+      api.getCategories()
+        .then((cats) => {
+          const list = (cats || []).filter((c) => c && c !== 'All');
+          if (list.length > 0) setAvailableCategories(list);
+        })
+        .catch(() => {});
     }
   }, [isAuthenticated, user?.role, loadDashboard]);
 
@@ -410,10 +417,9 @@ export default function InstructorStudio() {
                     value={editingCourse.category}
                     onChange={(e) => setEditingCourse({ ...editingCourse, category: e.target.value })}
                   >
-                    <option value="Development">Development</option>
-                    <option value="Cloud">Cloud</option>
-                    <option value="Design">Design</option>
-                    <option value="Business">Business</option>
+                    {Array.from(new Set([...availableCategories, editingCourse.category].filter(Boolean))).map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
                   </select>
                 </div>
 

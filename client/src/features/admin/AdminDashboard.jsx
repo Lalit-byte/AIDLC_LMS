@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/useAuth';
 import { api } from '../../services/api';
@@ -16,6 +16,16 @@ export default function AdminDashboard() {
   });
   const [pendingCourses, setPendingCourses] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [categoryModal, setCategoryModal] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'student'
+  });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('pending');
   const [notification, setNotification] = useState('');
@@ -23,11 +33,20 @@ export default function AdminDashboard() {
   const [rejectingCourse, setRejectingCourse] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
 
+  // Search & Filter states
+  const [courseSearch, setCourseSearch] = useState('');
+  const [courseStatusFilter, setCourseStatusFilter] = useState('all');
+  const [categorySearch, setCategorySearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
+
   const loadData = async () => {
     try {
-      const [overviewData, pendingList] = await Promise.all([
+      const [overviewData, pendingList, catList, userList] = await Promise.all([
         api.getAdminOverview().catch(() => null),
-        api.getPendingCourses().catch(() => [])
+        api.getPendingCourses().catch(() => []),
+        api.getAdminCategories().catch(() => []),
+        api.getAdminUsers().catch(() => [])
       ]);
 
       if (overviewData?.stats) {
@@ -37,6 +56,8 @@ export default function AdminDashboard() {
         setAllCourses(overviewData.courses);
       }
       setPendingCourses(pendingList || []);
+      setCategories(catList || []);
+      setUsers(userList || []);
     } catch (err) {
       console.error('Failed to load admin data:', err);
     }
@@ -47,13 +68,17 @@ export default function AdminDashboard() {
     if (isAuthenticated && user?.role === 'admin') {
       Promise.all([
         api.getAdminOverview().catch(() => null),
-        api.getPendingCourses().catch(() => [])
+        api.getPendingCourses().catch(() => []),
+        api.getAdminCategories().catch(() => []),
+        api.getAdminUsers().catch(() => [])
       ])
-        .then(([overviewData, pendingList]) => {
+        .then(([overviewData, pendingList, catList, userList]) => {
           if (!active) return;
           if (overviewData?.stats) setStats(overviewData.stats);
           if (overviewData?.courses) setAllCourses(overviewData.courses);
           setPendingCourses(pendingList || []);
+          setCategories(catList || []);
+          setUsers(userList || []);
         })
         .finally(() => {
           if (active) setLoading(false);
@@ -99,17 +124,203 @@ export default function AdminDashboard() {
     }
   };
 
-  // Access check: Only Admin role can access
+  const handleOpenCreateCategory = () => {
+    setCategoryModal({
+      mode: 'create',
+      data: { name: '', description: '', isActive: true }
+    });
+  };
+
+  const handleOpenEditCategory = (cat) => {
+    setCategoryModal({
+      mode: 'edit',
+      id: cat._id || cat.id,
+      data: {
+        name: cat.name,
+        description: cat.description || '',
+        isActive: cat.isActive !== false
+      }
+    });
+  };
+
+  const handleSaveCategory = async (e) => {
+    e.preventDefault();
+    if (!categoryModal.data.name.trim()) {
+      alert('Category name is required.');
+      return;
+    }
+
+    try {
+      if (categoryModal.mode === 'create') {
+        await api.createCategory(categoryModal.data);
+        setNotification(`✅ Category "${categoryModal.data.name.trim()}" created successfully.`);
+      } else {
+        await api.updateCategory(categoryModal.id, categoryModal.data);
+        setNotification(`✅ Category "${categoryModal.data.name.trim()}" updated successfully.`);
+      }
+      setTimeout(() => setNotification(''), 4500);
+      setCategoryModal(null);
+      await loadData();
+    } catch (err) {
+      alert(err.message || 'Failed to save category.');
+    }
+  };
+
+  const handleToggleCategoryActive = async (cat) => {
+    try {
+      const nextStatus = !(cat.isActive !== false);
+      await api.updateCategory(cat._id || cat.id, { isActive: nextStatus });
+      setNotification(`Category "${cat.name}" is now ${nextStatus ? 'active' : 'inactive'}.`);
+      setTimeout(() => setNotification(''), 3500);
+      await loadData();
+    } catch (err) {
+      alert(err.message || 'Failed to update category status.');
+    }
+  };
+
+  const handleDeleteCategory = async (cat) => {
+    if (cat.courseCount > 0) {
+      alert(`Cannot delete category "${cat.name}" because ${cat.courseCount} course(s) use it. Deactivate it instead.`);
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete category "${cat.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await api.deleteCategory(cat._id || cat.id);
+      setNotification(`🗑️ Category "${cat.name}" has been deleted.`);
+      setTimeout(() => setNotification(''), 4500);
+      await loadData();
+    } catch (err) {
+      alert(err.message || 'Failed to delete category.');
+    }
+  };
+
+  const handleOpenCreateUser = () => {
+    setNewUserData({ name: '', email: '', password: '', role: 'student' });
+    setUserModalOpen(true);
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    if (!newUserData.name.trim()) {
+      alert('User name is required.');
+      return;
+    }
+    if (!newUserData.email.trim()) {
+      alert('User email is required.');
+      return;
+    }
+    if (!newUserData.password || newUserData.password.length < 6) {
+      alert('Password must be at least 6 characters.');
+      return;
+    }
+
+    try {
+      await api.createAdminUser(newUserData);
+      setNotification(
+        `✅ ${newUserData.role === 'instructor' ? 'Instructor' : 'Student'} "${newUserData.name.trim()}" created successfully.`
+      );
+      setTimeout(() => setNotification(''), 4500);
+      setUserModalOpen(false);
+      setNewUserData({ name: '', email: '', password: '', role: 'student' });
+      await loadData();
+    } catch (err) {
+      alert(err.message || 'Failed to create user.');
+    }
+  };
+
+  const handleDeleteUser = async (targetUser) => {
+    const targetId = targetUser._id || targetUser.id;
+    if (user && (user.id === targetId || user._id === targetId)) {
+      alert('You cannot delete your own admin account.');
+      return;
+    }
+
+    if (targetUser.role === 'instructor' && (targetUser.coursesAuthored || 0) > 0) {
+      alert(
+        `Cannot delete instructor "${targetUser.name}" because they have ${targetUser.coursesAuthored} course(s). Reassign or delete their courses first.`
+      );
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Are you sure you want to delete ${targetUser.role} "${targetUser.name}" (${targetUser.email})? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await api.deleteAdminUser(targetId);
+      setNotification(
+        `🗑️ ${targetUser.role === 'instructor' ? 'Instructor' : 'Student'} "${targetUser.name}" deleted.`
+      );
+      setTimeout(() => setNotification(''), 4500);
+      await loadData();
+    } catch (err) {
+      alert(err.message || 'Failed to delete user.');
+    }
+  };
+
+  // Filtered lists for course, category, and user tabs
+  const filteredCourses = useMemo(() => {
+    return allCourses.filter((course) => {
+      const matchesSearch =
+        !courseSearch.trim() ||
+        course.title?.toLowerCase().includes(courseSearch.toLowerCase()) ||
+        course.instructor?.name?.toLowerCase().includes(courseSearch.toLowerCase()) ||
+        course.category?.toLowerCase().includes(courseSearch.toLowerCase()) ||
+        course.slug?.toLowerCase().includes(courseSearch.toLowerCase());
+
+      const matchesStatus =
+        courseStatusFilter === 'all' || course.status === courseStatusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [allCourses, courseSearch, courseStatusFilter]);
+
+  const filteredCategories = useMemo(() => {
+    return categories.filter((cat) => {
+      if (!categorySearch.trim()) return true;
+      const q = categorySearch.toLowerCase();
+      return (
+        cat.name?.toLowerCase().includes(q) ||
+        cat.slug?.toLowerCase().includes(q) ||
+        cat.description?.toLowerCase().includes(q)
+      );
+    });
+  }, [categories, categorySearch]);
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const q = userSearch.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        u.name?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q);
+
+      const matchesRole =
+        userRoleFilter === 'all' || u.role === userRoleFilter;
+
+      return matchesSearch && matchesRole;
+    });
+  }, [users, userSearch, userRoleFilter]);
+
+  // Access check: Unauthenticated Guest
   if (!isAuthenticated) {
     return (
       <div className="container" style={{ padding: '5rem 1.5rem', textAlign: 'center' }}>
-        <div style={{ maxWidth: '460px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '2.5rem 1.5rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🛡️</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem' }}>Admin Authentication Required</h2>
-          <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
+        <div style={{ maxWidth: '460px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '2.5rem 1.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🛡️</div>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0f172a' }}>Admin Authentication Required</h2>
+          <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.875rem', lineHeight: 1.5 }}>
             Please sign in with an Administrator account to view and manage platform courses.
           </p>
-          <Link to="/login" className="btn btn-primary">
+          <Link to="/login" className="btn btn-primary" style={{ width: '100%', padding: '0.65rem 1rem' }}>
             Sign In as Admin
           </Link>
         </div>
@@ -117,13 +328,14 @@ export default function AdminDashboard() {
     );
   }
 
+  // Access check: Non-Admin Role
   if (user?.role !== 'admin') {
     return (
       <div className="container" style={{ padding: '5rem 1.5rem', textAlign: 'center' }}>
-        <div style={{ maxWidth: '500px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '2.5rem 1.5rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.75rem' }}>Administrator Access Only</h2>
-          <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: 1.5 }}>
+        <div style={{ maxWidth: '480px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '2.5rem 1.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔒</div>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0f172a' }}>Administrator Access Only</h2>
+          <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.875rem', lineHeight: 1.5 }}>
             You are currently logged in as a <strong>{user?.role || 'user'}</strong> ({user?.name}). The Admin Portal is restricted to platform administrators.
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
@@ -143,78 +355,133 @@ export default function AdminDashboard() {
     <div className="admin-container">
       {/* Header */}
       <header className="admin-header">
-        <span className="admin-badge">🛡️ Platform Administrator</span>
+        <div className="admin-brand-bar">
+          <div className="admin-site-brand">
+            <div className="admin-site-logo">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <div className="admin-site-info">
+              <span className="admin-site-name">OpenLMS Platform</span>
+              <span className="admin-badge">
+                <span className="admin-badge-dot"></span>
+                Platform Administrator
+              </span>
+            </div>
+          </div>
+          <div className="admin-privilege-links">
+            <Link to="/dashboard" className="admin-nav-link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                <path d="M6 6h10"/>
+                <path d="M6 10h10"/>
+              </svg>
+              <span>Student Workspace</span>
+            </Link>
+            <Link to="/studio" className="admin-nav-link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+              </svg>
+              <span>Educator Studio</span>
+            </Link>
+            <Link to="/" className="admin-nav-link">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+              </svg>
+              <span>All Courses Catalog</span>
+            </Link>
+          </div>
+        </div>
+
         <div className="admin-title-row">
           <div>
-            <h1 style={{ fontSize: '1.875rem', fontWeight: 800, margin: '0.25rem 0' }}>Admin Dashboard</h1>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>
-              Review educator course submissions, approve courses for publication, and manage platform resources.
+            <h1>Admin Dashboard</h1>
+            <p className="admin-subtitle">
+              Review educator course submissions, manage curriculum categories, and monitor platform operations.
             </p>
           </div>
         </div>
       </header>
 
-      {/* Admin Full Access Privileges Banner */}
-      <section className="admin-privileges-banner">
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span>⚡</span> Unrestricted Admin Privileges Active
-          </div>
-          <div style={{ fontSize: '0.85rem', color: '#0c4a6e', marginTop: '0.25rem' }}>
-            As an administrator, you have full access to student learning, educator course authoring, and platform moderation.
-          </div>
-        </div>
-        <div className="admin-privilege-links">
-          <Link to="/dashboard" className="btn btn-outline" style={{ fontSize: '0.825rem', padding: '0.4rem 0.8rem', backgroundColor: '#fff' }}>
-            🎓 Student Workspace
-          </Link>
-          <Link to="/studio" className="btn btn-outline" style={{ fontSize: '0.825rem', padding: '0.4rem 0.8rem', backgroundColor: '#fff' }}>
-            ✏️ Educator Studio
-          </Link>
-          <Link to="/" className="btn btn-outline" style={{ fontSize: '0.825rem', padding: '0.4rem 0.8rem', backgroundColor: '#fff' }}>
-            📚 All Courses Catalog
-          </Link>
-        </div>
-      </section>
-
-      {/* Notification Banner */}
+      {/* Notification Toast */}
       {notification && (
-        <div style={{ backgroundColor: '#dcfce7', color: '#15803d', border: '1px solid #86efac', padding: '0.875rem 1.25rem', borderRadius: '8px', marginBottom: '1.5rem', fontWeight: 500 }}>
-          {notification}
+        <div className="admin-notification-toast">
+          <span>{notification}</span>
+          <button
+            type="button"
+            className="admin-notification-close"
+            onClick={() => setNotification('')}
+            aria-label="Dismiss notification"
+          >
+            ✕
+          </button>
         </div>
       )}
 
-      {/* Stats Cards */}
+      {/* Metric Stats Cards */}
       <div className="admin-stats-grid">
         <div className="admin-stat-card">
-          <div className="admin-stat-icon stat-icon-pending">⏳</div>
           <div>
             <div className="admin-stat-num">{stats.pendingCount || pendingCourses.length}</div>
             <div className="admin-stat-label">Pending Reviews</div>
+            <div className="admin-stat-subtext">Awaiting admin review</div>
+          </div>
+          <div className="admin-stat-icon stat-icon-pending">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
           </div>
         </div>
 
         <div className="admin-stat-card">
-          <div className="admin-stat-icon stat-icon-published">✅</div>
           <div>
             <div className="admin-stat-num">{stats.publishedCount || 0}</div>
             <div className="admin-stat-label">Live Published Courses</div>
+            <div className="admin-stat-subtext">Visible in public catalog</div>
+          </div>
+          <div className="admin-stat-icon stat-icon-published">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
           </div>
         </div>
 
         <div className="admin-stat-card">
-          <div className="admin-stat-icon stat-icon-total">📖</div>
           <div>
             <div className="admin-stat-num">{stats.totalCourses || 0}</div>
             <div className="admin-stat-label">Total Authored Courses</div>
+            <div className="admin-stat-subtext">Across all instructors</div>
+          </div>
+          <div className="admin-stat-icon stat-icon-total">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+              <path d="M6 6h10"/>
+              <path d="M6 10h10"/>
+            </svg>
           </div>
         </div>
 
-        <div className="admin-stat-card">
-          <div className="admin-stat-icon stat-icon-users">👥</div>
+        <div
+          className="admin-stat-card"
+          style={{ cursor: 'pointer' }}
+          onClick={() => setActiveTab('users')}
+        >
           <div>
-            <div className="admin-stat-num">{stats.totalUsers || 0}</div>
+            <div className="admin-stat-num">{users.length || stats.totalUsers || 0}</div>
             <div className="admin-stat-label">Registered Users</div>
+            <div className="admin-stat-subtext">Students & instructors</div>
+          </div>
+          <div className="admin-stat-icon stat-icon-users">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
           </div>
         </div>
       </div>
@@ -225,8 +492,12 @@ export default function AdminDashboard() {
           className={`admin-tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
           onClick={() => setActiveTab('pending')}
         >
-          <span>⏳ Pending Submissions</span>
-          <span className="badge" style={{ backgroundColor: pendingCourses.length > 0 ? '#ef4444' : '#94a3b8', color: '#fff', fontSize: '0.75rem', padding: '0.15rem 0.5rem' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>Pending Submissions</span>
+          <span className={`admin-tab-badge ${pendingCourses.length > 0 ? 'badge-highlight' : ''}`}>
             {pendingCourses.length}
           </span>
         </button>
@@ -234,25 +505,87 @@ export default function AdminDashboard() {
           className={`admin-tab-btn ${activeTab === 'all_courses' ? 'active' : ''}`}
           onClick={() => setActiveTab('all_courses')}
         >
-          <span>📋 All Platform Courses</span>
-          <span className="badge" style={{ backgroundColor: '#e2e8f0', color: '#475569', fontSize: '0.75rem', padding: '0.15rem 0.5rem' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          <span>All Platform Courses</span>
+          <span className="admin-tab-badge">
             {allCourses.length}
+          </span>
+        </button>
+        <button
+          className={`admin-tab-btn ${activeTab === 'categories' ? 'active' : ''}`}
+          onClick={() => setActiveTab('categories')}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+            <line x1="7" y1="7" x2="7.01" y2="7"/>
+          </svg>
+          <span>Categories</span>
+          <span className="admin-tab-badge">
+            {categories.length}
+          </span>
+        </button>
+        <button
+          className={`admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+          onClick={() => setActiveTab('users')}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span>Users</span>
+          <span className="admin-tab-badge">
+            {users.length}
           </span>
         </button>
       </div>
 
-      {/* Main Content */}
+      {/* Tab 1: Pending Submissions */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem 1rem' }}>Loading platform administration...</div>
+        <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#64748b' }}>
+          Loading platform administration data...
+        </div>
       ) : activeTab === 'pending' ? (
         <div>
           {pendingCourses.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '4rem 1.5rem', backgroundColor: '#fff', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-lg)' }}>
-              <div style={{ fontSize: '3rem', marginBottom: '0.75rem' }}>🎉</div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>No Courses Awaiting Review</h3>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>
-                All educator submissions have been reviewed. When an educator submits a course, it will appear here for approval.
+            <div className="admin-empty-state">
+              <div
+                style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  backgroundColor: '#f0fdf4',
+                  color: '#16a34a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1.25rem',
+                  border: '1px solid #bbf7d0'
+                }}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+              <h3 className="admin-empty-title">All Submissions Reviewed</h3>
+              <p className="admin-empty-desc">
+                There are no courses currently awaiting administrator approval. When instructors submit new curriculum, it will appear here for review and publication.
               </p>
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ marginTop: '0.75rem', fontSize: '0.85rem' }}
+                onClick={() => setActiveTab('all_courses')}
+              >
+                Browse All Platform Courses →
+              </button>
             </div>
           ) : (
             <div>
@@ -260,112 +593,165 @@ export default function AdminDashboard() {
                 const courseId = course._id || course.id;
                 const isExpanded = expandedCourseId === courseId;
                 const price = typeof course.price === 'number' ? course.price : 0;
-                const totalLessons = course.totalLessons || (course.sections || []).reduce((sum, s) => sum + (s.lessons?.length || 0), 0);
+                const totalLessons =
+                  course.totalLessons ||
+                  (course.sections || []).reduce((sum, s) => sum + (s.lessons?.length || 0), 0);
 
                 return (
                   <article key={courseId} className="admin-pending-card">
                     <div className="pending-card-top">
                       <img
-                        src={course.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80'}
+                        src={
+                          course.thumbnail ||
+                          'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80'
+                        }
                         alt={course.title}
                         className="pending-thumbnail"
                       />
 
                       <div className="pending-card-main">
                         <div className="pending-badges">
-                          <span className="badge" style={{ backgroundColor: '#f1f5f9', color: '#475569', fontSize: '0.75rem' }}>
+                          <span className="status-pill status-draft">
                             {course.category || 'Development'}
                           </span>
-                          <span className="badge" style={{ backgroundColor: '#fef3c7', color: '#92400e', fontSize: '0.75rem', fontWeight: 600 }}>
+                          <span className="status-pill status-pending">
+                            <span className="status-dot"></span>
                             Under Review
                           </span>
-                          <span className="badge" style={{ backgroundColor: price === 0 ? '#dcfce7' : '#e0f2fe', color: price === 0 ? '#15803d' : '#0369a1', fontSize: '0.75rem', fontWeight: 600 }}>
-                            {price === 0 ? 'Free' : `₹${price.toLocaleString('en-IN')}`}
+                          <span className="status-pill status-active">
+                            {price === 0 ? 'Free Course' : `₹${price.toLocaleString('en-IN')}`}
                           </span>
                         </div>
 
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0.25rem 0 0.5rem' }}>
-                          {course.title}
-                        </h3>
-
-                        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                        <h3 className="pending-title">{course.title}</h3>
+                        <p className="pending-desc">
                           {course.description || 'No description provided.'}
                         </p>
 
-                        <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', fontSize: '0.825rem', color: '#64748b' }}>
-                          <div>
-                            👤 Instructor: <strong>{course.instructor?.name || course.instructorName || 'Platform Instructor'}</strong> ({course.instructor?.email || 'N/A'})
+                        <div className="pending-meta-grid">
+                          <div className="pending-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b' }}>
+                              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                              <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                            <span>
+                              Instructor: <strong>{course.instructor?.name || course.instructorName || 'Platform Instructor'}</strong>
+                              {course.instructor?.email ? ` (${course.instructor.email})` : ''}
+                            </span>
                           </div>
-                          <div>
-                            📁 Curriculum: <strong>{course.sections?.length || 0} sections</strong> ({totalLessons} lessons)
+                          <div className="pending-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b' }}>
+                              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                              <path d="M6 6h10"/>
+                              <path d="M6 10h10"/>
+                            </svg>
+                            <span>
+                              Curriculum: <strong>{course.sections?.length || 0} sections</strong> ({totalLessons} lessons)
+                            </span>
                           </div>
-                          <div>
-                            📅 Submitted: <strong>{course.updatedAt ? new Date(course.updatedAt).toLocaleDateString() : 'Recent'}</strong>
+                          <div className="pending-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b' }}>
+                              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                              <line x1="16" y1="2" x2="16" y2="6"/>
+                              <line x1="8" y1="2" x2="8" y2="6"/>
+                              <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                            <span>
+                              Submitted: <strong>{course.updatedAt ? new Date(course.updatedAt).toLocaleDateString() : 'Recent'}</strong>
+                            </span>
                           </div>
                         </div>
 
                         {/* Curriculum Accordion Toggle */}
-                        <div style={{ marginTop: '0.75rem' }}>
+                        <div style={{ marginTop: '0.65rem' }}>
                           <button
                             type="button"
+                            className="curriculum-accordion-btn"
                             onClick={() => setExpandedCourseId(isExpanded ? null : courseId)}
-                            style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '0.825rem', fontWeight: 600, padding: 0 }}
                           >
-                            {isExpanded ? '▲ Hide Curriculum Details' : '▼ Inspect Curriculum (' + (course.sections?.length || 0) + ' sections)'}
+                            <span>{isExpanded ? '▲ Hide Curriculum Details' : '▼ Inspect Curriculum & Lessons'}</span>
                           </button>
+
+                          {isExpanded && (
+                            <div className="curriculum-accordion">
+                              {!course.sections || course.sections.length === 0 ? (
+                                <p style={{ color: '#94a3b8', margin: 0 }}>No sections configured yet.</p>
+                              ) : (
+                                course.sections.map((sec, secIdx) => (
+                                  <div key={sec._id || secIdx} className="curriculum-section-row">
+                                    <div className="curriculum-section-title">
+                                      Section {secIdx + 1}: {sec.title}
+                                    </div>
+                                    {(sec.lessons || []).map((les, lesIdx) => (
+                                      <div key={les._id || lesIdx} className="curriculum-lesson-item">
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                          {les.type === 'video' ? (
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#2563eb' }}>
+                                              <polygon points="5 3 19 12 5 21 5 3"/>
+                                            </svg>
+                                          ) : (
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#059669' }}>
+                                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                              <polyline points="14 2 14 8 20 8"/>
+                                            </svg>
+                                          )}
+                                          <span>{les.title}</span>
+                                          {les.isPreview && (
+                                            <span style={{ fontSize: '0.7rem', color: '#16a34a', marginLeft: '0.35rem', fontWeight: 600 }}>
+                                              FREE PREVIEW
+                                            </span>
+                                          )}
+                                        </span>
+                                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                          {les.duration || '10 min'}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          )}
                         </div>
 
-                        {isExpanded && (
-                          <div className="curriculum-accordion">
-                            {(course.sections || []).length === 0 ? (
-                              <p style={{ color: '#94a3b8', fontStyle: 'italic', margin: 0 }}>No sections defined in this course.</p>
-                            ) : (
-                              (course.sections || []).map((sec, secIdx) => (
-                                <div key={sec._id || sec.id || secIdx} className="curriculum-section-row">
-                                  <div className="curriculum-section-title">
-                                    Section {secIdx + 1}: {sec.title} ({sec.lessons?.length || 0} lessons)
-                                  </div>
-                                  {(sec.lessons || []).map((lsn, lsnIdx) => (
-                                    <div key={lsn._id || lsn.id || lsnIdx} className="curriculum-lesson-item">
-                                      <span>{lsn.type === 'video' ? '🎬' : '📄'} {lsn.title}</span>
-                                      <span>{lsn.duration || 'N/A'} {lsn.isPreview ? '(Free Preview)' : ''}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              ))
-                            )}
-                          </div>
-                        )}
+                        {/* Action buttons */}
+                        <div className="pending-actions">
+                          <button
+                            type="button"
+                            className="btn-table-action btn-action-primary"
+                            style={{ padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
+                            onClick={() => handleApprove(courseId, course.title)}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                            <span>Approve & Publish Course</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-table-action btn-action-danger"
+                            style={{ padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
+                            onClick={() => handleOpenReject(course)}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"/>
+                              <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                            <span>Reject Course</span>
+                          </button>
+                          <Link
+                            to={`/courses/${course.slug || courseId}`}
+                            className="btn-table-action"
+                            style={{ padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
+                          >
+                            <span>Preview Course</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="7" y1="17" x2="17" y2="7"/>
+                              <polyline points="7 7 17 7 17 17"/>
+                            </svg>
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="pending-actions">
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={() => handleApprove(courseId, course.title)}
-                        style={{ backgroundColor: '#16a34a', borderColor: '#16a34a', padding: '0.5rem 1.25rem' }}
-                      >
-                        ✓ Approve & Publish to All Courses
-                      </button>
-
-                      <button
-                        type="button"
-                        className="btn btn-outline"
-                        onClick={() => handleOpenReject(course)}
-                        style={{ color: '#dc2626', borderColor: '#fca5a5' }}
-                      >
-                        ✕ Reject with Reason
-                      </button>
-
-                      <Link
-                        to={`/courses/${course.slug || courseId}`}
-                        className="btn btn-outline"
-                        style={{ marginLeft: 'auto' }}
-                      >
-                        Preview Course Page ↗
-                      </Link>
                     </div>
                   </article>
                 );
@@ -373,110 +759,643 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
-      ) : (
-        /* All Platform Courses Tab */
-        <div style={{ backgroundColor: '#fff', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="educator-table">
-              <thead>
-                <tr>
-                  <th>Course Title</th>
-                  <th>Instructor</th>
-                  <th>Category</th>
-                  <th>Price</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allCourses.length === 0 ? (
+      ) : null}
+
+      {/* Tab 2: All Platform Courses */}
+      {!loading && activeTab === 'all_courses' && (
+        <div>
+          {/* Filter Bar */}
+          <div className="admin-filter-bar">
+            <div className="admin-filter-group">
+              <input
+                type="text"
+                placeholder="Search by title, instructor, or category..."
+                value={courseSearch}
+                onChange={(e) => setCourseSearch(e.target.value)}
+                className="admin-search-input"
+              />
+              <select
+                value={courseStatusFilter}
+                onChange={(e) => setCourseStatusFilter(e.target.value)}
+                className="admin-select-input"
+              >
+                <option value="all">All Statuses ({allCourses.length})</option>
+                <option value="published">Published</option>
+                <option value="pending_review">Under Review</option>
+                <option value="draft">Draft</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+              Showing <strong>{filteredCourses.length}</strong> of {allCourses.length} courses
+            </div>
+          </div>
+
+          <div className="admin-table-card">
+            <div className="admin-table-wrapper">
+              <table className="admin-table">
+                <thead>
                   <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                      No courses found on the platform.
-                    </td>
+                    <th>Course</th>
+                    <th>Instructor</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
                   </tr>
-                ) : (
-                  allCourses.map((c) => {
-                    const price = typeof c.price === 'number' ? c.price : 0;
-                    return (
-                      <tr key={c._id || c.id}>
-                        <td style={{ fontWeight: 600 }}>{c.title}</td>
-                        <td style={{ color: '#64748b' }}>{c.instructor?.name || c.instructorName || 'Platform Instructor'}</td>
-                        <td>{c.category}</td>
-                        <td>{price === 0 ? 'Free' : `₹${price.toLocaleString('en-IN')}`}</td>
-                        <td>
-                          <span
-                            className="badge"
-                            style={{
-                              backgroundColor:
+                </thead>
+                <tbody>
+                  {filteredCourses.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                        No courses match your filter criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCourses.map((c) => {
+                      const courseId = c._id || c.id;
+                      const price = typeof c.price === 'number' ? c.price : 0;
+                      return (
+                        <tr key={courseId}>
+                          <td>
+                            <div className="table-course-item">
+                              <img
+                                src={c.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80'}
+                                alt={c.title}
+                                className="table-course-thumb"
+                              />
+                              <div>
+                                <div className="table-course-title" title={c.title}>
+                                  {c.title}
+                                </div>
+                                <div className="table-course-slug">{c.slug || courseId}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 500, color: '#1e293b' }}>
+                              {c.instructor?.name || c.instructorName || 'Platform Instructor'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                              {c.instructor?.email || '—'}
+                            </div>
+                          </td>
+                          <td>
+                            <span className="status-pill status-draft">
+                              {c.category || 'General'}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{ fontWeight: 600, color: price === 0 ? '#16a34a' : '#0f172a' }}>
+                              {price === 0 ? 'Free' : `₹${price.toLocaleString('en-IN')}`}
+                            </span>
+                          </td>
+                          <td>
+                            <span
+                              className={`status-pill ${
                                 c.status === 'published'
-                                  ? '#dcfce7'
+                                  ? 'status-published'
                                   : c.status === 'pending_review'
-                                  ? '#fef3c7'
-                                  : '#f1f5f9',
-                              color:
-                                c.status === 'published'
-                                  ? '#15803d'
-                                  : c.status === 'pending_review'
-                                  ? '#92400e'
-                                  : '#475569',
-                              textTransform: 'capitalize'
-                            }}
-                          >
-                            {c.status === 'pending_review' ? 'Under Review' : c.status}
-                          </span>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            {c.status === 'pending_review' && (
-                              <button
-                                type="button"
-                                className="btn btn-primary"
-                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', backgroundColor: '#16a34a' }}
-                                onClick={() => handleApprove(c._id || c.id, c.title)}
-                              >
-                                Approve
-                              </button>
-                            )}
-                            <Link
-                              to={`/courses/${c.slug || c._id || c.id}`}
-                              className="btn btn-outline"
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                  ? 'status-pending'
+                                  : c.status === 'rejected'
+                                  ? 'status-rejected'
+                                  : 'status-draft'
+                              }`}
                             >
-                              View
-                            </Link>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                              <span className="status-dot"></span>
+                              {c.status === 'pending_review' ? 'Under Review' : c.status}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div className="admin-action-btn-group" style={{ justifyContent: 'flex-end' }}>
+                              {c.status === 'pending_review' && (
+                                <button
+                                  type="button"
+                                  className="btn-table-action btn-action-primary"
+                                  onClick={() => handleApprove(courseId, c.title)}
+                                >
+                                  Approve
+                                </button>
+                              )}
+                              <Link
+                                to={`/courses/${c.slug || courseId}`}
+                                className="btn-table-action"
+                              >
+                                View →
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Rejection Modal */}
-      {rejectingCourse && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
-          <div style={{ backgroundColor: '#fff', borderRadius: '12px', padding: '1.75rem', maxWidth: '500px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Reject Course Submission
-            </h3>
-            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1rem' }}>
-              Please provide feedback explaining to the educator why "{rejectingCourse.title}" cannot be approved at this time:
-            </p>
-            <form onSubmit={handleConfirmReject}>
-              <textarea
-                rows="4"
-                required
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="e.g. Please add at least 3 lessons and provide a clearer course summary before re-submitting."
-                style={{ width: '100%', padding: '0.625rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.875rem' }}
+      {/* Tab 3: Categories */}
+      {!loading && activeTab === 'categories' && (
+        <div>
+          <div className="admin-filter-bar">
+            <div className="admin-filter-group">
+              <input
+                type="text"
+                placeholder="Search categories by name or slug..."
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                className="admin-search-input"
               />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                Showing <strong>{filteredCategories.length}</strong> of {categories.length} categories
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', padding: '0.5rem 1rem' }}
+              onClick={handleOpenCreateCategory}
+            >
+              <span>＋</span> Add Category
+            </button>
+          </div>
+
+          <div className="admin-table-card">
+            <div className="admin-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Category Name</th>
+                    <th>Slug</th>
+                    <th>Description</th>
+                    <th>Assigned Courses</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCategories.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                        {categories.length === 0
+                          ? 'No categories found. Click "Add Category" to create your first one.'
+                          : 'No categories match your search.'}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCategories.map((cat) => {
+                      const catId = cat._id || cat.id;
+                      const hasCourses = (cat.courseCount || 0) > 0;
+                      return (
+                        <tr key={catId}>
+                          <td style={{ fontWeight: 600, color: '#0f172a' }}>{cat.name}</td>
+                          <td>
+                            <code style={{ fontSize: '0.78rem', backgroundColor: '#f1f5f9', padding: '0.2rem 0.45rem', borderRadius: '4px', color: '#475569' }}>
+                              {cat.slug}
+                            </code>
+                          </td>
+                          <td style={{ color: '#64748b', fontSize: '0.85rem', maxWidth: '300px' }}>
+                            {cat.description || '—'}
+                          </td>
+                          <td>
+                            <span className="status-pill status-draft">
+                              {cat.courseCount || 0} course{cat.courseCount === 1 ? '' : 's'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`status-pill ${cat.isActive !== false ? 'status-active' : 'status-inactive'}`}>
+                              <span className="status-dot"></span>
+                              {cat.isActive !== false ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div className="admin-action-btn-group" style={{ justifyContent: 'flex-end' }}>
+                              <button
+                                type="button"
+                                className="btn-table-action"
+                                onClick={() => handleOpenEditCategory(cat)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-table-action"
+                                onClick={() => handleToggleCategoryActive(cat)}
+                              >
+                                {cat.isActive !== false ? 'Deactivate' : 'Activate'}
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-table-action btn-action-danger"
+                                disabled={hasCourses}
+                                title={
+                                  hasCourses
+                                    ? `Cannot delete category assigned to ${cat.courseCount} course(s). Deactivate instead.`
+                                    : 'Delete category'
+                                }
+                                onClick={() => handleDeleteCategory(cat)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Users (Students & Teachers/Instructors) */}
+      {!loading && activeTab === 'users' && (
+        <div>
+          <div className="admin-filter-bar">
+            <div className="admin-filter-group">
+              <input
+                type="text"
+                placeholder="Search by name or email..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="admin-search-input"
+              />
+              <select
+                value={userRoleFilter}
+                onChange={(e) => setUserRoleFilter(e.target.value)}
+                className="admin-select-input"
+              >
+                <option value="all">All Roles ({users.length})</option>
+                <option value="student">Students</option>
+                <option value="instructor">Teachers / Instructors</option>
+                <option value="admin">Administrators</option>
+              </select>
+              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                Showing <strong>{filteredUsers.length}</strong> of {users.length} users
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', padding: '0.5rem 1rem' }}
+              onClick={handleOpenCreateUser}
+            >
+              <span>＋</span> Add Student / Teacher
+            </button>
+          </div>
+
+          <div className="admin-table-card">
+            <div className="admin-table-wrapper">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Activity & Courses</th>
+                    <th>Joined</th>
+                    <th>Status</th>
+                    <th style={{ textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                        No users match your search criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((u) => {
+                      const uId = u._id || u.id;
+                      const isCurrentAdmin = user && (user.id === uId || user._id === uId);
+                      const hasCourses = u.role === 'instructor' && (u.coursesAuthored || 0) > 0;
+
+                      return (
+                        <tr key={uId}>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                              <div
+                                style={{
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '50%',
+                                  backgroundColor:
+                                    u.role === 'instructor'
+                                      ? '#ede9fe'
+                                      : u.role === 'admin'
+                                      ? '#fee2e2'
+                                      : '#e0f2fe',
+                                  color:
+                                    u.role === 'instructor'
+                                      ? '#6d28d9'
+                                      : u.role === 'admin'
+                                      ? '#b91c1c'
+                                      : '#0369a1',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 700,
+                                  fontSize: '0.85rem',
+                                  flexShrink: 0
+                                }}
+                              >
+                                {u.name ? u.name.charAt(0).toUpperCase() : 'U'}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 600, color: '#0f172a' }}>
+                                  {u.name}
+                                  {isCurrentAdmin && (
+                                    <span style={{ fontSize: '0.7rem', color: '#2563eb', marginLeft: '0.4rem', fontWeight: 500 }}>
+                                      (You)
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{u.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span
+                              className={`status-pill ${
+                                u.role === 'instructor'
+                                  ? 'status-pending'
+                                  : u.role === 'admin'
+                                  ? 'status-rejected'
+                                  : 'status-published'
+                              }`}
+                            >
+                              <span className="status-dot"></span>
+                              {u.role === 'instructor' ? 'Teacher / Instructor' : u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                            </span>
+                          </td>
+                          <td>
+                            {u.role === 'instructor' ? (
+                              <span className="status-pill status-draft">
+                                🎓 {u.coursesAuthored || 0} course{u.coursesAuthored === 1 ? '' : 's'} authored
+                              </span>
+                            ) : u.role === 'student' ? (
+                              <span className="status-pill status-draft">
+                                📚 {u.coursesEnrolled || 0} course{u.coursesEnrolled === 1 ? '' : 's'} enrolled
+                              </span>
+                            ) : (
+                              <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Platform Administrator</span>
+                            )}
+                          </td>
+                          <td style={{ fontSize: '0.825rem', color: '#64748b' }}>
+                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recent'}
+                          </td>
+                          <td>
+                            <span className={`status-pill ${u.isActive !== false ? 'status-active' : 'status-inactive'}`}>
+                              <span className="status-dot"></span>
+                              {u.isActive !== false ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div className="admin-action-btn-group" style={{ justifyContent: 'flex-end' }}>
+                              <button
+                                type="button"
+                                className="btn-table-action btn-action-danger"
+                                disabled={isCurrentAdmin || hasCourses}
+                                title={
+                                  isCurrentAdmin
+                                    ? 'Cannot delete your own admin account'
+                                    : hasCourses
+                                    ? `Cannot delete instructor with ${u.coursesAuthored} active courses`
+                                    : `Delete ${u.role}`
+                                }
+                                onClick={() => handleDeleteUser(u)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Modal (Create / Edit) */}
+      {categoryModal && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal-card">
+            <div className="admin-modal-header">
+              <h3 className="admin-modal-title">
+                {categoryModal.mode === 'create' ? 'Create New Category' : `Edit Category "${categoryModal.data.name}"`}
+              </h3>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={() => setCategoryModal(null)}
+                aria-label="Close dialog"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleSaveCategory}>
+              <div className="admin-modal-body">
+                <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                  Categories organize curriculum in the public catalogue and instructor studio.
+                </p>
+
+                <div className="form-field-group">
+                  <label className="form-field-label">Category Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Mobile Development"
+                    value={categoryModal.data.name}
+                    onChange={(e) =>
+                      setCategoryModal({
+                        ...categoryModal,
+                        data: { ...categoryModal.data, name: e.target.value }
+                      })
+                    }
+                    className="form-field-input"
+                  />
+                </div>
+
+                <div className="form-field-group">
+                  <label className="form-field-label">Description</label>
+                  <textarea
+                    rows="3"
+                    placeholder="Brief description of courses in this category..."
+                    value={categoryModal.data.description}
+                    onChange={(e) =>
+                      setCategoryModal({
+                        ...categoryModal,
+                        data: { ...categoryModal.data, description: e.target.value }
+                      })
+                    }
+                    className="form-field-textarea"
+                  />
+                </div>
+
+                <div className="form-checkbox-row">
+                  <input
+                    type="checkbox"
+                    id="catIsActive"
+                    checked={categoryModal.data.isActive}
+                    onChange={(e) =>
+                      setCategoryModal({
+                        ...categoryModal,
+                        data: { ...categoryModal.data, isActive: e.target.checked }
+                      })
+                    }
+                  />
+                  <label htmlFor="catIsActive" style={{ fontSize: '0.85rem', color: '#334155', cursor: 'pointer' }}>
+                    Active (visible in public filter pills and instructor studio)
+                  </label>
+                </div>
+              </div>
+
+              <div className="admin-modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setCategoryModal(null)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  {categoryModal.mode === 'create' ? 'Create Category' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add User Modal */}
+      {userModalOpen && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal-card">
+            <div className="admin-modal-header">
+              <h3 className="admin-modal-title">Add Student or Teacher</h3>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={() => setUserModalOpen(false)}
+                aria-label="Close dialog"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleCreateUser}>
+              <div className="admin-modal-body">
+                <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                  Create an authenticated platform account for a student or teacher/instructor.
+                </p>
+
+                <div className="form-field-group">
+                  <label className="form-field-label">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. John Doe"
+                    value={newUserData.name}
+                    onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
+                    className="form-field-input"
+                  />
+                </div>
+
+                <div className="form-field-group">
+                  <label className="form-field-label">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. user@platform.com"
+                    value={newUserData.email}
+                    onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                    className="form-field-input"
+                  />
+                </div>
+
+                <div className="form-field-group">
+                  <label className="form-field-label">Password * (min 6 characters)</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="Enter secure password..."
+                    value={newUserData.password}
+                    onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                    className="form-field-input"
+                  />
+                </div>
+
+                <div className="form-field-group">
+                  <label className="form-field-label">Account Role *</label>
+                  <select
+                    value={newUserData.role}
+                    onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value })}
+                    className="form-field-input"
+                  >
+                    <option value="student">Student (Learn courses & track progress)</option>
+                    <option value="instructor">Teacher / Instructor (Author & manage courses)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="admin-modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setUserModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Create Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Course Rejection Modal */}
+      {rejectingCourse && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal-card">
+            <div className="admin-modal-header">
+              <h3 className="admin-modal-title">Reject Course Submission</h3>
+              <button
+                type="button"
+                className="admin-modal-close"
+                onClick={() => setRejectingCourse(null)}
+                aria-label="Close dialog"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleConfirmReject}>
+              <div className="admin-modal-body">
+                <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                  Please provide feedback explaining to the educator why "<strong>{rejectingCourse.title}</strong>" cannot be approved at this time:
+                </p>
+                <div className="form-field-group">
+                  <textarea
+                    rows="4"
+                    required
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    placeholder="e.g. Please add at least 3 lessons and provide a clearer course summary before re-submitting."
+                    className="form-field-textarea"
+                  />
+                </div>
+              </div>
+
+              <div className="admin-modal-footer">
                 <button
                   type="button"
                   className="btn btn-outline"

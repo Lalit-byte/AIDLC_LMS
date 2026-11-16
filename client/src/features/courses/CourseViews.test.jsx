@@ -3,6 +3,7 @@ import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
 import CourseCard from './CourseCard.jsx';
+import CourseList from './CourseList.jsx';
 
 describe('Course Views Component tests', () => {
   it('CourseCard renders course details, free badge, and link to course id', () => {
@@ -48,5 +49,18 @@ describe('Course Views Component tests', () => {
     expect(html).toContain('badge-paid');
     expect(html).toContain('₹1,499');
     expect(html).toContain('/courses/crs_paid_1');
+  });
+
+  it('CourseList renders home hero and deduplicated category pill', () => {
+    const html = renderToString(
+      <MemoryRouter>
+        <CourseList />
+      </MemoryRouter>
+    );
+
+    expect(html).toContain('Master Tech Skills');
+    expect(html).toContain('Search courses by title, topic, or instructor');
+    expect(html).toContain('All Prices');
+    expect(html).toContain('Curated Curriculum');
   });
 });

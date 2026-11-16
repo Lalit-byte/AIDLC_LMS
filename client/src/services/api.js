@@ -537,5 +537,121 @@ export const api = {
     }
     const json = await res.json();
     return json.data?.course;
+  },
+
+  async getAdminCategories() {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/categories`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to fetch categories.');
+    }
+    const json = await res.json();
+    return json.data?.categories || [];
+  },
+
+  async createCategory(data) {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/categories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to create category.');
+    }
+    const json = await res.json();
+    return json.data?.category;
+  },
+
+  async updateCategory(categoryId, data) {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to update category.');
+    }
+    const json = await res.json();
+    return json.data?.category;
+  },
+
+  async deleteCategory(categoryId) {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}`, {
+      method: 'DELETE',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to delete category.');
+    }
+    const json = await res.json();
+    return json;
+  },
+
+  async getAdminUsers() {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/users`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to fetch platform users.');
+    }
+    const json = await res.json();
+    return json.data?.users || [];
+  },
+
+  async createAdminUser(data) {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to create user.');
+    }
+    const json = await res.json();
+    return json.data?.user;
+  },
+
+  async deleteAdminUser(userId) {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to delete user.');
+    }
+    const json = await res.json();
+    return json;
   }
 };

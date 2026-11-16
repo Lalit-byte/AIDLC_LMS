@@ -5,7 +5,7 @@ import { sanitizeMongoUri } from '../src/config/db.js';
 
 test('validateEnv returns defaults in development', () => {
   const config = validateEnv({});
-  assert.equal(config.PORT, 5000);
+  assert.equal(config.PORT, 5050);
   assert.equal(config.NODE_ENV, 'development');
   assert.equal(config.CLIENT_URL, 'http://localhost:5173');
   assert.equal(config.MONGO_URI, 'mongodb://localhost:27017/aidlc_lms');
