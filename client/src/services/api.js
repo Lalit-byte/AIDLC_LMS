@@ -262,6 +262,19 @@ export const api = {
     return res.json();
   },
 
+  async getRazorpayKey() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/payments/key`);
+      if (res.ok) {
+        const json = await res.json();
+        return json.data?.keyId || '';
+      }
+    } catch {
+      // ignore network errors
+    }
+    return '';
+  },
+
   // Progress tracking endpoints
   async getCourseProgress(courseId) {
     const token = getStoredToken();
@@ -653,5 +666,20 @@ export const api = {
     }
     const json = await res.json();
     return json;
+  },
+
+  async getAdminPayments() {
+    const token = getStoredToken();
+    const res = await fetch(`${API_BASE_URL}/admin/payments`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || 'Failed to fetch payment transactions.');
+    }
+    const json = await res.json();
+    return json.data || { summary: {}, payments: [] };
   }
 };

@@ -15,6 +15,7 @@ export default function Navbar() {
   }
 
   const isInstructorOrAdmin = user?.role === 'instructor' || user?.role === 'admin';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const roleLabel =
     user?.role === 'instructor'
       ? 'Teacher'
@@ -33,7 +34,14 @@ export default function Navbar() {
           <ul className="navbar-links">
             {isAuthenticated && (
               <li>
-                <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+                  Home
+                </NavLink>
+              </li>
+            )}
+            {!isAuthPage && (
+              <li>
+                <NavLink to="/courses" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
                   Courses
                 </NavLink>
               </li>
@@ -107,6 +115,18 @@ export default function Navbar() {
               <li>
                 <NavLink
                   to="/"
+                  end
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+                >
+                  Home
+                </NavLink>
+              </li>
+            )}
+            {!isAuthPage && (
+              <li>
+                <NavLink
+                  to="/courses"
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
                 >

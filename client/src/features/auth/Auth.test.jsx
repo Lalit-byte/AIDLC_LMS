@@ -37,21 +37,22 @@ describe('Auth and Navbar Component Views', () => {
     expect(html).toContain('Create Account');
   });
 
-  it('Navbar hides Courses, studio, and my learning for unauthenticated guest', () => {
+  it('Navbar hides Home, studio, and my learning for unauthenticated guest', () => {
     const html = renderToString(
       <MemoryRouter>
         <Navbar />
       </MemoryRouter>
     );
 
-    expect(html).not.toContain('Courses');
+    expect(html).not.toContain('Home');
     expect(html).not.toContain('Instructor Studio');
     expect(html).not.toContain('My Learning');
+    expect(html).toContain('Courses');
     expect(html).toContain('Log in');
     expect(html).toContain('Get Started');
   });
 
-  it('Navbar renders Student role badge, Courses, and My Learning, but hides Instructor Studio for student', () => {
+  it('Navbar renders Student role badge, Home, and My Learning, but hides Instructor Studio for student', () => {
     const mockStudentContext = {
       user: { name: 'Alice Student', role: 'student' },
       isAuthenticated: true,
@@ -66,7 +67,7 @@ describe('Auth and Navbar Component Views', () => {
       </MemoryRouter>
     );
 
-    expect(html).toContain('Courses');
+    expect(html).toContain('Home');
     expect(html).toContain('Alice Student');
     expect(html).toContain('Student');
     expect(html).toContain('My Learning');
@@ -91,5 +92,21 @@ describe('Auth and Navbar Component Views', () => {
     expect(html).toContain('Bob Teacher');
     expect(html).toContain('Teacher');
     expect(html).toContain('Instructor Studio');
+  });
+
+  it('Navbar hides Courses link when user is on login or register page', () => {
+    const htmlLogin = renderToString(
+      <MemoryRouter initialEntries={['/login']}>
+        <Navbar />
+      </MemoryRouter>
+    );
+    expect(htmlLogin).not.toContain('Courses');
+
+    const htmlRegister = renderToString(
+      <MemoryRouter initialEntries={['/register']}>
+        <Navbar />
+      </MemoryRouter>
+    );
+    expect(htmlRegister).not.toContain('Courses');
   });
 });

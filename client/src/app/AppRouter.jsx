@@ -20,7 +20,8 @@ export default function AppRouter() {
           <Navbar />
           <main style={{ flex: 1 }}>
             <Routes>
-              <Route path="/" element={<CourseList />} />
+              <Route path="/" element={<CourseList showHero={true} />} />
+              <Route path="/courses" element={<CourseList showHero={false} />} />
               <Route path="/courses/:id" element={<CourseDetails />} />
               <Route path="/learn/:courseId" element={<LessonPlayer />} />
               <Route path="/dashboard" element={<Dashboard />} />

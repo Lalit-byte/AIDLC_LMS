@@ -9,7 +9,7 @@ const defaultCourse = () => ({
   title: '',
   description: '',
   category: 'Development',
-  price: 0,
+  price: '',
   currency: 'INR',
   instructor: 'You (Instructor)',
   thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80',
@@ -40,6 +40,8 @@ export default function InstructorStudio() {
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [notification, setNotification] = useState('');
   const [availableCategories, setAvailableCategories] = useState(['Development', 'Cloud', 'Design', 'Business']);
+  const [courseSubTab, setCourseSubTab] = useState('published');
+  const [selectedCourseEnrolled, setSelectedCourseEnrolled] = useState('all');
 
   const loadDashboard = useCallback(() => {
     api.getInstructorDashboard()
@@ -90,6 +92,10 @@ export default function InstructorStudio() {
   }
 
   const { stats, courses, latestEnrolments, allEnrolments } = dashboardData;
+  const isAdmin = user?.role === 'admin';
+  const publishedCourses = (courses || []).filter((c) => c.status === 'published');
+  const draftCourses = (courses || []).filter((c) => c.status !== 'published');
+  const publishedCoursesCount = publishedCourses.length;
 
   const handleStartNewCourse = () => {
     setEditingCourse(defaultCourse());
@@ -100,6 +106,7 @@ export default function InstructorStudio() {
     setEditingCourse({
       ...course,
       id: course._id || course.id,
+      price: course.price !== undefined && course.price !== null ? String(course.price) : '0',
       sections: course.sections || []
     });
     setActiveTab('add_course');
@@ -117,7 +124,12 @@ export default function InstructorStudio() {
     }
 
     try {
-      const updated = await api.saveInstructorCourse(editingCourse);
+      const priceNum = editingCourse.price === '' ? 0 : Number(editingCourse.price);
+      const payload = {
+        ...editingCourse,
+        price: isNaN(priceNum) || priceNum < 0 ? 0 : priceNum
+      };
+      const updated = await api.saveInstructorCourse(payload);
       if (updated) {
         setDashboardData(updated);
       }
@@ -319,8 +331,12 @@ export default function InstructorStudio() {
                   </svg>
                 </div>
                 <div>
-                  <div className="stat-value">{stats.totalCourses}</div>
-                  <div className="stat-label">Total Courses</div>
+                  <div className="stat-value">
+                    {isAdmin ? stats.totalCourses : publishedCoursesCount}
+                  </div>
+                  <div className="stat-label">
+                    {isAdmin ? 'Total Courses' : 'Published Courses'}
+                  </div>
                 </div>
               </div>
 
@@ -333,8 +349,8 @@ export default function InstructorStudio() {
                   </svg>
                 </div>
                 <div>
-                  <div className="stat-value">₹{stats.totalEarnings.toLocaleString('en-IN')}</div>
-                  <div className="stat-label">Total Earnings</div>
+                  <div className="stat-value">₹{(stats.totalEarnings || 0).toLocaleString('en-IN')}</div>
+                  <div className="stat-label">Total Revenue</div>
                 </div>
               </div>
             </div>
@@ -424,12 +440,16 @@ export default function InstructorStudio() {
                 </div>
 
                 <div className="form-group">
-                  <label>Price (₹ INR, 0 = Free)</label>
+                  <label>Course Price (₹ INR)</label>
                   <input
-                    type="number"
-                    min="0"
-                    value={editingCourse.price}
-                    onChange={(e) => setEditingCourse({ ...editingCourse, price: Number(e.target.value) })}
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="e.g. 499 (0 for Free)"
+                    value={editingCourse.price !== undefined && editingCourse.price !== null ? editingCourse.price : ''}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setEditingCourse({ ...editingCourse, price: val });
+                    }}
                   />
                 </div>
               </div>
@@ -640,26 +660,111 @@ export default function InstructorStudio() {
           </div>
         ) : activeTab === 'my_courses' ? (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
                 <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>My Courses</h2>
-                <p style={{ color: 'var(--color-text-muted)' }}>Manage, edit, and submit your courses for platform review.</p>
+                <p style={{ color: 'var(--color-text-muted)' }}>Manage, edit, and review your authored courses.</p>
               </div>
               <button className="btn btn-primary" onClick={handleStartNewCourse}>
                 + Add Course
               </button>
             </div>
 
-            {courses.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '4rem 1rem', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-lg)' }}>
-                <p style={{ marginBottom: '1rem', color: 'var(--color-text-muted)' }}>You haven't authored any courses yet.</p>
-                <button className="btn btn-primary" onClick={handleStartNewCourse}>
-                  Create your first course
+            {/* Course Sub Tabs: Published by default, Drafts accessible */}
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem' }}>
+              <button
+                type="button"
+                className={`btn ${courseSubTab === 'published' ? 'btn-primary' : 'btn-outline'}`}
+                style={{ padding: '0.4rem 1rem', fontSize: '0.875rem' }}
+                onClick={() => setCourseSubTab('published')}
+              >
+                Published Courses ({publishedCourses.length})
+              </button>
+              {draftCourses.length > 0 && (
+                <button
+                  type="button"
+                  className={`btn ${courseSubTab === 'drafts' ? 'btn-primary' : 'btn-outline'}`}
+                  style={{ padding: '0.4rem 1rem', fontSize: '0.875rem' }}
+                  onClick={() => setCourseSubTab('drafts')}
+                >
+                  Drafts & Under Review ({draftCourses.length})
                 </button>
-              </div>
+              )}
+            </div>
+
+            {courseSubTab === 'published' ? (
+              publishedCourses.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '4rem 1rem', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-lg)' }}>
+                  <p style={{ marginBottom: '1rem', color: 'var(--color-text-muted)' }}>You have no published courses yet.</p>
+                  <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                    <button className="btn btn-primary" onClick={handleStartNewCourse}>
+                      Create your first course
+                    </button>
+                    {draftCourses.length > 0 && (
+                      <button className="btn btn-outline" onClick={() => setCourseSubTab('drafts')}>
+                        View Drafts ({draftCourses.length})
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="studio-grid">
+                  {publishedCourses.map((course) => {
+                    const courseId = course._id || course.id;
+                    const price = typeof course.price === 'number' ? course.price : 0;
+                    const enrolledCount = course.enrolledCount || allEnrolments.filter((e) => String(e.courseId) === String(courseId) || e.courseTitle === course.title).length;
+                    const salesAmount = course.totalEarnings || 0;
+
+                    return (
+                      <article key={courseId} className="studio-card">
+                        <div className="studio-card-header">
+                          <div>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
+                              {course.category}
+                            </span>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0.25rem 0' }}>{course.title}</h3>
+                          </div>
+                          {getStatusBadge(course.status)}
+                        </div>
+
+                        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1.25rem', flex: 1 }}>
+                          {course.description || 'No description provided.'}
+                        </p>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
+                          <div>Sections: <strong style={{ color: 'var(--color-text-main)' }}>{course.sections?.length || 0}</strong></div>
+                          <div>Price: <strong style={{ color: 'var(--color-text-main)' }}>{price === 0 ? 'Free' : `₹${price.toLocaleString('en-IN')}`}</strong></div>
+                          <div>Students: <strong style={{ color: '#4f46e5' }}>👥 {enrolledCount}</strong></div>
+                          <div>Sales: <strong style={{ color: '#16a34a' }}>💰 ₹{salesAmount.toLocaleString('en-IN')}</strong></div>
+                        </div>
+
+                        <div className="studio-card-actions">
+                          <button
+                            className="btn btn-outline"
+                            style={{ flex: 1 }}
+                            onClick={() => handleEditCourse(course)}
+                          >
+                            Edit / Curriculum
+                          </button>
+                          <button
+                            className="btn btn-primary"
+                            style={{ flex: 1 }}
+                            onClick={() => {
+                              setSelectedCourseEnrolled(courseId);
+                              setActiveTab('student_enrolled');
+                            }}
+                          >
+                            View Students
+                          </button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )
             ) : (
               <div className="studio-grid">
-                {courses.map((course) => {
+                {draftCourses.map((course) => {
                   const courseId = course._id || course.id;
                   const price = typeof course.price === 'number' ? course.price : 0;
                   return (
@@ -709,47 +814,122 @@ export default function InstructorStudio() {
         ) : (
           /* Student Enrolled Section */
           <section className="educator-table-section">
-            <h2 className="educator-section-title">All Enrolled Students</h2>
-            <div className="educator-table-container">
-              <table className="educator-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: '60px' }}>#</th>
-                    <th>Student Name</th>
-                    <th>Student Email</th>
-                    <th>Course Title</th>
-                    <th>Enrolled Date</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!allEnrolments || allEnrolments.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                        No students enrolled in your courses yet.
-                      </td>
-                    </tr>
-                  ) : (
-                    allEnrolments.map((enrol, idx) => (
-                      <tr key={enrol.id || idx}>
-                        <td style={{ fontWeight: 600 }}>{enrol.index || idx + 1}</td>
-                        <td style={{ fontWeight: 500 }}>{enrol.studentName}</td>
-                        <td style={{ color: '#64748b' }}>{enrol.studentEmail || '-'}</td>
-                        <td>{enrol.courseTitle}</td>
-                        <td style={{ color: '#64748b' }}>
-                          {enrol.enrolledAt ? new Date(enrol.enrolledAt).toLocaleDateString() : '-'}
-                        </td>
-                        <td>
-                          <span className="badge badge-published" style={{ textTransform: 'capitalize' }}>
-                            {enrol.status || 'Active'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <h2 className="educator-section-title" style={{ margin: 0 }}>Enrolled Students on Each Course</h2>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
+                  Review enrolled learners, course progress, and enrolment dates across your published courses.
+                </p>
+              </div>
+
+              {publishedCourses.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <label htmlFor="course-select-filter" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
+                    Filter by Course:
+                  </label>
+                  <select
+                    id="course-select-filter"
+                    value={selectedCourseEnrolled}
+                    onChange={(e) => setSelectedCourseEnrolled(e.target.value)}
+                    style={{ padding: '0.45rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '0.875rem', backgroundColor: '#ffffff' }}
+                  >
+                    <option value="all">All Courses ({allEnrolments.length} total students)</option>
+                    {publishedCourses.map((c) => {
+                      const cId = c._id || c.id;
+                      const count = allEnrolments.filter((e) => String(e.courseId) === String(cId) || e.courseTitle === c.title).length;
+                      return (
+                        <option key={cId} value={cId}>
+                          {c.title} ({count} enrolled)
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
             </div>
+
+            {publishedCourses.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3.5rem 1rem', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-lg)' }}>
+                <p style={{ color: 'var(--color-text-muted)', marginBottom: '1rem' }}>No published courses found. Once your courses are published and students enroll, they will appear here.</p>
+                <button className="btn btn-primary" onClick={handleStartNewCourse}>
+                  Create a Course
+                </button>
+              </div>
+            ) : (
+              (selectedCourseEnrolled === 'all'
+                ? publishedCourses
+                : publishedCourses.filter((c) => String(c._id || c.id) === String(selectedCourseEnrolled))
+              ).map((course) => {
+                const courseId = course._id || course.id;
+                const courseEnrolments = allEnrolments.filter(
+                  (e) => String(e.courseId) === String(courseId) || e.courseTitle === course.title
+                );
+
+                return (
+                  <div key={courseId} style={{ marginBottom: '2rem', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                    <div style={{ padding: '1rem 1.25rem', backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase' }}>
+                          {course.category}
+                        </span>
+                        <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: '0.15rem 0 0 0', color: '#0f172a' }}>
+                          {course.title}
+                        </h3>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                        <span className="badge badge-published" style={{ fontSize: '0.8125rem', padding: '0.3rem 0.6rem' }}>
+                          👥 {courseEnrolments.length} Enrolled
+                        </span>
+                        {course.price > 0 && (
+                          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#16a34a' }}>
+                            Sales: ₹{((course.totalEarnings || 0)).toLocaleString('en-IN')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="educator-table-container" style={{ border: 'none', borderRadius: 0 }}>
+                      <table className="educator-table">
+                        <thead>
+                          <tr>
+                            <th style={{ width: '60px' }}>#</th>
+                            <th>Student Name</th>
+                            <th>Student Email</th>
+                            <th>Enrolled Date</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {courseEnrolments.length === 0 ? (
+                            <tr>
+                              <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                                No students enrolled in this course yet.
+                              </td>
+                            </tr>
+                          ) : (
+                            courseEnrolments.map((enrol, idx) => (
+                              <tr key={enrol.id || idx}>
+                                <td style={{ fontWeight: 600 }}>{idx + 1}</td>
+                                <td style={{ fontWeight: 500 }}>{enrol.studentName}</td>
+                                <td style={{ color: '#64748b' }}>{enrol.studentEmail || '-'}</td>
+                                <td style={{ color: '#64748b' }}>
+                                  {enrol.enrolledAt ? new Date(enrol.enrolledAt).toLocaleDateString() : '-'}
+                                </td>
+                                <td>
+                                  <span className="badge badge-published" style={{ textTransform: 'capitalize' }}>
+                                    {enrol.status || 'Active'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </section>
         )}
       </main>

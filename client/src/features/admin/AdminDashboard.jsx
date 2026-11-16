@@ -40,13 +40,25 @@ export default function AdminDashboard() {
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('all');
 
+  // Payment transactions state
+  const [payments, setPayments] = useState([]);
+  const [paymentSummary, setPaymentSummary] = useState({
+    totalRevenue: 0,
+    successfulPayments: 0,
+    pendingPayments: 0,
+    failedPayments: 0
+  });
+  const [paymentSearch, setPaymentSearch] = useState('');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
+
   const loadData = async () => {
     try {
-      const [overviewData, pendingList, catList, userList] = await Promise.all([
+      const [overviewData, pendingList, catList, userList, paymentData] = await Promise.all([
         api.getAdminOverview().catch(() => null),
         api.getPendingCourses().catch(() => []),
         api.getAdminCategories().catch(() => []),
-        api.getAdminUsers().catch(() => [])
+        api.getAdminUsers().catch(() => []),
+        api.getAdminPayments().catch(() => ({ summary: {}, payments: [] }))
       ]);
 
       if (overviewData?.stats) {
@@ -58,6 +70,10 @@ export default function AdminDashboard() {
       setPendingCourses(pendingList || []);
       setCategories(catList || []);
       setUsers(userList || []);
+      setPayments(paymentData?.payments || []);
+      if (paymentData?.summary) {
+        setPaymentSummary(paymentData.summary);
+      }
     } catch (err) {
       console.error('Failed to load admin data:', err);
     }
@@ -70,15 +86,20 @@ export default function AdminDashboard() {
         api.getAdminOverview().catch(() => null),
         api.getPendingCourses().catch(() => []),
         api.getAdminCategories().catch(() => []),
-        api.getAdminUsers().catch(() => [])
+        api.getAdminUsers().catch(() => []),
+        api.getAdminPayments().catch(() => ({ summary: {}, payments: [] }))
       ])
-        .then(([overviewData, pendingList, catList, userList]) => {
+        .then(([overviewData, pendingList, catList, userList, paymentData]) => {
           if (!active) return;
           if (overviewData?.stats) setStats(overviewData.stats);
           if (overviewData?.courses) setAllCourses(overviewData.courses);
           setPendingCourses(pendingList || []);
           setCategories(catList || []);
           setUsers(userList || []);
+          setPayments(paymentData?.payments || []);
+          if (paymentData?.summary) {
+            setPaymentSummary(paymentData.summary);
+          }
         })
         .finally(() => {
           if (active) setLoading(false);
@@ -310,6 +331,24 @@ export default function AdminDashboard() {
     });
   }, [users, userSearch, userRoleFilter]);
 
+  const filteredPayments = useMemo(() => {
+    return payments.filter((p) => {
+      const q = paymentSearch.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        p.orderId?.toLowerCase().includes(q) ||
+        p.paymentId?.toLowerCase().includes(q) ||
+        p.user?.name?.toLowerCase().includes(q) ||
+        p.user?.email?.toLowerCase().includes(q) ||
+        p.course?.title?.toLowerCase().includes(q);
+
+      const matchesStatus =
+        paymentStatusFilter === 'all' || p.status === paymentStatusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [payments, paymentSearch, paymentStatusFilter]);
+
   // Access check: Unauthenticated Guest
   if (!isAuthenticated) {
     return (
@@ -352,10 +391,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="admin-container">
-      {/* Header */}
-      <header className="admin-header">
-        <div className="admin-brand-bar">
+    <div className="admin-container admin-layout">
+      {/* Left Sidebar Navigation */}
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar-header">
           <div className="admin-site-brand">
             <div className="admin-site-logo">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -370,181 +409,231 @@ export default function AdminDashboard() {
               </span>
             </div>
           </div>
-          <div className="admin-privilege-links">
-            <Link to="/dashboard" className="admin-nav-link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                <path d="M6 6h10"/>
-                <path d="M6 10h10"/>
-              </svg>
-              <span>Student Workspace</span>
-            </Link>
-            <Link to="/studio" className="admin-nav-link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-              </svg>
-              <span>Educator Studio</span>
-            </Link>
-            <Link to="/" className="admin-nav-link">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-              </svg>
-              <span>All Courses Catalog</span>
-            </Link>
-          </div>
         </div>
 
-        <div className="admin-title-row">
-          <div>
-            <h1>Admin Dashboard</h1>
-            <p className="admin-subtitle">
-              Review educator course submissions, manage curriculum categories, and monitor platform operations.
-            </p>
-          </div>
-        </div>
-      </header>
+        <nav className="admin-sidebar-nav">
+          <div className="admin-sidebar-section-title">ADMIN NAVIGATION</div>
 
-      {/* Notification Toast */}
-      {notification && (
-        <div className="admin-notification-toast">
-          <span>{notification}</span>
           <button
             type="button"
-            className="admin-notification-close"
-            onClick={() => setNotification('')}
-            aria-label="Dismiss notification"
+            className={`admin-sidebar-btn admin-tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
+            onClick={() => setActiveTab('pending')}
           >
-            ✕
+            <span className="admin-sidebar-btn-content">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>Pending Submissions</span>
+            </span>
+            <span className={`admin-tab-badge ${pendingCourses.length > 0 ? 'badge-highlight' : ''}`}>
+              {pendingCourses.length}
+            </span>
           </button>
-        </div>
-      )}
 
-      {/* Metric Stats Cards */}
-      <div className="admin-stats-grid">
-        <div className="admin-stat-card">
-          <div>
-            <div className="admin-stat-num">{stats.pendingCount || pendingCourses.length}</div>
-            <div className="admin-stat-label">Pending Reviews</div>
-            <div className="admin-stat-subtext">Awaiting admin review</div>
-          </div>
-          <div className="admin-stat-icon stat-icon-pending">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
-            </svg>
-          </div>
-        </div>
+          <button
+            type="button"
+            className={`admin-sidebar-btn admin-tab-btn ${activeTab === 'all_courses' ? 'active' : ''}`}
+            onClick={() => setActiveTab('all_courses')}
+          >
+            <span className="admin-sidebar-btn-content">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              <span>All Platform Courses</span>
+            </span>
+            <span className="admin-tab-badge">
+              {allCourses.length}
+            </span>
+          </button>
 
-        <div className="admin-stat-card">
-          <div>
-            <div className="admin-stat-num">{stats.publishedCount || 0}</div>
-            <div className="admin-stat-label">Live Published Courses</div>
-            <div className="admin-stat-subtext">Visible in public catalog</div>
-          </div>
-          <div className="admin-stat-icon stat-icon-published">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-              <polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-          </div>
-        </div>
+          <button
+            type="button"
+            className={`admin-sidebar-btn admin-tab-btn ${activeTab === 'categories' ? 'active' : ''}`}
+            onClick={() => setActiveTab('categories')}
+          >
+            <span className="admin-sidebar-btn-content">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                <line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+              <span>Categories</span>
+            </span>
+            <span className="admin-tab-badge">
+              {categories.length}
+            </span>
+          </button>
 
-        <div className="admin-stat-card">
-          <div>
-            <div className="admin-stat-num">{stats.totalCourses || 0}</div>
-            <div className="admin-stat-label">Total Authored Courses</div>
-            <div className="admin-stat-subtext">Across all instructors</div>
-          </div>
-          <div className="admin-stat-icon stat-icon-total">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <button
+            type="button"
+            className={`admin-sidebar-btn admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            <span className="admin-sidebar-btn-content">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <span>Users</span>
+            </span>
+            <span className="admin-tab-badge">
+              {users.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={`admin-sidebar-btn admin-tab-btn ${activeTab === 'payments' ? 'active' : ''}`}
+            onClick={() => setActiveTab('payments')}
+          >
+            <span className="admin-sidebar-btn-content">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              <span>Transactions & Revenue</span>
+            </span>
+            <span className="admin-tab-badge">
+              {payments.length}
+            </span>
+          </button>
+
+          <div className="admin-sidebar-section-title" style={{ marginTop: '1.75rem' }}>SWITCH WORKSPACE</div>
+
+          <Link to="/dashboard" className="admin-sidebar-link">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
               <path d="M6 6h10"/>
               <path d="M6 10h10"/>
             </svg>
-          </div>
-        </div>
-
-        <div
-          className="admin-stat-card"
-          style={{ cursor: 'pointer' }}
-          onClick={() => setActiveTab('users')}
-        >
-          <div>
-            <div className="admin-stat-num">{users.length || stats.totalUsers || 0}</div>
-            <div className="admin-stat-label">Registered Users</div>
-            <div className="admin-stat-subtext">Students & instructors</div>
-          </div>
-          <div className="admin-stat-icon stat-icon-users">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            <span>Student Workspace</span>
+          </Link>
+          <Link to="/studio" className="admin-sidebar-link">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
             </svg>
+            <span>Educator Studio</span>
+          </Link>
+          <Link to="/" className="admin-sidebar-link">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+            </svg>
+            <span>Home</span>
+          </Link>
+        </nav>
+      </aside>
+
+      {/* Main Right Content Area */}
+      <main className="admin-main">
+        <header className="admin-main-header">
+          <div className="admin-title-row">
+            <div>
+              <h1>Admin Dashboard</h1>
+              <p className="admin-subtitle">
+                Review educator course submissions, manage curriculum categories, and monitor platform operations.
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* Notification Toast */}
+        {notification && (
+          <div className="admin-notification-toast">
+            <span>{notification}</span>
+            <button
+              type="button"
+              className="admin-notification-close"
+              onClick={() => setNotification('')}
+              aria-label="Dismiss notification"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Metric Stats Cards */}
+        <div className="admin-stats-grid">
+          <div
+            className="admin-stat-card"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setActiveTab('pending')}
+          >
+            <div>
+              <div className="admin-stat-num">{stats.pendingCount || pendingCourses.length}</div>
+              <div className="admin-stat-label">Pending Reviews</div>
+              <div className="admin-stat-subtext">Awaiting admin review</div>
+            </div>
+            <div className="admin-stat-icon stat-icon-pending">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+          </div>
+
+          <div
+            className="admin-stat-card"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setActiveTab('all_courses')}
+          >
+            <div>
+              <div className="admin-stat-num">{stats.publishedCount || 0}</div>
+              <div className="admin-stat-label">Live Published Courses</div>
+              <div className="admin-stat-subtext">Visible in public catalog</div>
+            </div>
+            <div className="admin-stat-icon stat-icon-published">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            </div>
+          </div>
+
+          <div
+            className="admin-stat-card"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setActiveTab('all_courses')}
+          >
+            <div>
+              <div className="admin-stat-num">{stats.totalCourses || 0}</div>
+              <div className="admin-stat-label">Total Authored Courses</div>
+              <div className="admin-stat-subtext">Across all instructors</div>
+            </div>
+            <div className="admin-stat-icon stat-icon-total">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                <path d="M6 6h10"/>
+                <path d="M6 10h10"/>
+              </svg>
+            </div>
+          </div>
+
+          <div
+            className="admin-stat-card"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setActiveTab('users')}
+          >
+            <div>
+              <div className="admin-stat-num">{users.length || stats.totalUsers || 0}</div>
+              <div className="admin-stat-label">Registered Users</div>
+              <div className="admin-stat-subtext">Students & instructors</div>
+            </div>
+            <div className="admin-stat-icon stat-icon-users">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="admin-tabs">
-        <button
-          className={`admin-tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
-          onClick={() => setActiveTab('pending')}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-          <span>Pending Submissions</span>
-          <span className={`admin-tab-badge ${pendingCourses.length > 0 ? 'badge-highlight' : ''}`}>
-            {pendingCourses.length}
-          </span>
-        </button>
-        <button
-          className={`admin-tab-btn ${activeTab === 'all_courses' ? 'active' : ''}`}
-          onClick={() => setActiveTab('all_courses')}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7"/>
-            <rect x="14" y="3" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/>
-            <rect x="3" y="14" width="7" height="7"/>
-          </svg>
-          <span>All Platform Courses</span>
-          <span className="admin-tab-badge">
-            {allCourses.length}
-          </span>
-        </button>
-        <button
-          className={`admin-tab-btn ${activeTab === 'categories' ? 'active' : ''}`}
-          onClick={() => setActiveTab('categories')}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-            <line x1="7" y1="7" x2="7.01" y2="7"/>
-          </svg>
-          <span>Categories</span>
-          <span className="admin-tab-badge">
-            {categories.length}
-          </span>
-        </button>
-        <button
-          className={`admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
-          onClick={() => setActiveTab('users')}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-          <span>Users</span>
-          <span className="admin-tab-badge">
-            {users.length}
-          </span>
-        </button>
-      </div>
 
       {/* Tab 1: Pending Submissions */}
       {loading ? (
@@ -1184,6 +1273,229 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Tab 5: Transactions & Revenue Ledger */}
+      {!loading && activeTab === 'payments' && (
+        <div>
+          {/* Revenue & Payment Summary Metrics */}
+          <div className="admin-stats-grid" style={{ marginBottom: '1.75rem' }}>
+            <div className="admin-stat-card">
+              <div>
+                <div className="admin-stat-num" style={{ color: '#16a34a' }}>
+                  ₹{(paymentSummary.totalRevenue || 0).toLocaleString('en-IN')}
+                </div>
+                <div className="admin-stat-label">Total Realized Revenue</div>
+                <div className="admin-stat-subtext">From successful course enrollments</div>
+              </div>
+              <div className="admin-stat-icon stat-icon-published">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="1" x2="12" y2="23"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </div>
+            </div>
+
+            <div className="admin-stat-card">
+              <div>
+                <div className="admin-stat-num">{paymentSummary.successfulPayments || 0}</div>
+                <div className="admin-stat-label">Successful Payments</div>
+                <div className="admin-stat-subtext">Verified gateway transactions</div>
+              </div>
+              <div className="admin-stat-icon stat-icon-total">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+            </div>
+
+            <div className="admin-stat-card">
+              <div>
+                <div className="admin-stat-num" style={{ color: '#d97706' }}>
+                  {paymentSummary.pendingPayments || 0}
+                </div>
+                <div className="admin-stat-label">Created / In-Progress</div>
+                <div className="admin-stat-subtext">Awaiting checkout completion</div>
+              </div>
+              <div className="admin-stat-icon stat-icon-pending">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+            </div>
+
+            <div className="admin-stat-card">
+              <div>
+                <div className="admin-stat-num" style={{ color: '#dc2626' }}>
+                  {paymentSummary.failedPayments || 0}
+                </div>
+                <div className="admin-stat-label">Failed / Declined</div>
+                <div className="admin-stat-subtext">Payment attempt failed or cancelled</div>
+              </div>
+              <div className="admin-stat-icon" style={{ backgroundColor: '#fef2f2', color: '#dc2626' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="admin-filter-bar">
+            <div className="admin-filter-group">
+              <input
+                type="text"
+                placeholder="Search by order ID, payment ID, learner name, email, or course..."
+                value={paymentSearch}
+                onChange={(e) => setPaymentSearch(e.target.value)}
+                className="admin-search-input"
+                style={{ width: '420px' }}
+              />
+              {paymentSearch && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentSearch('')}
+                  style={{
+                    marginLeft: '-2.2rem',
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem'
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="admin-filter-group">
+              <div className="admin-status-segmented">
+                <button
+                  type="button"
+                  className={`segmented-btn ${paymentStatusFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setPaymentStatusFilter('all')}
+                >
+                  All ({payments.length})
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-btn ${paymentStatusFilter === 'paid' ? 'active' : ''}`}
+                  onClick={() => setPaymentStatusFilter('paid')}
+                >
+                  Paid ({paymentSummary.successfulPayments || 0})
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-btn ${paymentStatusFilter === 'created' ? 'active' : ''}`}
+                  onClick={() => setPaymentStatusFilter('created')}
+                >
+                  Created ({paymentSummary.pendingPayments || 0})
+                </button>
+                <button
+                  type="button"
+                  className={`segmented-btn ${paymentStatusFilter === 'failed' ? 'active' : ''}`}
+                  onClick={() => setPaymentStatusFilter('failed')}
+                >
+                  Failed ({paymentSummary.failedPayments || 0})
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Payments Table */}
+          <div className="admin-table-container">
+            <div className="admin-table-scroll">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Learner</th>
+                    <th>Course</th>
+                    <th>Amount</th>
+                    <th>Order & Payment IDs</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPayments.length === 0 ? (
+                    <tr>
+                      <td colSpan="6">
+                        <div className="admin-empty-state" style={{ padding: '3.5rem 1rem' }}>
+                          <div className="empty-state-icon">💳</div>
+                          <h4 className="empty-state-title">No transactions found</h4>
+                          <p className="empty-state-subtitle">
+                            {paymentSearch || paymentStatusFilter !== 'all'
+                              ? 'No payment records match your search or status filter.'
+                              : 'When students purchase paid courses via Razorpay, transaction receipts and revenue will appear here.'}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPayments.map((p) => {
+                      const statusClass =
+                        p.status === 'paid'
+                          ? 'status-active'
+                          : p.status === 'failed'
+                          ? 'status-rejected'
+                          : 'status-pending';
+
+                      const learnerName = p.user?.name || 'Learner';
+                      const learnerEmail = p.user?.email || 'N/A';
+                      const courseTitle = p.course?.title || 'Course';
+
+                      return (
+                        <tr key={p._id || p.orderId}>
+                          <td style={{ fontSize: '0.825rem', color: '#64748b', whiteSpace: 'nowrap' }}>
+                            {p.createdAt ? new Date(p.createdAt).toLocaleString() : 'Recent'}
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 600, color: '#0f172a' }}>{learnerName}</div>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{learnerEmail}</div>
+                          </td>
+                          <td style={{ maxWidth: '240px' }}>
+                            <div style={{ fontWeight: 500, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {courseTitle}
+                            </div>
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <strong style={{ color: p.status === 'paid' ? '#166534' : '#0f172a' }}>
+                              ₹{(p.amount || 0).toLocaleString('en-IN')}
+                            </strong>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                              <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#475569' }}>
+                                Ord: <strong>{p.orderId || 'N/A'}</strong>
+                              </span>
+                              {p.paymentId && (
+                                <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#2563eb' }}>
+                                  Pay: {p.paymentId}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <span className={`status-pill ${statusClass}`}>
+                              <span className="status-dot"></span>
+                              {p.status ? p.status.toUpperCase() : 'UNKNOWN'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Category Modal (Create / Edit) */}
       {categoryModal && (
         <div className="admin-modal-overlay">
@@ -1415,6 +1727,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      </main>
     </div>
   );
 }

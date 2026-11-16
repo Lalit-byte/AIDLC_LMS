@@ -64,15 +64,22 @@ export async function getCourseDetails(req, res, next) {
   try {
     const { slugOrId } = req.params;
 
-    const query = { status: 'published' };
-    if (mongoose.Types.ObjectId.isValid(slugOrId)) {
-      query.$or = [{ _id: slugOrId }, { slug: slugOrId }];
-    } else {
-      query.slug = slugOrId;
+    const baseQuery = mongoose.Types.ObjectId.isValid(slugOrId)
+      ? { $or: [{ _id: slugOrId }, { slug: slugOrId }] }
+      : { slug: slugOrId };
+
+    const course = await Course.findOne(baseQuery).populate('instructor', 'name email');
+    if (!course) {
+      throw ApiError.notFound('Course not found.');
     }
 
-    const course = await Course.findOne(query).populate('instructor', 'name email');
-    if (!course) {
+    const isOwnerOrAdmin = req.user && (
+      req.user.role === 'admin' ||
+      req.user.id?.toString() === course.instructor?._id?.toString() ||
+      req.user.id?.toString() === course.instructor?.toString()
+    );
+
+    if (course.status !== 'published' && !isOwnerOrAdmin) {
       throw ApiError.notFound('Course not found.');
     }
 
@@ -322,7 +329,11 @@ export async function updateCourse(req, res, next) {
 
 export async function getInstructorCourses(req, res, next) {
   try {
-    const courses = await Course.find({ instructor: req.user.id }).sort({ createdAt: -1 });
+    const filter = { instructor: req.user.id };
+    if (req.query.status) {
+      filter.status = req.query.status;
+    }
+    const courses = await Course.find(filter).sort({ createdAt: -1 });
 
     res.json({
       success: true,
@@ -338,7 +349,7 @@ export async function getInstructorCourses(req, res, next) {
 export async function getInstructorDashboard(req, res, next) {
   try {
     const instructorId = req.user.id;
-    const filter = req.user.role === 'admin' ? {} : { instructor: instructorId };
+    const filter = req.user.role === 'admin' && req.query.all === 'true' ? {} : { instructor: instructorId };
 
     const courses = await Course.find(filter).sort({ createdAt: -1 }).lean();
     const courseIds = courses.map((c) => c._id);
@@ -362,9 +373,35 @@ export async function getInstructorDashboard(req, res, next) {
 
     const totalEarnings = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
+    const enrollmentCountsByCourse = {};
+    for (const e of enrollments) {
+      const cId = (e.course?._id || e.course)?.toString();
+      if (cId) {
+        enrollmentCountsByCourse[cId] = (enrollmentCountsByCourse[cId] || 0) + 1;
+      }
+    }
+
+    const earningsByCourse = {};
+    for (const p of payments) {
+      const cId = p.course?.toString();
+      if (cId) {
+        earningsByCourse[cId] = (earningsByCourse[cId] || 0) + (p.amount || 0);
+      }
+    }
+
+    const mappedCourses = courses.map((c) => {
+      const cIdStr = (c._id || c.id)?.toString();
+      return {
+        ...c,
+        enrolledCount: enrollmentCountsByCourse[cIdStr] || 0,
+        totalEarnings: earningsByCourse[cIdStr] || 0
+      };
+    });
+
     const mappedEnrolments = enrollments.map((e, idx) => ({
       index: idx + 1,
       id: e._id,
+      courseId: (e.course?._id || e.course)?.toString(),
       studentName: e.user?.name || 'Student',
       studentEmail: e.user?.email || '',
       courseTitle: e.course?.title || 'Course',
@@ -380,7 +417,7 @@ export async function getInstructorDashboard(req, res, next) {
           totalCourses,
           totalEarnings
         },
-        courses,
+        courses: mappedCourses,
         latestEnrolments: mappedEnrolments.slice(0, 10),
         allEnrolments: mappedEnrolments
       }

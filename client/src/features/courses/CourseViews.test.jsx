@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { MemoryRouter } from 'react-router-dom';
+import { AuthContext } from '../../context/authContextBase.js';
 import CourseCard from './CourseCard.jsx';
 import CourseList from './CourseList.jsx';
 
@@ -62,5 +63,50 @@ describe('Course Views Component tests', () => {
     expect(html).toContain('Search courses by title, topic, or instructor');
     expect(html).toContain('All Prices');
     expect(html).toContain('Curated Curriculum');
+  });
+
+  it('CourseList hides hero, highlights, and CTA banner on /courses', () => {
+    const html = renderToString(
+      <MemoryRouter initialEntries={['/courses']}>
+        <CourseList showHero={false} />
+      </MemoryRouter>
+    );
+
+    expect(html).not.toContain('Master Tech Skills');
+    expect(html).not.toContain('Curated Curriculum');
+    expect(html).not.toContain('Transform Your Tech Career With OpenLMS');
+    expect(html).toContain('All Published Courses');
+    expect(html).toContain('Search courses by title, topic, or instructor');
+  });
+
+  it('CourseList shows CTA banner on home page but hides Get Started for Free button when user is logged in', () => {
+    const mockAuth = {
+      user: { name: 'Student Dan', role: 'student' },
+      isAuthenticated: true,
+      logout: () => {}
+    };
+
+    const html = renderToString(
+      <MemoryRouter initialEntries={['/']}>
+        <AuthContext.Provider value={mockAuth}>
+          <CourseList showHero={true} />
+        </AuthContext.Provider>
+      </MemoryRouter>
+    );
+
+    expect(html).toContain('Transform Your Tech Career With OpenLMS');
+    expect(html).not.toContain('Get Started for Free');
+    expect(html).toContain('Browse Free Courses');
+  });
+
+  it('CourseList shows Get Started for Free button when guest user is on home page', () => {
+    const html = renderToString(
+      <MemoryRouter initialEntries={['/']}>
+        <CourseList showHero={true} />
+      </MemoryRouter>
+    );
+
+    expect(html).toContain('Transform Your Tech Career With OpenLMS');
+    expect(html).toContain('Get Started for Free');
   });
 });

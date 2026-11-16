@@ -10,7 +10,8 @@ import {
   deleteCategory,
   getAdminUsers,
   createAdminUser,
-  deleteAdminUser
+  deleteAdminUser,
+  getAdminPayments
 } from '../controllers/adminController.js';
 import { authenticate, authorizeRoles } from '../middleware/auth.js';
 
@@ -34,5 +35,8 @@ router.delete('/categories/:id', deleteCategory);
 router.get('/users', getAdminUsers);
 router.post('/users', createAdminUser);
 router.delete('/users/:id', deleteAdminUser);
+
+// Payment & Revenue Ledger
+router.get('/payments', getAdminPayments);
 
 export default router;

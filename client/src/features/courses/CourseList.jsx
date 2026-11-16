@@ -1,10 +1,14 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/useAuth';
 import { api } from '../../services/api';
 import CourseCard from './CourseCard';
 import './CourseList.css';
 
-export default function CourseList() {
+export default function CourseList({ showHero }) {
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
+  const shouldShowHero = showHero !== undefined ? showHero : location.pathname === '/';
   const [courses, setCourses] = useState([]);
   const [categories, setCategories] = useState(['All']);
   const [loading, setLoading] = useState(true);
@@ -91,78 +95,91 @@ export default function CourseList() {
 
   return (
     <div className="container catalogue-container">
-      {/* Hero Section */}
-      <section className="catalogue-hero">
-        <div className="hero-pill-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-          </svg>
-          <span>Over 12,000+ Students Learning Today</span>
-        </div>
-        <h1>
-          Master Tech Skills. <span className="highlight-text">Build Real Projects.</span>
-        </h1>
-        <p>
-          Explore industry-curated courses taught by tech practitioners. Learn at your own pace with hands-on exercises, structured curriculum, and verified certificates.
-        </p>
-      </section>
+      {shouldShowHero ? (
+        <>
+          {/* Hero Section */}
+          <section className="catalogue-hero">
+            <div className="hero-pill-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              <span>Over 12,000+ Students Learning Today</span>
+            </div>
+            <h1>
+              Master Tech Skills. <span className="highlight-text">Build Real Projects.</span>
+            </h1>
+            <p>
+              Explore industry-curated courses taught by tech practitioners. Learn at your own pace with hands-on exercises, structured curriculum, and verified certificates.
+            </p>
+          </section>
 
-      {/* Feature Highlights */}
-      <section className="catalogue-highlights">
-        <div className="highlight-item">
-          <div className="highlight-icon-box icon-box-blue">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-              <path d="M6 6h10"/>
-              <path d="M6 10h10"/>
-            </svg>
-          </div>
-          <div>
-            <div className="highlight-title">Curated Curriculum</div>
-            <div className="highlight-desc">Practical, real-world skill paths</div>
-          </div>
-        </div>
+          {/* Feature Highlights */}
+          <section className="catalogue-highlights">
+            <div className="highlight-item">
+              <div className="highlight-icon-box icon-box-blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
+                  <path d="M6 6h10"/>
+                  <path d="M6 10h10"/>
+                </svg>
+              </div>
+              <div>
+                <div className="highlight-title">Curated Curriculum</div>
+                <div className="highlight-desc">Practical, real-world skill paths</div>
+              </div>
+            </div>
 
-        <div className="highlight-item">
-          <div className="highlight-icon-box icon-box-amber">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-          </div>
-          <div>
-            <div className="highlight-title">Interactive Learning</div>
-            <div className="highlight-desc">Self-paced video & text lessons</div>
-          </div>
-        </div>
+            <div className="highlight-item">
+              <div className="highlight-icon-box icon-box-amber">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+              </div>
+              <div>
+                <div className="highlight-title">Interactive Learning</div>
+                <div className="highlight-desc">Self-paced video & text lessons</div>
+              </div>
+            </div>
 
-        <div className="highlight-item">
-          <div className="highlight-icon-box icon-box-emerald">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </div>
-          <div>
-            <div className="highlight-title">Expert Mentors</div>
-            <div className="highlight-desc">Industry-active engineers & authors</div>
-          </div>
-        </div>
+            <div className="highlight-item">
+              <div className="highlight-icon-box icon-box-emerald">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </div>
+              <div>
+                <div className="highlight-title">Expert Mentors</div>
+                <div className="highlight-desc">Industry-active engineers & authors</div>
+              </div>
+            </div>
 
-        <div className="highlight-item">
-          <div className="highlight-icon-box icon-box-purple">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="6"/>
-              <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
-            </svg>
-          </div>
-          <div>
-            <div className="highlight-title">Lifetime Access</div>
-            <div className="highlight-desc">Track lesson progress anytime</div>
-          </div>
+            <div className="highlight-item">
+              <div className="highlight-icon-box icon-box-purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="6"/>
+                  <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+                </svg>
+              </div>
+              <div>
+                <div className="highlight-title">Lifetime Access</div>
+                <div className="highlight-desc">Track lesson progress anytime</div>
+              </div>
+            </div>
+          </section>
+        </>
+      ) : (
+        <div style={{ marginBottom: '1.75rem', paddingTop: '1.5rem' }}>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
+            All Published Courses
+          </h1>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9375rem', margin: 0 }}>
+            Browse and explore verified published courses across all disciplines.
+          </p>
         </div>
-      </section>
+      )}
 
       {/* Filter & Search Toolbar */}
       <section className="catalogue-toolbar-card">
@@ -309,30 +326,34 @@ export default function CourseList() {
         </section>
       )}
 
-      {/* Bottom CTA Banner */}
-      <section className="catalogue-cta-banner">
-        <div className="cta-content">
-          <h2>Transform Your Tech Career With OpenLMS</h2>
-          <p>
-            Start learning today with free lesson previews on every course, self-paced interactive curriculums, and verified certificates.
-          </p>
-          <div className="cta-actions">
-            <Link to="/register" className="cta-btn-primary">
-              Get Started for Free
-            </Link>
-            <button
-              type="button"
-              className="cta-btn-secondary"
-              onClick={() => {
-                setPricing('free');
-                window.scrollTo({ top: 350, behavior: 'smooth' });
-              }}
-            >
-              Browse Free Courses →
-            </button>
+      {/* Bottom CTA Banner (Hidden on /courses, Get Started button hidden when logged in) */}
+      {shouldShowHero && (
+        <section className="catalogue-cta-banner">
+          <div className="cta-content">
+            <h2>Transform Your Tech Career With OpenLMS</h2>
+            <p>
+              Start learning today with free lesson previews on every course, self-paced interactive curriculums, and verified certificates.
+            </p>
+            <div className="cta-actions">
+              {!isAuthenticated && (
+                <Link to="/register" className="cta-btn-primary">
+                  Get Started for Free
+                </Link>
+              )}
+              <button
+                type="button"
+                className="cta-btn-secondary"
+                onClick={() => {
+                  setPricing('free');
+                  window.scrollTo({ top: 350, behavior: 'smooth' });
+                }}
+              >
+                Browse Free Courses →
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

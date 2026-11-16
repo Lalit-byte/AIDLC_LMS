@@ -3,6 +3,7 @@ import { Course, slugify } from '../models/Course.js';
 import { Category } from '../models/Category.js';
 import { User } from '../models/User.js';
 import { Enrollment } from '../models/Enrollment.js';
+import { Payment } from '../models/Payment.js';
 import { ApiError } from '../utils/ApiError.js';
 
 export async function getAdminOverview(req, res, next) {
@@ -400,6 +401,41 @@ export async function deleteAdminUser(req, res, next) {
     res.json({
       success: true,
       message: `User "${targetUser.name}" (${targetUser.role}) deleted successfully.`
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getAdminPayments(req, res, next) {
+  try {
+    const payments = await Payment.find()
+      .sort({ createdAt: -1 })
+      .populate('user', 'name email')
+      .populate('course', 'title price slug')
+      .lean();
+
+    const summary = payments.reduce(
+      (acc, p) => {
+        if (p.status === 'paid') {
+          acc.totalRevenue += p.amount || 0;
+          acc.successfulPayments += 1;
+        } else if (p.status === 'failed') {
+          acc.failedPayments += 1;
+        } else {
+          acc.pendingPayments += 1;
+        }
+        return acc;
+      },
+      { totalRevenue: 0, successfulPayments: 0, pendingPayments: 0, failedPayments: 0 }
+    );
+
+    res.json({
+      success: true,
+      data: {
+        summary,
+        payments
+      }
     });
   } catch (err) {
     next(err);

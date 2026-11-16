@@ -28,15 +28,36 @@ describe('InstructorStudio Component', () => {
     expect(html).toContain('My Courses');
     expect(html).toContain('Student Enrolled');
 
-    // Stat cards from user specification
+    // Stat cards for instructors: shows Published Courses, Total Enrolments, and Total Revenue
     expect(html).toContain('Total Enrolments');
-    expect(html).toContain('Total Courses');
-    expect(html).toContain('Total Earnings');
+    expect(html).toContain('Published Courses');
+    expect(html).toContain('Total Revenue');
 
     // Latest enrolments table
     expect(html).toContain('Latest Enrolments');
     expect(html).toContain('Student Name');
     expect(html).toContain('Course Title');
+  });
+
+  it('renders total courses and total revenue cards when accessed by an admin', () => {
+    const mockAdminAuth = {
+      user: { name: 'Super Admin', role: 'admin' },
+      isAuthenticated: true,
+      loading: false,
+      logout: () => {}
+    };
+
+    const html = renderToString(
+      <MemoryRouter>
+        <AuthContext.Provider value={mockAdminAuth}>
+          <InstructorStudio />
+        </AuthContext.Provider>
+      </MemoryRouter>
+    );
+
+    expect(html).toContain('Total Enrolments');
+    expect(html).toContain('Total Courses');
+    expect(html).toContain('Total Revenue');
   });
 
   it('renders access denied screen when user is a student', () => {

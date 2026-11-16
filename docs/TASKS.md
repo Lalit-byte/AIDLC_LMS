@@ -44,8 +44,8 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 - [x] M2-04 Implement sections and lessons. ([#23](https://github.com/Lalit-byte/AIDLC_LMS/issues/23)) — `@tarun077-R`
 - [x] M2-05 Implement course submission and admin review/publishing. ([#24](https://github.com/Lalit-byte/AIDLC_LMS/issues/24)) — `@Lalit-byte`
 - [x] M2-06 Build public catalogue and course detail UI. ([#25](https://github.com/Lalit-byte/AIDLC_LMS/issues/25)) — `@tarun077-R`
-- [ ] M2-07 Build instructor course-management UI.
-- [ ] M2-08 Build admin course-review UI.
+- [x] M2-07 Build instructor course-management UI.
+- [x] M2-08 Build admin course-review UI.
 
 ## 5. Milestone 3 — Payments and enrollment
 
@@ -53,18 +53,18 @@ Follow the exact phase names and artifact requirements of the AIDLC version/harn
 - [x] M3-02 Implement server-side Razorpay order creation using database price. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
 - [x] M3-03 Implement backend checkout signature verification. ([#26](https://github.com/Lalit-byte/AIDLC_LMS/issues/26)) — `@Lalit-byte`
 - [x] M3-04 Implement webhook signature verification and idempotent event processing. ([#27](https://github.com/Lalit-byte/AIDLC_LMS/issues/27)) — `@Lalit-byte`
-- [ ] M3-05 Implement payment state and enrollment activation rules.
-- [ ] M3-06 Build checkout UI and payment result states.
-- [ ] M3-07 Test success, failure, cancel, invalid signature, duplicate webhook, and delayed webhook.
+- [x] M3-05 Implement payment state and enrollment activation rules.
+- [x] M3-06 Build checkout UI and payment result states.
+- [x] M3-07 Test success, failure, cancel, invalid signature, duplicate webhook, and delayed webhook.
 
 ## 6. Milestone 4 — Learning experience
 
 - [x] M4-01 Implement student enrollment list. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
 - [x] M4-02 Implement protected lesson/content access. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
 - [x] M4-03 Implement lesson completion and progress persistence. ([#28](https://github.com/Lalit-byte/AIDLC_LMS/issues/28)) — `@tarun077-R`
-- [ ] M4-04 Build student dashboard and course player.
-- [ ] M4-05 Add instructor dashboard basics.
-- [ ] M4-06 Add admin user/category/enrollment views.
+- [x] M4-04 Build student dashboard and course player.
+- [x] M4-05 Add instructor dashboard basics.
+- [x] M4-06 Add admin user/category/enrollment views.
 
 ## 7. Milestone 5 — QA and release
 
