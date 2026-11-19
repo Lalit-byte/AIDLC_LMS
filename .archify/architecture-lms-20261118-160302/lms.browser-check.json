@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "browser-check",
+  "evidenceKind": "automated-browser",
+  "status": "fail",
+  "visualReview": "not-requested",
+  "provenance": "current",
+  "deliveryReceiptId": "7b0a71e2-43db-485e-8b09-f9cf84ef1b36",
+  "artifact": {
+    "path": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+    "sha256": "6940388fcfb585f98f75f97d09516bbd734def2f3d1c0c0d56c8af12f2d30274",
+    "bytes": 849037
+  },
+  "state": {
+    "detail": "read",
+    "motion": "still"
+  },
+  "chrome": {
+    "status": "available",
+    "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/temp-cleanup-incomplete",
+      "severity": "error",
+      "message": "Browser cleanup could not safely finish; inspect the reported retained path.",
+      "subject": {
+        "artifact": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html"
+      },
+      "evidence": {
+        "reason": "Chrome did not exit; retained temporary profile \"C:\\Users\\SMD\\AppData\\Local\\Temp\\archify-visual-check-profile-AS0zds\".",
+        "retainedDirectory": "C:\\Users\\SMD\\AppData\\Local\\Temp\\archify-visual-check-profile-AS0zds"
+      },
+      "supportedFixes": [
+        "resolve the reported process or filesystem failure; verify directory ownership before manual cleanup"
+      ]
+    }
+  ],
+  "containment": {
+    "status": "fail",
+    "policy": "fit-or-reader-declared-readable-vertical-scroll",
+    "viewports": []
+  },
+  "themeStates": {
+    "status": "fail",
+    "viewports": []
+  },
+  "readability": {
+    "status": "fail",
+    "minimumProjectedNodeTextPx": 6,
+    "viewports": []
+  },
+  "viewerChrome": {
+    "status": "fail",
+    "viewports": []
+  },
+  "captures": {
+    "status": "not-requested",
+    "screenshots": [],
+    "contactSheet": null
+  },
+  "sidecars": {
+    "receipt": "lms.browser-check.json",
+    "files": []
+  },
+  "error": "Chrome did not exit; retained temporary profile \"C:\\Users\\SMD\\AppData\\Local\\Temp\\archify-visual-check-profile-AS0zds\"."
+}

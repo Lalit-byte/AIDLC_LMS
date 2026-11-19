@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "4b31894d-47d3-4d24-bddc-b988448eada5",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\candidate.json",
+  "output": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+  "specification": {
+    "sha256": "13ff163e415f1c23b531975f4c0c38c89235a994954ab660152ee960465a5e3f",
+    "bytes": 7037
+  },
+  "artifact": {
+    "sha256": "6940388fcfb585f98f75f97d09516bbd734def2f3d1c0c0d56c8af12f2d30274",
+    "bytes": 849037
+  }
+}

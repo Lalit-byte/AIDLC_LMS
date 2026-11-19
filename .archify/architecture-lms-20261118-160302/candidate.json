@@ -1,0 +1,289 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "AIDLC LMS Architecture",
+    "output": ".archify/architecture-lms-20261118-160302/lms.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Lalit-byte/AIDLC_LMS.git",
+      "provider": "github",
+      "link_mode": "web",
+      "revision": "784734e25ef2dd13523ecf940ceee0e1a4a12c45"
+    }
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "Users & Roles",
+      "sublabel": "Students / Instructors",
+      "icon": "person",
+      "pos": [40, 200],
+      "size": [140, 60]
+    },
+    {
+      "id": "spa",
+      "type": "frontend",
+      "label": "React Client",
+      "sublabel": "Vite SPA :5173",
+      "icon": "frontend",
+      "pos": [250, 200],
+      "size": [130, 60],
+      "sources": [
+        {
+          "path": "client/src/app/AppRouter.jsx",
+          "line": 15,
+          "end_line": 38,
+          "label": "AppRouter"
+        },
+        {
+          "path": "client/src/services/api.js",
+          "line": 4,
+          "end_line": 6,
+          "label": "API Client"
+        }
+      ]
+    },
+    {
+      "id": "auth",
+      "type": "security",
+      "label": "Auth & RBAC",
+      "sublabel": "JWT + bcrypt",
+      "tag": "Bearer Token",
+      "icon": "security",
+      "pos": [460, 70],
+      "size": [140, 60],
+      "sources": [
+        {
+          "path": "server/src/middleware/auth.js",
+          "line": 8,
+          "end_line": 29,
+          "label": "authenticate middleware"
+        },
+        {
+          "path": "server/src/utils/token.js",
+          "line": 1,
+          "end_line": 12,
+          "label": "verifyToken helper"
+        }
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Express API Gateway",
+      "sublabel": "Node.js REST :5000",
+      "icon": "backend",
+      "pos": [460, 200],
+      "size": [140, 60],
+      "sources": [
+        {
+          "path": "server/src/app.js",
+          "line": 13,
+          "end_line": 55,
+          "label": "createApp & routes"
+        },
+        {
+          "path": "server/src/server.js",
+          "line": 38,
+          "end_line": 50,
+          "label": "server listener"
+        }
+      ]
+    },
+    {
+      "id": "services",
+      "type": "backend",
+      "label": "LMS Core Services",
+      "sublabel": "Courses & Enrollment",
+      "icon": "backend",
+      "pos": [460, 330],
+      "size": [140, 60],
+      "sources": [
+        {
+          "path": "server/src/controllers/courseController.js",
+          "line": 8,
+          "end_line": 30,
+          "label": "getPublicCourses"
+        },
+        {
+          "path": "server/src/controllers/enrollmentController.js",
+          "line": 16,
+          "end_line": 35,
+          "label": "getMyCourses"
+        }
+      ]
+    },
+    {
+      "id": "payments",
+      "type": "backend",
+      "label": "Payment Processor",
+      "sublabel": "Orders & Verification",
+      "icon": "backend",
+      "pos": [730, 200],
+      "size": [140, 60],
+      "sources": [
+        {
+          "path": "server/src/controllers/paymentController.js",
+          "line": 9,
+          "end_line": 35,
+          "label": "createPaymentOrder"
+        },
+        {
+          "path": "server/src/config/razorpay.js",
+          "line": 6,
+          "end_line": 25,
+          "label": "Razorpay client"
+        }
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "MongoDB",
+      "sublabel": "Mongoose ODM",
+      "icon": "database",
+      "pos": [730, 330],
+      "size": [140, 60],
+      "sources": [
+        {
+          "path": "server/src/config/db.js",
+          "line": 11,
+          "end_line": 30,
+          "label": "connectDB"
+        },
+        {
+          "path": "server/src/models/Course.js",
+          "line": 37,
+          "end_line": 70,
+          "label": "lessonSchema"
+        }
+      ]
+    },
+    {
+      "id": "razorpay",
+      "type": "external",
+      "label": "Razorpay Gateway",
+      "sublabel": "Orders API & Webhook",
+      "icon": "external",
+      "pos": [980, 200],
+      "size": [140, 60]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "LMS Deployment Environment",
+      "wraps": ["spa", "auth", "api", "services", "payments", "db"]
+    },
+    {
+      "kind": "security-group",
+      "label": "Backend & Data Network (:5000 / :27017)",
+      "wraps": ["auth", "api", "services", "payments", "db"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-to-spa",
+      "from": "users",
+      "to": "spa",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "spa-to-api",
+      "from": "spa",
+      "to": "api",
+      "label": "REST /api",
+      "variant": "emphasis"
+    },
+    {
+      "id": "api-to-auth",
+      "from": "api",
+      "to": "auth",
+      "label": "verify token",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "api-to-services",
+      "from": "api",
+      "to": "services",
+      "label": "dispatch",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-to-payments",
+      "from": "api",
+      "to": "payments",
+      "label": "order & webhook",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "payments-to-razorpay",
+      "from": "payments",
+      "to": "razorpay",
+      "label": "Orders API",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "services-to-db",
+      "from": "services",
+      "to": "db",
+      "label": "Mongoose queries",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "payments-to-db",
+      "from": "payments",
+      "to": "db",
+      "label": "record payment",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Frontend Application",
+      "items": [
+        "React 18 SPA bundled with Vite and React Router",
+        "Client-side JWT state management via AuthContext",
+        "Lesson player with embedded video player and markdown view"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "API & Business Logic",
+      "items": [
+        "Express REST API with Helmet security headers and CORS",
+        "Modular routing: auth, courses, enrollments, payments, admin",
+        "Stateless JWT authentication and role-based authorization"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Payments & Integration",
+      "items": [
+        "Razorpay Orders API integration for secure checkout",
+        "HMAC-SHA256 signature verification for orders and webhooks",
+        "Idempotent webhook handling with WebhookEvent model"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Persistence Tier",
+      "items": [
+        "MongoDB database accessed via Mongoose ODM",
+        "Schemas for User, Course, Category, Enrollment, Payment",
+        "Authoritative price validation preventing client-side tampering"
+      ]
+    }
+  ]
+}

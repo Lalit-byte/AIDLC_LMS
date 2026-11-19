@@ -1,0 +1,386 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-11-18T10:41:33.656Z",
+  "specification": {
+    "path": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\candidate.json",
+    "sha256": "13ff163e415f1c23b531975f4c0c38c89235a994954ab660152ee960465a5e3f",
+    "bytes": 7037
+  },
+  "artifact": {
+    "path": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+    "sha256": "6940388fcfb585f98f75f97d09516bbd734def2f3d1c0c0d56c8af12f2d30274",
+    "bytes": 849037
+  },
+  "stages": {
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.agents\\skills\\archify\\bin\\archify.mjs",
+        "deliver",
+        "architecture",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\candidate.json",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "13ff163e415f1c23b531975f4c0c38c89235a994954ab660152ee960465a5e3f",
+          "bytes": 7037
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 1184,
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.agents\\skills\\archify\\bin\\archify.mjs",
+        "deliver",
+        "architecture",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\candidate.json",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "7b0a71e2-43db-485e-8b09-f9cf84ef1b36",
+        "ok": true,
+        "command": "deliver",
+        "type": "architecture",
+        "input": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\candidate.json",
+        "output": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+        "specification": {
+          "sha256": "13ff163e415f1c23b531975f4c0c38c89235a994954ab660152ee960465a5e3f",
+          "bytes": 7037
+        },
+        "artifact": {
+          "sha256": "6940388fcfb585f98f75f97d09516bbd734def2f3d1c0c0d56c8af12f2d30274",
+          "bytes": 849037
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "evidence": {
+          "verified": true,
+          "repository": "https://github.com/Lalit-byte/AIDLC_LMS",
+          "revision": "784734e25ef2dd13523ecf940ceee0e1a4a12c45",
+          "references": 12
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 300,
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.agents\\skills\\archify\\bin\\archify.mjs",
+        "check",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+        "artifact": {
+          "sha256": "6940388fcfb585f98f75f97d09516bbd734def2f3d1c0c0d56c8af12f2d30274",
+          "bytes": 849037
+        },
+        "checks": [
+          {
+            "name": "single_svg",
+            "ok": true,
+            "details": [
+              "found 1 <svg> block(s)"
+            ]
+          },
+          {
+            "name": "finite_svg",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "orthogonal_arrows",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "label_route_clearance",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_crossings",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_corridors",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "container_border_runs",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "route_rhythm",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "legend_clearance",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "metrics": {
+            "properCrossings": 0,
+            "resolvedCrossovers": 0,
+            "ambiguousCorridors": 0,
+            "arrowheadCollisions": 0,
+            "containerBorderRuns": 0,
+            "labelRouteClearanceIssues": 0,
+            "labelCanvasOverflowIssues": 0,
+            "minLabelRouteClearance": 51.1,
+            "desktopReadabilityIssues": 0,
+            "viewportHeightIssues": 0,
+            "minProjectedNodeTextPx": 7.5,
+            "maxBends": 0,
+            "routesOverSuggestedBends": 0,
+            "maxStretch": 1,
+            "routesOverSuggestedStretch": 0,
+            "minSegmentPx": 70,
+            "minInteriorSegmentPx": null,
+            "shortSegmentCount": 0,
+            "shortEndpointSegmentCount": 0,
+            "shortInteriorSegmentCount": 0,
+            "microSegmentCount": 0
+          },
+          "suggestedLimits": {
+            "bendsPerRelationship": 2,
+            "stretch": 1.35,
+            "segmentPx": 16,
+            "microSegmentPx": 8
+          },
+          "routeReview": {
+            "crossings": [],
+            "detours": []
+          },
+          "leadingSpace": {
+            "measured": true,
+            "emptyTopPx": 40,
+            "emptyTopRatio": 0.084,
+            "occupiedTop": 40,
+            "viewBoxTop": 0,
+            "canvasHeight": 478,
+            "typicalNodeHeight": 60,
+            "reviewSuggested": false
+          },
+          "desktopReadability": {
+            "budgetBasis": "recognized-declared-wide",
+            "readerContract": "declared-wide-v1",
+            "availableDiagramWidth": 1087.5,
+            "actualBudgetPx": 1087.5,
+            "actualReaderWidth": 1117.5,
+            "desiredReaderWidth": 1117.5,
+            "viewportCap": 1376,
+            "limit": "source-size",
+            "requestedTargetPx": 7.5,
+            "requestedTargetMet": true,
+            "hardFloorPx": 6,
+            "hardFloorMet": true,
+            "minimumOwner": {
+              "kind": "edge",
+              "id": "users-to-spa",
+              "from": "users",
+              "to": "spa"
+            },
+            "minimumSourceTextPx": 8,
+            "minimumProjectedTextPx": 7.5,
+            "semanticTextCount": 26
+          },
+          "issues": []
+        },
+        "provenance": "current",
+        "deliveryReceiptId": "7b0a71e2-43db-485e-8b09-f9cf84ef1b36"
+      }
+    },
+    "browser-check": {
+      "status": "fail",
+      "exitCode": 1,
+      "durationMs": 10994,
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.agents\\skills\\archify\\bin\\archify.mjs",
+        "browser-check",
+        "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+        "--json",
+        "--require-provenance"
+      ],
+      "execution": "in-process",
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": false,
+        "command": "browser-check",
+        "evidenceKind": "automated-browser",
+        "status": "fail",
+        "visualReview": "not-requested",
+        "provenance": "current",
+        "deliveryReceiptId": "7b0a71e2-43db-485e-8b09-f9cf84ef1b36",
+        "artifact": {
+          "path": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+          "sha256": "6940388fcfb585f98f75f97d09516bbd734def2f3d1c0c0d56c8af12f2d30274",
+          "bytes": 849037
+        },
+        "state": {
+          "detail": "read",
+          "motion": "still"
+        },
+        "chrome": {
+          "status": "available",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        },
+        "diagnostics": [
+          {
+            "code": "viewer/temp-cleanup-incomplete",
+            "severity": "error",
+            "message": "Browser cleanup could not safely finish; inspect the reported retained path.",
+            "subject": {
+              "artifact": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html"
+            },
+            "evidence": {
+              "reason": "Chrome did not exit; retained temporary profile \"C:\\Users\\SMD\\AppData\\Local\\Temp\\archify-visual-check-profile-AS0zds\".",
+              "retainedDirectory": "C:\\Users\\SMD\\AppData\\Local\\Temp\\archify-visual-check-profile-AS0zds"
+            },
+            "supportedFixes": [
+              "resolve the reported process or filesystem failure; verify directory ownership before manual cleanup"
+            ]
+          }
+        ],
+        "containment": {
+          "status": "fail",
+          "policy": "fit-or-reader-declared-readable-vertical-scroll",
+          "viewports": []
+        },
+        "themeStates": {
+          "status": "fail",
+          "viewports": []
+        },
+        "readability": {
+          "status": "fail",
+          "minimumProjectedNodeTextPx": 6,
+          "viewports": []
+        },
+        "viewerChrome": {
+          "status": "fail",
+          "viewports": []
+        },
+        "captures": {
+          "status": "not-requested",
+          "screenshots": [],
+          "contactSheet": null
+        },
+        "sidecars": {
+          "receipt": "lms.browser-check.json",
+          "files": []
+        },
+        "error": "Chrome did not exit; retained temporary profile \"C:\\Users\\SMD\\AppData\\Local\\Temp\\archify-visual-check-profile-AS0zds\"."
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  },
+  "diagnostics": [
+    {
+      "code": "viewer/temp-cleanup-incomplete",
+      "severity": "error",
+      "message": "Browser cleanup could not safely finish; inspect the reported retained path.",
+      "subject": {
+        "artifact": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html"
+      },
+      "evidence": {
+        "reason": "Chrome did not exit; retained temporary profile \"C:\\Users\\SMD\\AppData\\Local\\Temp\\archify-visual-check-profile-AS0zds\".",
+        "retainedDirectory": "C:\\Users\\SMD\\AppData\\Local\\Temp\\archify-visual-check-profile-AS0zds"
+      },
+      "supportedFixes": [
+        "resolve the reported process or filesystem failure; verify directory ownership before manual cleanup"
+      ]
+    }
+  ],
+  "evidence": {
+    "receipt": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.finalize.json",
+    "summaryReceipt": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.finalize-summary.json",
+    "browserCheckReceipt": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "failedStage": "browser-check",
+  "finishedAt": "2026-11-18T10:41:47.032Z",
+  "durationMs": 13375,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-18T10:40:43.347Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

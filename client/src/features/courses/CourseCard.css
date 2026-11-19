@@ -1,16 +1,16 @@
 .course-card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-lg, 12px);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
   display: flex;
   flex-direction: column;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
 .course-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   border-color: var(--color-border-hover);
 }
@@ -21,6 +21,7 @@
   aspect-ratio: 16 / 9;
   background-color: var(--color-surface-hover);
   overflow: hidden;
+  border-bottom: 1px solid var(--color-border-subtle, #f1f5f9);
 }
 
 .course-thumbnail {
@@ -32,9 +33,9 @@
 
 .course-thumbnail-wrapper .badge {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  box-shadow: var(--shadow-sm);
+  top: 10px;
+  right: 10px;
+  box-shadow: var(--shadow-xs);
 }
 
 .course-body {
@@ -53,47 +54,49 @@
 }
 
 .course-category {
-  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.075em;
   color: var(--color-primary);
 }
 
 .course-lessons-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.3rem;
   font-size: 0.75rem;
   color: var(--color-text-muted);
   font-weight: 500;
 }
 
 .course-title {
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   color: var(--color-text-main);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.35rem;
   line-height: 1.4;
+  letter-spacing: -0.015em;
 }
 
 .course-instructor {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.65rem;
   font-weight: 500;
 }
 
 .course-description {
   font-size: 0.875rem;
-  color: var(--color-text-muted);
+  color: #475569;
   margin-bottom: 1.25rem;
   flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .course-footer {
@@ -101,12 +104,14 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 1rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-subtle, #f1f5f9);
   margin-top: auto;
 }
 
 .course-price {
+  font-family: var(--font-mono);
   font-size: 1.125rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-text-main);
+  letter-spacing: -0.02em;
 }

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "fail",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\candidate.json",
+    "sha256": "13ff163e415f1c23b531975f4c0c38c89235a994954ab660152ee960465a5e3f",
+    "bytes": 7037
+  },
+  "artifact": {
+    "path": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html",
+    "sha256": "6940388fcfb585f98f75f97d09516bbd734def2f3d1c0c0d56c8af12f2d30274",
+    "bytes": 849037
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "fail"
+  },
+  "failedStage": "browser-check",
+  "diagnostics": [
+    {
+      "code": "viewer/temp-cleanup-incomplete",
+      "severity": "error",
+      "message": "Browser cleanup could not safely finish; inspect the reported retained path.",
+      "subject": {
+        "artifact": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.html"
+      },
+      "evidence": {
+        "reason": "Chrome did not exit; retained temporary profile \"C:\\Users\\SMD\\AppData\\Local\\Temp\\archify-visual-check-profile-AS0zds\".",
+        "retainedDirectory": "C:\\Users\\SMD\\AppData\\Local\\Temp\\archify-visual-check-profile-AS0zds"
+      },
+      "supportedFixes": [
+        "resolve the reported process or filesystem failure; verify directory ownership before manual cleanup"
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.finalize.json",
+    "summaryReceipt": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.finalize-summary.json",
+    "browserCheckReceipt": "C:\\Users\\SMD\\OneDrive\\Desktop\\AIDLC_LMS\\.archify\\architecture-lms-20261118-160302\\lms.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-18T10:40:43.347Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 13375,
+  "browserCheck": {
+    "requested": true,
+    "ran": false
+  }
+}

@@ -100,16 +100,14 @@ export default function CourseList({ showHero }) {
           {/* Hero Section */}
           <section className="catalogue-hero">
             <div className="hero-pill-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-              </svg>
-              <span>Over 12,000+ Students Learning Today</span>
+              <span className="hero-pill-dot" aria-hidden="true" />
+              <span>Technical Curriculum & Real Projects</span>
             </div>
             <h1>
               Master Tech Skills. <span className="highlight-text">Build Real Projects.</span>
             </h1>
             <p>
-              Explore industry-curated courses taught by tech practitioners. Learn at your own pace with hands-on exercises, structured curriculum, and verified certificates.
+              Industry-curated courses designed by practicing engineers. Structured lesson paths, verified code exercises, and comprehensive skill progression.
             </p>
           </section>
 
