@@ -100,16 +100,19 @@ export default function CourseList({ showHero }) {
         <>
           {/* Hero Section */}
           <section className="catalogue-hero">
-            <div className="hero-pill-badge">
-              <span className="hero-pill-dot" aria-hidden="true" />
-              <span>Technical Curriculum & Real Projects</span>
+            <img
+              src="/hero-banner.jpg"
+              alt="Online learning student"
+              className="catalogue-hero-bg"
+            />
+            <div className="catalogue-hero-content">
+              <h1>
+                Master Tech Skills. <span className="highlight-text">Build Real Projects.</span>
+              </h1>
+              <p>
+                Industry-curated courses designed by practicing engineers. Structured lesson paths, verified code exercises, and comprehensive skill progression.
+              </p>
             </div>
-            <h1>
-              Master Tech Skills. <span className="highlight-text">Build Real Projects.</span>
-            </h1>
-            <p>
-              Industry-curated courses designed by practicing engineers. Structured lesson paths, verified code exercises, and comprehensive skill progression.
-            </p>
           </section>
 
           {/* Feature Highlights */}

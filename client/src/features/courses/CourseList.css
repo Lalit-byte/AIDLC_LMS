@@ -6,29 +6,57 @@
 
 /* Hero Section */
 .catalogue-hero {
-  padding: 4rem 1.5rem 2.5rem;
-  text-align: center;
   position: relative;
-  background-color: var(--color-surface);
+  min-height: 420px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl, 16px);
   margin-top: 1.5rem;
   margin-bottom: 2rem;
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background-color: #000000;
+}
+
+.catalogue-hero-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  z-index: 1;
+}
+
+.catalogue-hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 4.5rem 1.75rem 2.25rem;
+  text-align: center;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.5) 60%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-pill-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #f8fafc;
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.35rem 0.85rem;
   border-radius: var(--radius-full);
   margin-bottom: 1.25rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   letter-spacing: 0.02em;
 }
 
@@ -36,32 +64,34 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: var(--color-success);
+  background-color: #34d399;
   display: inline-block;
-  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.3);
 }
 
 .catalogue-hero h1 {
-  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-size: clamp(1.875rem, 3.5vw, 2.5rem);
   font-weight: 700;
-  margin-bottom: 1rem;
-  color: var(--color-text-main);
+  margin-bottom: 0.75rem;
+  color: #ffffff;
   letter-spacing: -0.035em;
   line-height: 1.15;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
 }
 
 .catalogue-hero h1 .highlight-text {
-  color: var(--color-primary);
+  color: #38bdf8;
   background: none;
   -webkit-text-fill-color: initial;
 }
 
 .catalogue-hero p {
   font-size: 1.0625rem;
-  color: var(--color-text-muted);
-  max-width: 620px;
+  color: #f1f5f9;
+  max-width: 640px;
   margin: 0 auto;
   line-height: 1.6;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85);
 }
 
 /* Highlights Grid */
