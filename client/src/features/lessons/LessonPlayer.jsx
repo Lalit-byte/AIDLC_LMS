@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { FiPlay, FiFileText, FiCheck } from 'react-icons/fi';
 import { api, formatEmbedUrl, isDirectVideo } from '../../services/api';
 import './LessonPlayer.css';
 
@@ -96,9 +97,10 @@ export default function LessonPlayer() {
             <button
               className={`btn ${isCompleted ? 'btn-outline' : 'btn-primary'}`}
               onClick={handleToggleComplete}
-              style={{ gap: '0.35rem' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
-              <span>{isCompleted ? '✓ Completed' : 'Mark as Complete'}</span>
+              {isCompleted ? <FiCheck size={16} /> : null}
+              <span>{isCompleted ? 'Completed' : 'Mark as Complete'}</span>
             </button>
 
             <button
@@ -178,10 +180,15 @@ export default function LessonPlayer() {
                       className={`sidebar-lesson-item ${active ? 'active' : ''}`}
                       onClick={() => setActiveLesson(lesson)}
                     >
-                      <span>
-                        {lesson.type === 'video' ? '🎬' : '📄'} {lesson.title}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                        {lesson.type === 'video' ? (
+                          <FiPlay size={13} style={{ color: '#2563eb', flexShrink: 0 }} />
+                        ) : (
+                          <FiFileText size={13} style={{ color: '#059669', flexShrink: 0 }} />
+                        )}
+                        <span>{lesson.title}</span>
                       </span>
-                      {completed && <span className="completed-check">✓</span>}
+                      {completed && <span className="completed-check"><FiCheck size={13} /></span>}
                     </button>
                   );
                 })}

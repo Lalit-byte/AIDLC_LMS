@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { FiPlay, FiFileText } from 'react-icons/fi';
 import { api } from '../../services/api';
 import CheckoutModal from '../checkout/CheckoutModal';
 import LessonPreviewModal from '../lessons/LessonPreviewModal';
@@ -112,7 +113,13 @@ export default function CourseDetails() {
                           return (
                             <li key={lessonKey} className="lesson-row">
                               <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ marginRight: '0.5rem' }}>{lesson.type === 'video' ? '🎬' : '📄'}</span>
+                                <span style={{ marginRight: '0.5rem', display: 'inline-flex', alignItems: 'center' }}>
+                                  {lesson.type === 'video' ? (
+                                    <FiPlay size={14} style={{ color: '#2563eb' }} />
+                                  ) : (
+                                    <FiFileText size={14} style={{ color: '#059669' }} />
+                                  )}
+                                </span>
                                 <span>{lesson.title}</span>
                                 {lesson.isPreview && (
                                   <button

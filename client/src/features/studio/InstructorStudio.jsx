@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { FiLock, FiHome, FiPlusSquare, FiBook, FiBookOpen, FiUsers, FiTrendingUp, FiPlay, FiFileText, FiX } from 'react-icons/fi';
 import { useAuth } from '../../context/useAuth';
 import { api, formatEmbedUrl } from '../../services/api';
 import './InstructorStudio.css';
@@ -78,7 +79,9 @@ export default function InstructorStudio() {
     return (
       <div className="container" style={{ padding: '5rem 1.5rem', textAlign: 'center' }}>
         <div style={{ maxWidth: '480px', margin: '0 auto', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '2.5rem', boxShadow: 'var(--shadow-sm)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
+          <div style={{ marginBottom: '1rem', color: 'var(--color-primary)' }}>
+            <FiLock size={48} />
+          </div>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Instructor Access Only</h2>
           <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', fontSize: '0.9375rem', lineHeight: 1.5 }}>
             Instructor Studio is reserved for teachers and course instructors. Students do not have access to this area.
@@ -244,10 +247,7 @@ export default function InstructorStudio() {
             onClick={() => setActiveTab('dashboard')}
           >
             <span className="educator-nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
+              <FiHome size={20} />
             </span>
             <span>Dashboard</span>
           </button>
@@ -257,11 +257,7 @@ export default function InstructorStudio() {
             onClick={handleStartNewCourse}
           >
             <span className="educator-nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="4" />
-                <line x1="12" y1="8" x2="12" y2="16" />
-                <line x1="8" y1="12" x2="16" y2="12" />
-              </svg>
+              <FiPlusSquare size={20} />
             </span>
             <span>Add Course</span>
           </button>
@@ -271,10 +267,7 @@ export default function InstructorStudio() {
             onClick={() => setActiveTab('my_courses')}
           >
             <span className="educator-nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-              </svg>
+              <FiBook size={20} />
             </span>
             <span>My Courses</span>
           </button>
@@ -284,10 +277,7 @@ export default function InstructorStudio() {
             onClick={() => setActiveTab('student_enrolled')}
           >
             <span className="educator-nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+              <FiUsers size={20} />
             </span>
             <span>Student Enrolled</span>
           </button>
@@ -310,10 +300,7 @@ export default function InstructorStudio() {
             <div className="educator-stats-grid">
               <div className="educator-stat-card">
                 <div className="stat-icon-wrapper stat-icon-blue">
-                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="8" r="4" fill="#3b82f6" />
-                    <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" fill="#60a5fa" />
-                  </svg>
+                  <FiUsers size={28} color="#2563eb" />
                 </div>
                 <div>
                   <div className="stat-value">{stats.totalEnrolments}</div>
@@ -323,12 +310,7 @@ export default function InstructorStudio() {
 
               <div className="educator-stat-card">
                 <div className="stat-icon-wrapper stat-icon-cyan">
-                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                    <circle cx="11" cy="11" r="3" stroke="#f59e0b" fill="#fef3c7" />
-                    <line x1="13.5" y1="13.5" x2="16" y2="16" stroke="#f59e0b" />
-                  </svg>
+                  <FiBookOpen size={28} color="#2563eb" />
                 </div>
                 <div>
                   <div className="stat-value">
@@ -342,11 +324,7 @@ export default function InstructorStudio() {
 
               <div className="educator-stat-card">
                 <div className="stat-icon-wrapper stat-icon-money">
-                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none">
-                    <path d="M19 14c0 3.3-3.1 6-7 6s-7-2.7-7-6c0-2.8 2.2-5.1 5.2-5.8L9 6h6l-1.2 2.2c3 0.7 5.2 3 5.2 5.8z" fill="#3b82f6" />
-                    <circle cx="12" cy="14" r="3" fill="#ffffff" />
-                    <text x="12" y="16.5" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#2563eb">₹</text>
-                  </svg>
+                  <FiTrendingUp size={28} color="#2563eb" />
                 </div>
                 <div>
                   <div className="stat-value">₹{(stats.totalEarnings || 0).toLocaleString('en-IN')}</div>
@@ -513,16 +491,23 @@ export default function InstructorStudio() {
                           const lsnId = String(lsn.id || lsn._id);
                           return (
                             <div key={lsnId} className="builder-lesson-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span>{lsn.type === 'video' ? '🎬' : '📄'} {lsn.title} ({lsn.duration || 'N/A'})</span>
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                                {lsn.type === 'video' ? (
+                                  <FiPlay size={13} style={{ color: '#2563eb' }} />
+                                ) : (
+                                  <FiFileText size={13} style={{ color: '#059669' }} />
+                                )}
+                                <span>{lsn.title} ({lsn.duration || 'N/A'})</span>
+                              </span>
                               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                                 {lsn.isPreview && <span className="badge badge-published" style={{ fontSize: '0.7rem' }}>Preview</span>}
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteLesson(secId, lsnId)}
-                                  style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '0.85rem' }}
+                                  style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
                                   title="Remove lesson"
                                 >
-                                  ✕
+                                  <FiX size={14} />
                                 </button>
                               </div>
                             </div>

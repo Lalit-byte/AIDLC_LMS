@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { FiBookOpen } from 'react-icons/fi';
 import './CourseCard.css';
 
 export default function CourseCard({ course, actionLabel, actionUrl }) {
@@ -41,11 +42,7 @@ export default function CourseCard({ course, actionLabel, actionUrl }) {
           <span className="course-category">{categoryName || 'General'}</span>
           {lessonsCount ? (
             <span className="course-lessons-badge">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                <path d="M6 6h10"/>
-                <path d="M6 10h10"/>
-              </svg>
+              <FiBookOpen size={12} style={{ marginRight: '0.25rem' }} />
               {lessonsCount} lessons
             </span>
           ) : null}

@@ -1,5 +1,27 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  FiLayers,
+  FiClock,
+  FiGrid,
+  FiTag,
+  FiUsers,
+  FiDollarSign,
+  FiBookOpen,
+  FiEdit3,
+  FiCompass,
+  FiCheckCircle,
+  FiUser,
+  FiCalendar,
+  FiPlay,
+  FiFileText,
+  FiCheck,
+  FiX,
+  FiExternalLink,
+  FiXCircle,
+  FiShield,
+  FiLock
+} from 'react-icons/fi';
 import { useAuth } from '../../context/useAuth';
 import { api } from '../../services/api';
 import './AdminDashboard.css';
@@ -354,7 +376,9 @@ export default function AdminDashboard() {
     return (
       <div className="container" style={{ padding: '5rem 1.5rem', textAlign: 'center' }}>
         <div style={{ maxWidth: '460px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '2.5rem 1.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🛡️</div>
+          <div style={{ marginBottom: '1rem', color: '#2563eb' }}>
+            <FiShield size={42} />
+          </div>
           <h2 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0f172a' }}>Admin Authentication Required</h2>
           <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.875rem', lineHeight: 1.5 }}>
             Please sign in with an Administrator account to view and manage platform courses.
@@ -372,7 +396,9 @@ export default function AdminDashboard() {
     return (
       <div className="container" style={{ padding: '5rem 1.5rem', textAlign: 'center' }}>
         <div style={{ maxWidth: '480px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '2.5rem 1.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔒</div>
+          <div style={{ marginBottom: '1rem', color: '#2563eb' }}>
+            <FiLock size={42} />
+          </div>
           <h2 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0f172a' }}>Administrator Access Only</h2>
           <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.875rem', lineHeight: 1.5 }}>
             You are currently logged in as a <strong>{user?.role || 'user'}</strong> ({user?.name}). The Admin Portal is restricted to platform administrators.
@@ -397,9 +423,7 @@ export default function AdminDashboard() {
         <div className="admin-sidebar-header">
           <div className="admin-site-brand">
             <div className="admin-site-logo">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
+              <FiLayers size={22} />
             </div>
             <div className="admin-site-info">
               <span className="admin-site-name">OpenLMS Platform</span>
@@ -420,10 +444,7 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('pending')}
           >
             <span className="admin-sidebar-btn-content">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
+              <FiClock size={16} />
               <span>Pending Submissions</span>
             </span>
             <span className={`admin-tab-badge ${pendingCourses.length > 0 ? 'badge-highlight' : ''}`}>
@@ -437,12 +458,7 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('all_courses')}
           >
             <span className="admin-sidebar-btn-content">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-              </svg>
+              <FiGrid size={16} />
               <span>All Platform Courses</span>
             </span>
             <span className="admin-tab-badge">
@@ -456,10 +472,7 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('categories')}
           >
             <span className="admin-sidebar-btn-content">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                <line x1="7" y1="7" x2="7.01" y2="7"/>
-              </svg>
+              <FiTag size={16} />
               <span>Categories</span>
             </span>
             <span className="admin-tab-badge">
@@ -473,12 +486,7 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('users')}
           >
             <span className="admin-sidebar-btn-content">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
+              <FiUsers size={16} />
               <span>Users</span>
             </span>
             <span className="admin-tab-badge">
@@ -492,10 +500,7 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('payments')}
           >
             <span className="admin-sidebar-btn-content">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="1" x2="12" y2="23"/>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-              </svg>
+              <FiDollarSign size={16} />
               <span>Transactions & Revenue</span>
             </span>
             <span className="admin-tab-badge">
@@ -506,24 +511,15 @@ export default function AdminDashboard() {
           <div className="admin-sidebar-section-title" style={{ marginTop: '1.75rem' }}>SWITCH WORKSPACE</div>
 
           <Link to="/dashboard" className="admin-sidebar-link">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-              <path d="M6 6h10"/>
-              <path d="M6 10h10"/>
-            </svg>
+            <FiBookOpen size={15} />
             <span>Student Workspace</span>
           </Link>
           <Link to="/studio" className="admin-sidebar-link">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-            </svg>
+            <FiEdit3 size={15} />
             <span>Educator Studio</span>
           </Link>
           <Link to="/" className="admin-sidebar-link">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
-            </svg>
+            <FiCompass size={15} />
             <span>Home</span>
           </Link>
         </nav>
@@ -552,7 +548,7 @@ export default function AdminDashboard() {
               onClick={() => setNotification('')}
               aria-label="Dismiss notification"
             >
-              ✕
+              <FiX size={16} />
             </button>
           </div>
         )}
@@ -570,10 +566,7 @@ export default function AdminDashboard() {
               <div className="admin-stat-subtext">Awaiting admin review</div>
             </div>
             <div className="admin-stat-icon stat-icon-pending">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
+              <FiClock size={22} />
             </div>
           </div>
 
@@ -588,10 +581,7 @@ export default function AdminDashboard() {
               <div className="admin-stat-subtext">Visible in public catalog</div>
             </div>
             <div className="admin-stat-icon stat-icon-published">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-              </svg>
+              <FiCheckCircle size={22} />
             </div>
           </div>
 
@@ -606,11 +596,7 @@ export default function AdminDashboard() {
               <div className="admin-stat-subtext">Across all instructors</div>
             </div>
             <div className="admin-stat-icon stat-icon-total">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                <path d="M6 6h10"/>
-                <path d="M6 10h10"/>
-              </svg>
+              <FiBookOpen size={22} />
             </div>
           </div>
 
@@ -625,12 +611,7 @@ export default function AdminDashboard() {
               <div className="admin-stat-subtext">Students & instructors</div>
             </div>
             <div className="admin-stat-icon stat-icon-users">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
+              <FiUsers size={22} />
             </div>
           </div>
         </div>
@@ -658,10 +639,7 @@ export default function AdminDashboard() {
                   border: '1px solid #bbf7d0'
                 }}
               >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
+                <FiCheckCircle size={28} />
               </div>
               <h3 className="admin-empty-title">All Submissions Reviewed</h3>
               <p className="admin-empty-desc">
@@ -719,32 +697,20 @@ export default function AdminDashboard() {
 
                         <div className="pending-meta-grid">
                           <div className="pending-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b' }}>
-                              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                              <circle cx="12" cy="7" r="4"/>
-                            </svg>
+                            <FiUser size={14} style={{ color: '#64748b' }} />
                             <span>
                               Instructor: <strong>{course.instructor?.name || course.instructorName || 'Platform Instructor'}</strong>
                               {course.instructor?.email ? ` (${course.instructor.email})` : ''}
                             </span>
                           </div>
                           <div className="pending-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b' }}>
-                              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                              <path d="M6 6h10"/>
-                              <path d="M6 10h10"/>
-                            </svg>
+                            <FiBookOpen size={14} style={{ color: '#64748b' }} />
                             <span>
                               Curriculum: <strong>{course.sections?.length || 0} sections</strong> ({totalLessons} lessons)
                             </span>
                           </div>
                           <div className="pending-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#64748b' }}>
-                              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                              <line x1="16" y1="2" x2="16" y2="6"/>
-                              <line x1="8" y1="2" x2="8" y2="6"/>
-                              <line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
+                            <FiCalendar size={14} style={{ color: '#64748b' }} />
                             <span>
                               Submitted: <strong>{course.updatedAt ? new Date(course.updatedAt).toLocaleDateString() : 'Recent'}</strong>
                             </span>
@@ -775,14 +741,9 @@ export default function AdminDashboard() {
                                       <div key={les._id || lesIdx} className="curriculum-lesson-item">
                                         <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                           {les.type === 'video' ? (
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#2563eb' }}>
-                                              <polygon points="5 3 19 12 5 21 5 3"/>
-                                            </svg>
+                                            <FiPlay size={13} style={{ color: '#2563eb' }} />
                                           ) : (
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#059669' }}>
-                                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                              <polyline points="14 2 14 8 20 8"/>
-                                            </svg>
+                                            <FiFileText size={13} style={{ color: '#059669' }} />
                                           )}
                                           <span>{les.title}</span>
                                           {les.isPreview && (
@@ -811,9 +772,7 @@ export default function AdminDashboard() {
                             style={{ padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
                             onClick={() => handleApprove(courseId, course.title)}
                           >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12"/>
-                            </svg>
+                            <FiCheck size={14} style={{ marginRight: '0.35rem' }} />
                             <span>Approve & Publish Course</span>
                           </button>
                           <button
@@ -822,10 +781,7 @@ export default function AdminDashboard() {
                             style={{ padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
                             onClick={() => handleOpenReject(course)}
                           >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <line x1="18" y1="6" x2="6" y2="18"/>
-                              <line x1="6" y1="6" x2="18" y2="18"/>
-                            </svg>
+                            <FiX size={14} style={{ marginRight: '0.35rem' }} />
                             <span>Reject Course</span>
                           </button>
                           <Link
@@ -834,10 +790,7 @@ export default function AdminDashboard() {
                             style={{ padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
                           >
                             <span>Preview Course</span>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <line x1="7" y1="17" x2="17" y2="7"/>
-                              <polyline points="7 7 17 7 17 17"/>
-                            </svg>
+                            <FiExternalLink size={12} style={{ marginLeft: '0.35rem' }} />
                           </Link>
                         </div>
                       </div>
@@ -1287,10 +1240,7 @@ export default function AdminDashboard() {
                 <div className="admin-stat-subtext">From successful course enrollments</div>
               </div>
               <div className="admin-stat-icon stat-icon-published">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="1" x2="12" y2="23"/>
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-                </svg>
+                <FiDollarSign size={22} />
               </div>
             </div>
 
@@ -1301,10 +1251,7 @@ export default function AdminDashboard() {
                 <div className="admin-stat-subtext">Verified gateway transactions</div>
               </div>
               <div className="admin-stat-icon stat-icon-total">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
+                <FiCheckCircle size={22} />
               </div>
             </div>
 
@@ -1317,10 +1264,7 @@ export default function AdminDashboard() {
                 <div className="admin-stat-subtext">Awaiting checkout completion</div>
               </div>
               <div className="admin-stat-icon stat-icon-pending">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
-                </svg>
+                <FiClock size={22} />
               </div>
             </div>
 
@@ -1333,11 +1277,7 @@ export default function AdminDashboard() {
                 <div className="admin-stat-subtext">Payment attempt failed or cancelled</div>
               </div>
               <div className="admin-stat-icon" style={{ backgroundColor: '#fef2f2', color: '#dc2626' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="15" y1="9" x2="9" y2="15"/>
-                  <line x1="9" y1="9" x2="15" y2="15"/>
-                </svg>
+                <FiXCircle size={22} />
               </div>
             </div>
           </div>
@@ -1367,7 +1307,7 @@ export default function AdminDashboard() {
                   }}
                   title="Clear search"
                 >
-                  ✕
+                  <FiX size={14} />
                 </button>
               )}
             </div>
@@ -1510,7 +1450,7 @@ export default function AdminDashboard() {
                 onClick={() => setCategoryModal(null)}
                 aria-label="Close dialog"
               >
-                ✕
+                <FiX size={18} />
               </button>
             </div>
             <form onSubmit={handleSaveCategory}>
@@ -1599,7 +1539,7 @@ export default function AdminDashboard() {
                 onClick={() => setUserModalOpen(false)}
                 aria-label="Close dialog"
               >
-                ✕
+                <FiX size={18} />
               </button>
             </div>
             <form onSubmit={handleCreateUser}>
@@ -1687,7 +1627,7 @@ export default function AdminDashboard() {
                 onClick={() => setRejectingCourse(null)}
                 aria-label="Close dialog"
               >
-                ✕
+                <FiX size={18} />
               </button>
             </div>
             <form onSubmit={handleConfirmReject}>

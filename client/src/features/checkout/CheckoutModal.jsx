@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FiLock, FiX, FiAlertTriangle, FiInfo } from 'react-icons/fi';
 import { useAuth } from '../../context/useAuth';
 import { api } from '../../services/api';
 import './CheckoutModal.css';
@@ -183,7 +184,7 @@ export default function CheckoutModal({ course, onClose }) {
           </h3>
           {!processing && (
             <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">
-              ✕
+              <FiX size={18} />
             </button>
           )}
         </div>
@@ -219,7 +220,7 @@ export default function CheckoutModal({ course, onClose }) {
             <>
               {error && (
                 <div className="checkout-error-box">
-                  <span style={{ marginRight: '0.5rem' }}>⚠️</span>
+                  <FiAlertTriangle size={16} style={{ marginRight: '0.5rem', flexShrink: 0 }} />
                   <span>{error}</span>
                 </div>
               )}
@@ -247,10 +248,7 @@ export default function CheckoutModal({ course, onClose }) {
 
               {!isFree && (
                 <div className="gateway-badge">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
+                  <FiLock size={16} />
                   <span>Secured by <strong>Razorpay</strong> (UPI, Cards, Netbanking)</span>
                 </div>
               )}
@@ -258,7 +256,7 @@ export default function CheckoutModal({ course, onClose }) {
               {!isFree && keyChecked && (!gatewayKeyId || gatewayKeyId.includes('placeholder')) && (
                 <div className="checkout-keys-notice">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: '#92400e', marginBottom: '0.2rem' }}>
-                    <span>ℹ️</span>
+                    <FiInfo size={15} />
                     <span>Razorpay keys not yet set in <code>server/.env</code></span>
                   </div>
                   <p style={{ margin: 0, fontSize: '0.78rem', color: '#78350f', lineHeight: 1.4 }}>

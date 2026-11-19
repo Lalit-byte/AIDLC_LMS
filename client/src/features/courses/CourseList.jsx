@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { FiBookOpen, FiZap, FiUsers, FiAward, FiSearch, FiX, FiAlertTriangle } from 'react-icons/fi';
 import { useAuth } from '../../context/useAuth';
 import { api } from '../../services/api';
 import CourseCard from './CourseCard';
@@ -115,11 +116,7 @@ export default function CourseList({ showHero }) {
           <section className="catalogue-highlights">
             <div className="highlight-item">
               <div className="highlight-icon-box icon-box-blue">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/>
-                  <path d="M6 6h10"/>
-                  <path d="M6 10h10"/>
-                </svg>
+                <FiBookOpen size={22} />
               </div>
               <div>
                 <div className="highlight-title">Curated Curriculum</div>
@@ -129,9 +126,7 @@ export default function CourseList({ showHero }) {
 
             <div className="highlight-item">
               <div className="highlight-icon-box icon-box-amber">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                </svg>
+                <FiZap size={22} />
               </div>
               <div>
                 <div className="highlight-title">Interactive Learning</div>
@@ -141,12 +136,7 @@ export default function CourseList({ showHero }) {
 
             <div className="highlight-item">
               <div className="highlight-icon-box icon-box-emerald">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
+                <FiUsers size={22} />
               </div>
               <div>
                 <div className="highlight-title">Expert Mentors</div>
@@ -156,10 +146,7 @@ export default function CourseList({ showHero }) {
 
             <div className="highlight-item">
               <div className="highlight-icon-box icon-box-purple">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="8" r="6"/>
-                  <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
-                </svg>
+                <FiAward size={22} />
               </div>
               <div>
                 <div className="highlight-title">Lifetime Access</div>
@@ -184,10 +171,7 @@ export default function CourseList({ showHero }) {
         {/* Search & Price Row */}
         <div className="toolbar-search-row">
           <div className="search-input-wrapper">
-            <svg className="search-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.3-4.3"/>
-            </svg>
+            <FiSearch className="search-input-icon" size={16} />
             <input
               type="search"
               className="catalogue-search"
@@ -202,7 +186,7 @@ export default function CourseList({ showHero }) {
                 onClick={() => setSearch('')}
                 aria-label="Clear search"
               >
-                ✕
+                <FiX size={14} />
               </button>
             )}
           </div>
@@ -259,7 +243,7 @@ export default function CourseList({ showHero }) {
                 {pricing !== 'all' ? ` · ${pricing === 'free' ? 'Free' : 'Paid'}` : ''}
                 {search.trim() ? ` · "${search.trim()}"` : ''}
                 <span className="clear-filter-x" onClick={resetFilters} title="Reset all filters">
-                  ✕
+                  <FiX size={12} />
                 </span>
               </span>
             )}
@@ -298,7 +282,9 @@ export default function CourseList({ showHero }) {
         </section>
       ) : error ? (
         <div className="catalogue-empty-state" style={{ borderColor: '#fca5a5' }}>
-          <div className="catalogue-empty-icon">⚠️</div>
+          <div className="catalogue-empty-icon">
+            <FiAlertTriangle size={36} color="#d97706" />
+          </div>
           <h3 style={{ color: '#dc2626' }}>Unable to Load Courses</h3>
           <p>{error}</p>
           <button className="btn btn-outline" onClick={fetchCourses}>
@@ -307,7 +293,9 @@ export default function CourseList({ showHero }) {
         </div>
       ) : sortedCourses.length === 0 ? (
         <div className="catalogue-empty-state">
-          <div className="catalogue-empty-icon">🔍</div>
+          <div className="catalogue-empty-icon">
+            <FiSearch size={36} color="#2563eb" />
+          </div>
           <h3>No Matching Courses Found</h3>
           <p>
             We couldn't find any courses matching your selected search or filter criteria. Try clearing your filters.
