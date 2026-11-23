@@ -44,7 +44,7 @@ export default function Navbar() {
                 </NavLink>
               </li>
             )}
-            {!isAuthPage && (
+            {isAuthenticated && !isAuthPage && (
               <li>
                 <NavLink to="/courses" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
                   Courses
@@ -128,7 +128,7 @@ export default function Navbar() {
                 </NavLink>
               </li>
             )}
-            {!isAuthPage && (
+            {isAuthenticated && !isAuthPage && (
               <li>
                 <NavLink
                   to="/courses"
