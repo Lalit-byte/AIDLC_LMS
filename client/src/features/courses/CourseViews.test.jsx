@@ -52,7 +52,7 @@ describe('Course Views Component tests', () => {
     expect(html).toContain('/courses/crs_paid_1');
   });
 
-  it('CourseList renders home hero and deduplicated category pill', () => {
+  it('CourseList renders home hero and top courses without search bar', () => {
     const html = renderToString(
       <MemoryRouter>
         <CourseList />
@@ -60,12 +60,13 @@ describe('Course Views Component tests', () => {
     );
 
     expect(html).toContain('Master Tech Skills');
-    expect(html).toContain('Search courses by title, topic, or instructor');
-    expect(html).toContain('All Prices');
+    expect(html).not.toContain('Search courses by title, topic, or instructor');
+    expect(html).not.toContain('All Prices');
     expect(html).toContain('Curated Curriculum');
+    expect(html).toContain('Top Courses');
   });
 
-  it('CourseList hides hero, highlights, and CTA banner on /courses', () => {
+  it('CourseList hides hero, highlights, and CTA banner on /courses while showing search toolbar', () => {
     const html = renderToString(
       <MemoryRouter initialEntries={['/courses']}>
         <CourseList showHero={false} />
@@ -77,6 +78,7 @@ describe('Course Views Component tests', () => {
     expect(html).not.toContain('Transform Your Tech Career With OpenLMS');
     expect(html).toContain('All Published Courses');
     expect(html).toContain('Search courses by title, topic, or instructor');
+    expect(html).toContain('All Prices');
   });
 
   it('CourseList shows CTA banner on home page but hides Get Started for Free button when user is logged in', () => {
