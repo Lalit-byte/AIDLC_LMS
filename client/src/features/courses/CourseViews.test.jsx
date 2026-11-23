@@ -52,7 +52,7 @@ describe('Course Views Component tests', () => {
     expect(html).toContain('/courses/crs_paid_1');
   });
 
-  it('CourseList renders home hero and top courses without search bar', () => {
+  it('CourseList renders home hero and courses without search bar or top courses heading', () => {
     const html = renderToString(
       <MemoryRouter>
         <CourseList />
@@ -63,7 +63,7 @@ describe('Course Views Component tests', () => {
     expect(html).not.toContain('Search courses by title, topic, or instructor');
     expect(html).not.toContain('All Prices');
     expect(html).toContain('Curated Curriculum');
-    expect(html).toContain('Top Courses');
+    expect(html).not.toContain('Top Courses');
   });
 
   it('CourseList hides hero, highlights, and CTA banner on /courses while showing search toolbar', () => {

@@ -86,7 +86,7 @@ export default function CourseList({ showHero }) {
   }, [courses, sortBy]);
 
   const displayedCourses = useMemo(
-    () => (shouldShowHero ? sortedCourses.slice(0, 3) : sortedCourses),
+    () => (shouldShowHero ? sortedCourses.slice(0, 4) : sortedCourses),
     [shouldShowHero, sortedCourses]
   );
 
@@ -174,18 +174,8 @@ export default function CourseList({ showHero }) {
         </div>
       )}
 
-      {/* Toolbar or Section Heading */}
-      {shouldShowHero ? (
-        <div className="homepage-section-header">
-          <div>
-            <h2 className="homepage-section-title">Top Courses</h2>
-            <p className="homepage-section-subtitle">
-              Explore our most popular industry-curated courses and start learning today.
-            </p>
-          </div>
-        </div>
-      ) : (
-        /* Filter & Search Toolbar (Only on Catalogue /courses page) */
+      {/* Filter & Search Toolbar (Only on Catalogue /courses page) */}
+      {!shouldShowHero && (
         <section className="catalogue-toolbar-card">
           {/* Search & Price Row */}
           <div className="toolbar-search-row">
@@ -288,7 +278,7 @@ export default function CourseList({ showHero }) {
       {/* Main Grid or Status States */}
       {loading ? (
         <section className="course-grid">
-          {[1, 2, 3, 4, 5, 6].slice(0, shouldShowHero ? 3 : 6).map((i) => (
+          {[1, 2, 3, 4, 5, 6].slice(0, shouldShowHero ? 4 : 6).map((i) => (
             <div key={i} className="course-card skeleton-card">
               <div className="skeleton-thumb" />
               <div className="skeleton-body">
