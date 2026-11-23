@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FiBookOpen, FiZap, FiUsers, FiAward, FiSearch, FiX, FiAlertTriangle } from 'react-icons/fi';
+import { FiBookOpen, FiZap, FiUsers, FiAward, FiSearch, FiX, FiAlertTriangle, FiArrowRight } from 'react-icons/fi';
 import { useAuth } from '../../context/useAuth';
 import { api } from '../../services/api';
 import CourseCard from './CourseCard';
@@ -85,6 +85,11 @@ export default function CourseList({ showHero }) {
     return list;
   }, [courses, sortBy]);
 
+  const displayedCourses = useMemo(
+    () => (shouldShowHero ? sortedCourses.slice(0, 4) : sortedCourses),
+    [shouldShowHero, sortedCourses]
+  );
+
   const resetFilters = () => {
     setSearch('');
     setCategory('All');
@@ -97,7 +102,7 @@ export default function CourseList({ showHero }) {
   return (
     <div className="container catalogue-container">
       {shouldShowHero ? (
-        <>
+        <div className="homepage-hero-section">
           {/* Hero Section */}
           <section className="catalogue-hero">
             <img
@@ -157,7 +162,7 @@ export default function CourseList({ showHero }) {
               </div>
             </div>
           </section>
-        </>
+        </div>
       ) : (
         <div style={{ marginBottom: '1.75rem', paddingTop: '1.5rem' }}>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
@@ -169,109 +174,123 @@ export default function CourseList({ showHero }) {
         </div>
       )}
 
-      {/* Filter & Search Toolbar */}
-      <section className="catalogue-toolbar-card">
-        {/* Search & Price Row */}
-        <div className="toolbar-search-row">
-          <div className="search-input-wrapper">
-            <FiSearch className="search-input-icon" size={16} />
-            <input
-              type="search"
-              className="catalogue-search"
-              placeholder="Search courses by title, topic, or instructor..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
+      {/* Top Courses Heading (positioned below the hero viewport) */}
+      {shouldShowHero && (
+        <div className="homepage-section-header">
+          <div>
+            <h2 className="homepage-section-title">Top Courses</h2>
+            <p className="homepage-section-subtitle">
+              Explore our most popular industry-curated courses and start learning today.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Filter & Search Toolbar (Only on Catalogue /courses page) */}
+      {!shouldShowHero && (
+        <section className="catalogue-toolbar-card">
+          {/* Search & Price Row */}
+          <div className="toolbar-search-row">
+            <div className="search-input-wrapper">
+              <FiSearch className="search-input-icon" size={16} />
+              <input
+                type="search"
+                className="catalogue-search"
+                placeholder="Search courses by title, topic, or instructor..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button
+                  type="button"
+                  className="search-clear-btn"
+                  onClick={() => setSearch('')}
+                  aria-label="Clear search"
+                >
+                  <FiX size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Segmented Pricing Control */}
+            <div className="pricing-segmented-group">
               <button
                 type="button"
-                className="search-clear-btn"
-                onClick={() => setSearch('')}
-                aria-label="Clear search"
+                className={`pricing-pill ${pricing === 'all' ? 'active' : ''}`}
+                onClick={() => setPricing('all')}
               >
-                <FiX size={14} />
+                All Prices
               </button>
-            )}
+              <button
+                type="button"
+                className={`pricing-pill ${pricing === 'free' ? 'active' : ''}`}
+                onClick={() => setPricing('free')}
+              >
+                Free
+              </button>
+              <button
+                type="button"
+                className={`pricing-pill ${pricing === 'paid' ? 'active' : ''}`}
+                onClick={() => setPricing('paid')}
+              >
+                Paid
+              </button>
+            </div>
           </div>
 
-          {/* Segmented Pricing Control */}
-          <div className="pricing-segmented-group">
-            <button
-              type="button"
-              className={`pricing-pill ${pricing === 'all' ? 'active' : ''}`}
-              onClick={() => setPricing('all')}
-            >
-              All Prices
-            </button>
-            <button
-              type="button"
-              className={`pricing-pill ${pricing === 'free' ? 'active' : ''}`}
-              onClick={() => setPricing('free')}
-            >
-              Free
-            </button>
-            <button
-              type="button"
-              className={`pricing-pill ${pricing === 'paid' ? 'active' : ''}`}
-              onClick={() => setPricing('paid')}
-            >
-              Paid
-            </button>
+          {/* Category Pills Bar (Guaranteed Single 'All') */}
+          <div className="category-pills-bar">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                className={`pill-btn ${category === cat ? 'active' : ''}`}
+                onClick={() => setCategory(cat)}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
-        </div>
 
-        {/* Category Pills Bar (Guaranteed Single 'All') */}
-        <div className="category-pills-bar">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              className={`pill-btn ${category === cat ? 'active' : ''}`}
-              onClick={() => setCategory(cat)}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Results Counter & Sort */}
-        <div className="results-and-sort">
-          <div className="results-meta">
-            <span className="results-counter">
-              Showing <strong>{sortedCourses.length}</strong> {sortedCourses.length === 1 ? 'course' : 'courses'}
-            </span>
-            {hasActiveFilters && (
-              <span className="active-filter-indicator">
-                Filtered
-                {category !== 'All' ? ` · ${category}` : ''}
-                {pricing !== 'all' ? ` · ${pricing === 'free' ? 'Free' : 'Paid'}` : ''}
-                {search.trim() ? ` · "${search.trim()}"` : ''}
-                <span className="clear-filter-x" onClick={resetFilters} title="Reset all filters">
-                  <FiX size={12} />
-                </span>
+          {/* Results Counter & Sort */}
+          <div className="results-and-sort">
+            <div className="results-meta">
+              <span className="results-counter">
+                Showing <strong>{sortedCourses.length}</strong> {sortedCourses.length === 1 ? 'course' : 'courses'}
               </span>
-            )}
-          </div>
+              {hasActiveFilters && (
+                <span className="active-filter-indicator">
+                  Filtered
+                  {category !== 'All' ? ` · ${category}` : ''}
+                  {pricing !== 'all' ? ` · ${pricing === 'free' ? 'Free' : 'Paid'}` : ''}
+                  {search.trim() ? ` · "${search.trim()}"` : ''}
+                  <span className="clear-filter-x" onClick={resetFilters} title="Reset all filters">
+                    <FiX size={12} />
+                  </span>
+                </span>
+              )}
+            </div>
 
-          <div className="sort-wrapper">
-            <span className="sort-label">Sort by:</span>
-            <select
-              className="sort-select"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <option value="popular">Most Popular</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="newest">Newest</option>
-            </select>
+            <div className="sort-wrapper">
+              <span className="sort-label">Sort by:</span>
+              <select
+                className="sort-select"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="popular">Most Popular</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="newest">Newest</option>
+              </select>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Main Grid or Status States */}
       {loading ? (
         <section className="course-grid">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+          {[1, 2, 3, 4, 5, 6].slice(0, shouldShowHero ? 4 : 6).map((i) => (
             <div key={i} className="course-card skeleton-card">
               <div className="skeleton-thumb" />
               <div className="skeleton-body">
@@ -294,7 +313,7 @@ export default function CourseList({ showHero }) {
             Try Again
           </button>
         </div>
-      ) : sortedCourses.length === 0 ? (
+      ) : displayedCourses.length === 0 ? (
         <div className="catalogue-empty-state">
           <div className="catalogue-empty-icon">
             <FiSearch size={36} color="#2563eb" />
@@ -308,11 +327,21 @@ export default function CourseList({ showHero }) {
           </button>
         </div>
       ) : (
-        <section className="course-grid">
-          {sortedCourses.map((course) => (
-            <CourseCard key={course.id || course.slug || course._id} course={course} />
-          ))}
-        </section>
+        <>
+          <section className="course-grid">
+            {displayedCourses.map((course) => (
+              <CourseCard key={course.id || course.slug || course._id} course={course} />
+            ))}
+          </section>
+
+          {shouldShowHero && (
+            <div className="show-more-courses-container">
+              <Link to="/courses" className="show-more-courses-btn">
+                Show More Courses <FiArrowRight size={16} />
+              </Link>
+            </div>
+          )}
+        </>
       )}
 
       {/* Bottom CTA Banner (Hidden on /courses, Get Started button hidden when logged in) */}
@@ -329,16 +358,9 @@ export default function CourseList({ showHero }) {
                   Get Started for Free
                 </Link>
               )}
-              <button
-                type="button"
-                className="cta-btn-secondary"
-                onClick={() => {
-                  setPricing('free');
-                  window.scrollTo({ top: 350, behavior: 'smooth' });
-                }}
-              >
+              <Link to="/courses" className="cta-btn-secondary">
                 Browse Free Courses →
-              </button>
+              </Link>
             </div>
           </div>
         </section>
