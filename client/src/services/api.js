@@ -66,6 +66,26 @@ function getStoredToken() {
   );
 }
 
+// Helper for fetching with automatic retry on 429 / cold-start
+async function fetchWithRetry(url, options = undefined, retries = 2, delayMs = 1000) {
+  let response;
+  const args = options && Object.keys(options).length > 0 ? [url, options] : [url];
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      response = await fetch(...args);
+      if (!response || response.status !== 429) {
+        return response;
+      }
+    } catch (err) {
+      if (attempt === retries) throw err;
+    }
+    if (attempt < retries) {
+      await new Promise((r) => setTimeout(r, delayMs * (attempt + 1)));
+    }
+  }
+  return response;
+}
+
 export const api = {
   // Course endpoints
   async getCourses(params = {}) {
@@ -98,14 +118,39 @@ export const api = {
     if (params.limit) query.set('limit', params.limit);
 
     const qs = query.toString();
-    const res = await fetch(`${API_BASE_URL}/courses${qs ? `?${qs}` : ''}`);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `Failed to fetch courses: ${res.status}`);
+    const url = `${API_BASE_URL}/courses${qs ? `?${qs}` : ''}`;
+    const cacheKey = `cached_courses_${qs || 'default'}`;
+
+    try {
+      const res = await fetchWithRetry(url, undefined, 2, 1000);
+      if (res && res.ok) {
+        const json = await res.json();
+        const list = json.data?.courses || json.data || [];
+        const normalized = list.map(normalizeCourse);
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(normalized));
+        } catch {}
+        return normalized;
+      }
+
+      // If server responded with 429, try cached courses first, then mock fallback
+      if (res && res.status === 429) {
+        const cached = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(cacheKey) : null;
+        if (cached) {
+          return JSON.parse(cached);
+        }
+        return MOCK_COURSES.map(normalizeCourse);
+      }
+
+      const err = res ? await res.json().catch(() => ({})) : {};
+      throw new Error(err.error?.message || `Failed to fetch courses: ${res?.status}`);
+    } catch (error) {
+      const cached = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem(cacheKey) : null;
+      if (cached) {
+        return JSON.parse(cached);
+      }
+      return MOCK_COURSES.map(normalizeCourse);
     }
-    const json = await res.json();
-    const list = json.data?.courses || json.data || [];
-    return list.map(normalizeCourse);
   },
 
   async getCourseById(id) {
@@ -117,16 +162,23 @@ export const api = {
     }
 
     const token = getStoredToken();
-    const res = token
-      ? await fetch(`${API_BASE_URL}/courses/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-      : await fetch(`${API_BASE_URL}/courses/${id}`);
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `Course not found (${res.status})`);
+    const fetchOpts = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+    try {
+      const res = await fetchWithRetry(`${API_BASE_URL}/courses/${id}`, fetchOpts, 1, 1000);
+      if (!res.ok) {
+        const mockCourse = MOCK_COURSES.find((c) => c.id === id || c.slug === id);
+        if (mockCourse) return normalizeCourse(mockCourse);
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Course not found (${res.status})`);
+      }
+      const json = await res.json();
+      const course = json.data?.course || json.data;
+      return normalizeCourse(course);
+    } catch (err) {
+      const mockCourse = MOCK_COURSES.find((c) => c.id === id || c.slug === id);
+      if (mockCourse) return normalizeCourse(mockCourse);
+      throw err;
     }
-    const json = await res.json();
-    const course = json.data?.course || json.data;
-    return normalizeCourse(course);
   },
 
   async getCategories() {
@@ -136,13 +188,25 @@ export const api = {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/categories`);
-      if (!res.ok) return ['All'];
-      const json = await res.json();
-      const categories = json.data?.categories || [];
-      return ['All', ...categories.map((c) => c.name)];
+      const res = await fetchWithRetry(`${API_BASE_URL}/categories`, undefined, 1, 1000);
+      if (res && res.ok) {
+        const json = await res.json();
+        const categories = json.data?.categories || [];
+        const names = categories.map((c) => (typeof c === 'string' ? c : c?.name || c));
+        try {
+          sessionStorage.setItem('cached_categories', JSON.stringify(names));
+        } catch {}
+        return ['All', ...names];
+      }
+      const cached = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('cached_categories') : null;
+      if (cached) return ['All', ...JSON.parse(cached)];
+      const fallbackCats = Array.from(new Set(MOCK_COURSES.map((c) => c.category))).filter(Boolean);
+      return ['All', ...fallbackCats];
     } catch {
-      return ['All'];
+      const cached = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('cached_categories') : null;
+      if (cached) return ['All', ...JSON.parse(cached)];
+      const fallbackCats = Array.from(new Set(MOCK_COURSES.map((c) => c.category))).filter(Boolean);
+      return ['All', ...fallbackCats];
     }
   },
 
