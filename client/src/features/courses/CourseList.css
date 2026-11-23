@@ -376,28 +376,62 @@
 
 /* Homepage Hero Viewport Wrapper - keeps Hero + Highlights as the full above-the-fold screen */
 .homepage-hero-section {
-  min-height: calc(100vh - 90px);
+  min-height: calc(100vh - 85px);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding-bottom: 2.5rem;
+  justify-content: flex-start;
+  padding-bottom: 4rem;
 }
 
 .homepage-hero-section .catalogue-hero {
-  flex: 1;
-  min-height: 420px;
-  margin-top: 1.25rem;
-  margin-bottom: 1.5rem;
+  height: clamp(330px, 45vh, 410px);
+  min-height: 330px;
+  margin-top: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.homepage-hero-section .catalogue-hero-content {
+  padding: 3rem 1.75rem 2rem;
+}
+
+.homepage-hero-section .catalogue-hero h1 {
+  font-size: clamp(1.65rem, 2.75vw, 2.2rem);
+  margin-bottom: 0.5rem;
+}
+
+.homepage-hero-section .catalogue-hero p {
+  font-size: 0.95rem;
+  max-width: 620px;
+  line-height: 1.5;
 }
 
 .homepage-hero-section .catalogue-highlights {
+  gap: 1rem;
   margin-bottom: 0;
+}
+
+.homepage-hero-section .highlight-item {
+  padding: 0.75rem 1rem;
+  gap: 0.75rem;
+}
+
+.homepage-hero-section .highlight-icon-box {
+  width: 36px;
+  height: 36px;
+}
+
+.homepage-hero-section .highlight-title {
+  font-size: 0.8125rem;
+}
+
+.homepage-hero-section .highlight-desc {
+  font-size: 0.7rem;
 }
 
 /* Home Page Top Courses Section */
 .homepage-section-header {
-  padding-top: 3.5rem;
-  margin-bottom: 1.75rem;
+  padding-top: 2.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .homepage-section-title {
@@ -616,7 +650,12 @@
 @media (max-width: 1024px) {
   .homepage-hero-section {
     min-height: auto;
-    padding-bottom: 1.5rem;
+    padding-bottom: 2rem;
+  }
+
+  .homepage-hero-section .catalogue-hero {
+    height: auto;
+    min-height: 300px;
   }
 
   .catalogue-highlights {
