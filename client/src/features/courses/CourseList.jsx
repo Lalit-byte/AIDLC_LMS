@@ -124,7 +124,7 @@ export default function CourseList({ showHero }) {
           <section className="catalogue-highlights">
             <div className="highlight-item">
               <div className="highlight-icon-box icon-box-blue">
-                <FiBookOpen size={18} />
+                <FiBookOpen size={22} />
               </div>
               <div>
                 <div className="highlight-title">Curated Curriculum</div>
@@ -134,7 +134,7 @@ export default function CourseList({ showHero }) {
 
             <div className="highlight-item">
               <div className="highlight-icon-box icon-box-amber">
-                <FiZap size={18} />
+                <FiZap size={22} />
               </div>
               <div>
                 <div className="highlight-title">Interactive Learning</div>
@@ -144,7 +144,7 @@ export default function CourseList({ showHero }) {
 
             <div className="highlight-item">
               <div className="highlight-icon-box icon-box-emerald">
-                <FiUsers size={18} />
+                <FiUsers size={22} />
               </div>
               <div>
                 <div className="highlight-title">Expert Mentors</div>
@@ -154,7 +154,7 @@ export default function CourseList({ showHero }) {
 
             <div className="highlight-item">
               <div className="highlight-icon-box icon-box-purple">
-                <FiAward size={18} />
+                <FiAward size={22} />
               </div>
               <div>
                 <div className="highlight-title">Lifetime Access</div>
