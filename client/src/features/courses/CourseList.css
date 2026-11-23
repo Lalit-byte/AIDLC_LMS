@@ -374,10 +374,30 @@
   padding-bottom: 2rem;
 }
 
+/* Homepage Hero Viewport Wrapper - keeps Hero + Highlights as the full above-the-fold screen */
+.homepage-hero-section {
+  min-height: calc(100vh - 90px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-bottom: 2.5rem;
+}
+
+.homepage-hero-section .catalogue-hero {
+  flex: 1;
+  min-height: 420px;
+  margin-top: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.homepage-hero-section .catalogue-highlights {
+  margin-bottom: 0;
+}
+
 /* Home Page Top Courses Section */
 .homepage-section-header {
-  margin-top: 2rem;
-  margin-bottom: 1.25rem;
+  padding-top: 3.5rem;
+  margin-bottom: 1.75rem;
 }
 
 .homepage-section-title {
@@ -594,6 +614,11 @@
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
+  .homepage-hero-section {
+    min-height: auto;
+    padding-bottom: 1.5rem;
+  }
+
   .catalogue-highlights {
     grid-template-columns: repeat(2, 1fr);
   }

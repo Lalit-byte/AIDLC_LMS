@@ -102,7 +102,7 @@ export default function CourseList({ showHero }) {
   return (
     <div className="container catalogue-container">
       {shouldShowHero ? (
-        <>
+        <div className="homepage-hero-section">
           {/* Hero Section */}
           <section className="catalogue-hero">
             <img
@@ -162,7 +162,7 @@ export default function CourseList({ showHero }) {
               </div>
             </div>
           </section>
-        </>
+        </div>
       ) : (
         <div style={{ marginBottom: '1.75rem', paddingTop: '1.5rem' }}>
           <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#0f172a', marginBottom: '0.35rem' }}>
@@ -171,6 +171,18 @@ export default function CourseList({ showHero }) {
           <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9375rem', margin: 0 }}>
             Browse and explore verified published courses across all disciplines.
           </p>
+        </div>
+      )}
+
+      {/* Top Courses Heading (positioned below the hero viewport) */}
+      {shouldShowHero && (
+        <div className="homepage-section-header">
+          <div>
+            <h2 className="homepage-section-title">Top Courses</h2>
+            <p className="homepage-section-subtitle">
+              Explore our most popular industry-curated courses and start learning today.
+            </p>
+          </div>
         </div>
       )}
 
