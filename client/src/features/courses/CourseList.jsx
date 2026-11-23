@@ -86,7 +86,7 @@ export default function CourseList({ showHero }) {
   }, [courses, sortBy]);
 
   const displayedCourses = useMemo(
-    () => (shouldShowHero ? sortedCourses.slice(0, 4) : sortedCourses),
+    () => (shouldShowHero ? sortedCourses.slice(0, 8) : sortedCourses),
     [shouldShowHero, sortedCourses]
   );
 
@@ -290,7 +290,7 @@ export default function CourseList({ showHero }) {
       {/* Main Grid or Status States */}
       {loading ? (
         <section className="course-grid">
-          {[1, 2, 3, 4, 5, 6].slice(0, shouldShowHero ? 4 : 6).map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].slice(0, shouldShowHero ? 8 : 6).map((i) => (
             <div key={i} className="course-card skeleton-card">
               <div className="skeleton-thumb" />
               <div className="skeleton-body">

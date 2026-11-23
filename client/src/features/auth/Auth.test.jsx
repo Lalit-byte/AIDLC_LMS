@@ -37,7 +37,7 @@ describe('Auth and Navbar Component Views', () => {
     expect(html).toContain('Create Account');
   });
 
-  it('Navbar hides Home, studio, and my learning for unauthenticated guest', () => {
+  it('Navbar hides Home, Courses, studio, and my learning for unauthenticated guest', () => {
     const html = renderToString(
       <MemoryRouter>
         <Navbar />
@@ -45,14 +45,14 @@ describe('Auth and Navbar Component Views', () => {
     );
 
     expect(html).not.toContain('Home');
+    expect(html).not.toContain('Courses');
     expect(html).not.toContain('Instructor Studio');
     expect(html).not.toContain('My Learning');
-    expect(html).toContain('Courses');
     expect(html).toContain('Log in');
     expect(html).toContain('Get Started');
   });
 
-  it('Navbar renders Student role badge, Home, and My Learning, but hides Instructor Studio for student', () => {
+  it('Navbar renders Student role badge, Home, Courses, and My Learning, but hides Instructor Studio for student', () => {
     const mockStudentContext = {
       user: { name: 'Alice Student', role: 'student' },
       isAuthenticated: true,
@@ -68,6 +68,7 @@ describe('Auth and Navbar Component Views', () => {
     );
 
     expect(html).toContain('Home');
+    expect(html).toContain('Courses');
     expect(html).toContain('Alice Student');
     expect(html).toContain('Student');
     expect(html).toContain('My Learning');

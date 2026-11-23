@@ -101,5 +101,75 @@ export const MOCK_COURSES = [
         ]
       }
     ]
+  },
+  {
+    id: 'crs_04',
+    title: 'Practical Python & Machine Learning',
+    slug: 'practical-python-machine-learning',
+    description: 'Learn data analysis, predictive modeling, and applied machine learning with NumPy and Scikit-Learn.',
+    instructor: 'Marcus Chen',
+    price: 2499,
+    currency: 'INR',
+    category: 'Data Science',
+    thumbnail: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
+    totalLessons: 20,
+    status: 'published',
+    sections: []
+  },
+  {
+    id: 'crs_05',
+    title: 'Kubernetes & CI/CD DevOps in Production',
+    slug: 'kubernetes-cicd-devops-production',
+    description: 'Master automated container deployments, Helm charts, and continuous delivery pipelines.',
+    instructor: 'Priya Sharma',
+    price: 0,
+    currency: 'INR',
+    category: 'DevOps',
+    thumbnail: 'https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=600&auto=format&fit=crop&q=80',
+    totalLessons: 14,
+    status: 'published',
+    sections: []
+  },
+  {
+    id: 'crs_06',
+    title: 'Mobile App Engineering with React Native',
+    slug: 'mobile-app-engineering-react-native',
+    description: 'Build native iOS and Android apps with cross-platform React Native, Expo, and offline sync.',
+    instructor: 'Liam O’Connor',
+    price: 1899,
+    currency: 'INR',
+    category: 'Mobile',
+    thumbnail: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&auto=format&fit=crop&q=80',
+    totalLessons: 16,
+    status: 'published',
+    sections: []
+  },
+  {
+    id: 'crs_07',
+    title: 'Applied AI with LLMs & Vector Databases',
+    slug: 'applied-ai-llms-vector-databases',
+    description: 'Architect generative AI applications using LangChain, embeddings, and RAG retrieval pipelines.',
+    instructor: 'Sophia Turner',
+    price: 2999,
+    currency: 'INR',
+    category: 'AI',
+    thumbnail: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?w=600&auto=format&fit=crop&q=80',
+    totalLessons: 24,
+    status: 'published',
+    sections: []
+  },
+  {
+    id: 'crs_08',
+    title: 'Modern Cyber Security & Threat Analysis',
+    slug: 'modern-cyber-security-threat-analysis',
+    description: 'Understand zero-trust architecture, OWASP vulnerabilities, and real-world penetration testing.',
+    instructor: 'Tariq Al-Mansoor',
+    price: 0,
+    currency: 'INR',
+    category: 'Security',
+    thumbnail: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=80',
+    totalLessons: 10,
+    status: 'published',
+    sections: []
   }
 ];
