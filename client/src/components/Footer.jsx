@@ -9,7 +9,7 @@ export default function Footer() {
       <div className="container footer-inner">
         <div className="footer-brand">OpenLMS Platform</div>
         <p className="footer-copy">
-          &copy; {CURRENT_YEAR} OpenLMS. Built with React + Vite & Node.js + Express.
+          &copy; {CURRENT_YEAR} OpenLMS. Built with React + Vite &amp; Node.js + Express.
         </p>
       </div>
     </footer>

@@ -20,10 +20,16 @@ import {
   FiExternalLink,
   FiXCircle,
   FiShield,
-  FiLock
+  FiLock,
+  FiArrowRight,
+  FiPlus,
+  FiCreditCard
 } from 'react-icons/fi';
 import { useAuth } from '../../context/useAuth';
 import { api } from '../../services/api';
+import Pagination from '../../components/Pagination';
+import SearchBar from '../../components/SearchBar';
+import { paginateItems } from '../../components/paginationUtils';
 import './AdminDashboard.css';
 
 export default function AdminDashboard() {
@@ -72,6 +78,13 @@ export default function AdminDashboard() {
   });
   const [paymentSearch, setPaymentSearch] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
+
+  // Pagination state per section
+  const [pendingPage, setPendingPage] = useState(1);
+  const [coursesPage, setCoursesPage] = useState(1);
+  const [categoriesPage, setCategoriesPage] = useState(1);
+  const [usersPage, setUsersPage] = useState(1);
+  const [paymentsPage, setPaymentsPage] = useState(1);
 
   const loadData = async () => {
     try {
@@ -135,7 +148,7 @@ export default function AdminDashboard() {
   const handleApprove = async (courseId, courseTitle) => {
     try {
       await api.approveCourse(courseId);
-      setNotification(`✅ "${courseTitle}" has been approved and published! It is now live in All Courses.`);
+      setNotification(`"${courseTitle}" has been approved and published! It is now live in All Courses.`);
       setTimeout(() => setNotification(''), 4500);
       await loadData();
     } catch (err) {
@@ -157,7 +170,7 @@ export default function AdminDashboard() {
 
     try {
       await api.rejectCourse(rejectingCourse._id || rejectingCourse.id, rejectReason.trim());
-      setNotification(`⚠️ "${rejectingCourse.title}" has been rejected.`);
+      setNotification(`"${rejectingCourse.title}" has been rejected.`);
       setTimeout(() => setNotification(''), 4500);
       setRejectingCourse(null);
       setRejectReason('');
@@ -196,10 +209,10 @@ export default function AdminDashboard() {
     try {
       if (categoryModal.mode === 'create') {
         await api.createCategory(categoryModal.data);
-        setNotification(`✅ Category "${categoryModal.data.name.trim()}" created successfully.`);
+        setNotification(`Category "${categoryModal.data.name.trim()}" created successfully.`);
       } else {
         await api.updateCategory(categoryModal.id, categoryModal.data);
-        setNotification(`✅ Category "${categoryModal.data.name.trim()}" updated successfully.`);
+        setNotification(`Category "${categoryModal.data.name.trim()}" updated successfully.`);
       }
       setTimeout(() => setNotification(''), 4500);
       setCategoryModal(null);
@@ -233,7 +246,7 @@ export default function AdminDashboard() {
 
     try {
       await api.deleteCategory(cat._id || cat.id);
-      setNotification(`🗑️ Category "${cat.name}" has been deleted.`);
+      setNotification(`Category "${cat.name}" has been deleted.`);
       setTimeout(() => setNotification(''), 4500);
       await loadData();
     } catch (err) {
@@ -264,7 +277,7 @@ export default function AdminDashboard() {
     try {
       await api.createAdminUser(newUserData);
       setNotification(
-        `✅ ${newUserData.role === 'instructor' ? 'Instructor' : 'Student'} "${newUserData.name.trim()}" created successfully.`
+        `${newUserData.role === 'instructor' ? 'Instructor' : 'Student'} "${newUserData.name.trim()}" created successfully.`
       );
       setTimeout(() => setNotification(''), 4500);
       setUserModalOpen(false);
@@ -300,7 +313,7 @@ export default function AdminDashboard() {
     try {
       await api.deleteAdminUser(targetId);
       setNotification(
-        `🗑️ ${targetUser.role === 'instructor' ? 'Instructor' : 'Student'} "${targetUser.name}" deleted.`
+        `${targetUser.role === 'instructor' ? 'Instructor' : 'Student'} "${targetUser.name}" deleted.`
       );
       setTimeout(() => setNotification(''), 4500);
       await loadData();
@@ -309,7 +322,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Filtered lists for course, category, and user tabs
   const filteredCourses = useMemo(() => {
     return allCourses.filter((course) => {
       const matchesSearch =
@@ -371,19 +383,20 @@ export default function AdminDashboard() {
     });
   }, [payments, paymentSearch, paymentStatusFilter]);
 
-  // Access check: Unauthenticated Guest
   if (!isAuthenticated) {
     return (
-      <div className="container" style={{ padding: '5rem 1.5rem', textAlign: 'center' }}>
-        <div style={{ maxWidth: '460px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '2.5rem 1.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <div style={{ marginBottom: '1rem', color: '#2563eb' }}>
-            <FiShield size={42} />
+      <div className="container gate-card-wrap">
+        <div className="gate-card">
+          <div className="gate-icon-circle">
+            <FiShield size={22} aria-hidden="true" />
           </div>
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0f172a' }}>Admin Authentication Required</h2>
-          <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.875rem', lineHeight: 1.5 }}>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+            Admin Authentication Required
+          </h2>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem', lineHeight: 1.5 }}>
             Please sign in with an Administrator account to view and manage platform courses.
           </p>
-          <Link to="/login" className="btn btn-primary" style={{ width: '100%', padding: '0.65rem 1rem' }}>
+          <Link to="/login" className="btn btn-primary" style={{ width: '100%' }}>
             Sign In as Admin
           </Link>
         </div>
@@ -391,23 +404,24 @@ export default function AdminDashboard() {
     );
   }
 
-  // Access check: Non-Admin Role
   if (user?.role !== 'admin') {
     return (
-      <div className="container" style={{ padding: '5rem 1.5rem', textAlign: 'center' }}>
-        <div style={{ maxWidth: '480px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '2.5rem 1.5rem', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-          <div style={{ marginBottom: '1rem', color: '#2563eb' }}>
-            <FiLock size={42} />
+      <div className="container gate-card-wrap">
+        <div className="gate-card">
+          <div className="gate-icon-circle">
+            <FiLock size={22} aria-hidden="true" />
           </div>
-          <h2 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.5rem', color: '#0f172a' }}>Administrator Access Only</h2>
-          <p style={{ color: '#64748b', marginBottom: '1.5rem', fontSize: '0.875rem', lineHeight: 1.5 }}>
+          <h2 style={{ fontSize: '1.35rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+            Administrator Access Only
+          </h2>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem', lineHeight: 1.5 }}>
             You are currently logged in as a <strong>{user?.role || 'user'}</strong> ({user?.name}). The Admin Portal is restricted to platform administrators.
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-            <button className="btn btn-primary" onClick={() => navigate('/')}>
+            <button type="button" className="btn btn-primary" onClick={() => navigate('/')}>
               Browse Courses
             </button>
-            <button className="btn btn-outline" onClick={() => navigate('/login')}>
+            <button type="button" className="btn btn-outline" onClick={() => navigate('/login')}>
               Switch Account
             </button>
           </div>
@@ -416,110 +430,115 @@ export default function AdminDashboard() {
     );
   }
 
+  const pendingMetric = stats.pendingCount || pendingCourses.length;
+  const publishedMetric = stats.publishedCount || 0;
+  const totalCoursesMetric = stats.totalCourses || 0;
+  const totalUsersMetric = users.length || stats.totalUsers || 0;
+
+  const paginatedPending = paginateItems(pendingCourses, pendingPage, 6);
+  const paginatedCourses = paginateItems(filteredCourses, coursesPage, 10);
+  const paginatedCategories = paginateItems(filteredCategories, categoriesPage, 10);
+  const paginatedUsers = paginateItems(filteredUsers, usersPage, 10);
+  const paginatedPayments = paginateItems(filteredPayments, paymentsPage, 10);
+
   return (
     <div className="admin-container admin-layout">
       {/* Left Sidebar Navigation */}
-      <aside className="admin-sidebar">
+      <aside className="admin-sidebar" aria-label="Admin navigation">
         <div className="admin-sidebar-header">
           <div className="admin-site-brand">
-            <div className="admin-site-logo">
-              <FiLayers size={22} />
+            <div className="admin-site-logo" aria-hidden="true">
+              <FiLayers size={18} />
             </div>
             <div className="admin-site-info">
               <span className="admin-site-name">OpenLMS Platform</span>
               <span className="admin-badge">
-                <span className="admin-badge-dot"></span>
-                Platform Administrator
+                <span className="admin-badge-dot" aria-hidden="true" />
+                <span>Platform Administrator</span>
               </span>
             </div>
           </div>
         </div>
 
         <nav className="admin-sidebar-nav">
-          <div className="admin-sidebar-section-title">ADMIN NAVIGATION</div>
+          <span className="admin-sidebar-section-title">Admin Navigation</span>
 
           <button
             type="button"
-            className={`admin-sidebar-btn admin-tab-btn ${activeTab === 'pending' ? 'active' : ''}`}
+            className={`admin-sidebar-btn ${activeTab === 'pending' ? 'active' : ''}`}
             onClick={() => setActiveTab('pending')}
           >
             <span className="admin-sidebar-btn-content">
-              <FiClock size={16} />
+              <FiClock size={17} aria-hidden="true" />
               <span>Pending Submissions</span>
             </span>
-            <span className={`admin-tab-badge ${pendingCourses.length > 0 ? 'badge-highlight' : ''}`}>
+            <span className={`admin-tab-badge tabular-nums ${pendingCourses.length > 0 ? 'badge-highlight' : ''}`}>
               {pendingCourses.length}
             </span>
           </button>
 
           <button
             type="button"
-            className={`admin-sidebar-btn admin-tab-btn ${activeTab === 'all_courses' ? 'active' : ''}`}
+            className={`admin-sidebar-btn ${activeTab === 'all_courses' ? 'active' : ''}`}
             onClick={() => setActiveTab('all_courses')}
           >
             <span className="admin-sidebar-btn-content">
-              <FiGrid size={16} />
+              <FiGrid size={17} aria-hidden="true" />
               <span>All Platform Courses</span>
             </span>
-            <span className="admin-tab-badge">
-              {allCourses.length}
-            </span>
+            <span className="admin-tab-badge tabular-nums">{allCourses.length}</span>
           </button>
 
           <button
             type="button"
-            className={`admin-sidebar-btn admin-tab-btn ${activeTab === 'categories' ? 'active' : ''}`}
+            className={`admin-sidebar-btn ${activeTab === 'categories' ? 'active' : ''}`}
             onClick={() => setActiveTab('categories')}
           >
             <span className="admin-sidebar-btn-content">
-              <FiTag size={16} />
+              <FiTag size={17} aria-hidden="true" />
               <span>Categories</span>
             </span>
-            <span className="admin-tab-badge">
-              {categories.length}
-            </span>
+            <span className="admin-tab-badge tabular-nums">{categories.length}</span>
           </button>
 
           <button
             type="button"
-            className={`admin-sidebar-btn admin-tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+            className={`admin-sidebar-btn ${activeTab === 'users' ? 'active' : ''}`}
             onClick={() => setActiveTab('users')}
           >
             <span className="admin-sidebar-btn-content">
-              <FiUsers size={16} />
+              <FiUsers size={17} aria-hidden="true" />
               <span>Users</span>
             </span>
-            <span className="admin-tab-badge">
-              {users.length}
-            </span>
+            <span className="admin-tab-badge tabular-nums">{users.length}</span>
           </button>
 
           <button
             type="button"
-            className={`admin-sidebar-btn admin-tab-btn ${activeTab === 'payments' ? 'active' : ''}`}
+            className={`admin-sidebar-btn ${activeTab === 'payments' ? 'active' : ''}`}
             onClick={() => setActiveTab('payments')}
           >
             <span className="admin-sidebar-btn-content">
-              <FiDollarSign size={16} />
-              <span>Transactions & Revenue</span>
+              <FiDollarSign size={17} aria-hidden="true" />
+              <span>Transactions &amp; Revenue</span>
             </span>
-            <span className="admin-tab-badge">
-              {payments.length}
-            </span>
+            <span className="admin-tab-badge tabular-nums">{payments.length}</span>
           </button>
+        </nav>
 
-          <div className="admin-sidebar-section-title" style={{ marginTop: '1.75rem' }}>SWITCH WORKSPACE</div>
+        <nav className="admin-sidebar-nav admin-sidebar-switch">
+          <span className="admin-sidebar-section-title">Switch Workspace</span>
 
           <Link to="/dashboard" className="admin-sidebar-link">
-            <FiBookOpen size={15} />
+            <FiBookOpen size={17} aria-hidden="true" />
             <span>Student Workspace</span>
           </Link>
           <Link to="/studio" className="admin-sidebar-link">
-            <FiEdit3 size={15} />
+            <FiEdit3 size={17} aria-hidden="true" />
             <span>Educator Studio</span>
           </Link>
           <Link to="/" className="admin-sidebar-link">
-            <FiCompass size={15} />
+            <FiCompass size={17} aria-hidden="true" />
             <span>Home</span>
           </Link>
         </nav>
@@ -527,1146 +546,1133 @@ export default function AdminDashboard() {
 
       {/* Main Right Content Area */}
       <main className="admin-main">
-        <header className="admin-main-header">
-          <div className="admin-title-row">
-            <div>
-              <h1>Admin Dashboard</h1>
-              <p className="admin-subtitle">
-                Review educator course submissions, manage curriculum categories, and monitor platform operations.
-              </p>
-            </div>
-          </div>
-        </header>
+        <div className="admin-main-inner">
+          <header className="admin-main-header">
+            <h1 className="admin-page-title">Admin Dashboard</h1>
+            <p className="admin-subtitle">
+              Review educator course submissions, manage curriculum categories, and monitor platform operations.
+            </p>
+          </header>
 
-        {/* Notification Toast */}
-        {notification && (
-          <div className="admin-notification-toast">
-            <span>{notification}</span>
-            <button
-              type="button"
-              className="admin-notification-close"
-              onClick={() => setNotification('')}
-              aria-label="Dismiss notification"
-            >
-              <FiX size={16} />
-            </button>
-          </div>
-        )}
-
-        {/* Metric Stats Cards */}
-        <div className="admin-stats-grid">
-          <div
-            className="admin-stat-card"
-            style={{ cursor: 'pointer' }}
-            onClick={() => setActiveTab('pending')}
-          >
-            <div>
-              <div className="admin-stat-num">{stats.pendingCount || pendingCourses.length}</div>
-              <div className="admin-stat-label">Pending Reviews</div>
-              <div className="admin-stat-subtext">Awaiting admin review</div>
-            </div>
-            <div className="admin-stat-icon stat-icon-pending">
-              <FiClock size={22} />
-            </div>
-          </div>
-
-          <div
-            className="admin-stat-card"
-            style={{ cursor: 'pointer' }}
-            onClick={() => setActiveTab('all_courses')}
-          >
-            <div>
-              <div className="admin-stat-num">{stats.publishedCount || 0}</div>
-              <div className="admin-stat-label">Live Published Courses</div>
-              <div className="admin-stat-subtext">Visible in public catalog</div>
-            </div>
-            <div className="admin-stat-icon stat-icon-published">
-              <FiCheckCircle size={22} />
-            </div>
-          </div>
-
-          <div
-            className="admin-stat-card"
-            style={{ cursor: 'pointer' }}
-            onClick={() => setActiveTab('all_courses')}
-          >
-            <div>
-              <div className="admin-stat-num">{stats.totalCourses || 0}</div>
-              <div className="admin-stat-label">Total Authored Courses</div>
-              <div className="admin-stat-subtext">Across all instructors</div>
-            </div>
-            <div className="admin-stat-icon stat-icon-total">
-              <FiBookOpen size={22} />
-            </div>
-          </div>
-
-          <div
-            className="admin-stat-card"
-            style={{ cursor: 'pointer' }}
-            onClick={() => setActiveTab('users')}
-          >
-            <div>
-              <div className="admin-stat-num">{users.length || stats.totalUsers || 0}</div>
-              <div className="admin-stat-label">Registered Users</div>
-              <div className="admin-stat-subtext">Students & instructors</div>
-            </div>
-            <div className="admin-stat-icon stat-icon-users">
-              <FiUsers size={22} />
-            </div>
-          </div>
-        </div>
-
-      {/* Tab 1: Pending Submissions */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#64748b' }}>
-          Loading platform administration data...
-        </div>
-      ) : activeTab === 'pending' ? (
-        <div>
-          {pendingCourses.length === 0 ? (
-            <div className="admin-empty-state">
-              <div
-                style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  backgroundColor: '#f0fdf4',
-                  color: '#16a34a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto 1.25rem',
-                  border: '1px solid #bbf7d0'
-                }}
-              >
-                <FiCheckCircle size={28} />
-              </div>
-              <h3 className="admin-empty-title">All Submissions Reviewed</h3>
-              <p className="admin-empty-desc">
-                There are no courses currently awaiting administrator approval. When instructors submit new curriculum, it will appear here for review and publication.
-              </p>
+          {notification && (
+            <div className="admin-notification-toast" role="status">
+              <span>{notification}</span>
               <button
                 type="button"
-                className="btn btn-outline"
-                style={{ marginTop: '0.75rem', fontSize: '0.85rem' }}
-                onClick={() => setActiveTab('all_courses')}
+                className="admin-notification-close"
+                onClick={() => setNotification('')}
+                aria-label="Dismiss notification"
               >
-                Browse All Platform Courses →
+                <FiX size={16} />
               </button>
             </div>
-          ) : (
-            <div>
-              {pendingCourses.map((course) => {
-                const courseId = course._id || course.id;
-                const isExpanded = expandedCourseId === courseId;
-                const price = typeof course.price === 'number' ? course.price : 0;
-                const totalLessons =
-                  course.totalLessons ||
-                  (course.sections || []).reduce((sum, s) => sum + (s.lessons?.length || 0), 0);
-
-                return (
-                  <article key={courseId} className="admin-pending-card">
-                    <div className="pending-card-top">
-                      <img
-                        src={
-                          course.thumbnail ||
-                          'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80'
-                        }
-                        alt={course.title}
-                        className="pending-thumbnail"
-                      />
-
-                      <div className="pending-card-main">
-                        <div className="pending-badges">
-                          <span className="status-pill status-draft">
-                            {course.category || 'Development'}
-                          </span>
-                          <span className="status-pill status-pending">
-                            <span className="status-dot"></span>
-                            Under Review
-                          </span>
-                          <span className="status-pill status-active">
-                            {price === 0 ? 'Free Course' : `₹${price.toLocaleString('en-IN')}`}
-                          </span>
-                        </div>
-
-                        <h3 className="pending-title">{course.title}</h3>
-                        <p className="pending-desc">
-                          {course.description || 'No description provided.'}
-                        </p>
-
-                        <div className="pending-meta-grid">
-                          <div className="pending-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <FiUser size={14} style={{ color: '#64748b' }} />
-                            <span>
-                              Instructor: <strong>{course.instructor?.name || course.instructorName || 'Platform Instructor'}</strong>
-                              {course.instructor?.email ? ` (${course.instructor.email})` : ''}
-                            </span>
-                          </div>
-                          <div className="pending-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <FiBookOpen size={14} style={{ color: '#64748b' }} />
-                            <span>
-                              Curriculum: <strong>{course.sections?.length || 0} sections</strong> ({totalLessons} lessons)
-                            </span>
-                          </div>
-                          <div className="pending-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                            <FiCalendar size={14} style={{ color: '#64748b' }} />
-                            <span>
-                              Submitted: <strong>{course.updatedAt ? new Date(course.updatedAt).toLocaleDateString() : 'Recent'}</strong>
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Curriculum Accordion Toggle */}
-                        <div style={{ marginTop: '0.65rem' }}>
-                          <button
-                            type="button"
-                            className="curriculum-accordion-btn"
-                            onClick={() => setExpandedCourseId(isExpanded ? null : courseId)}
-                          >
-                            <span>{isExpanded ? '▲ Hide Curriculum Details' : '▼ Inspect Curriculum & Lessons'}</span>
-                          </button>
-
-                          {isExpanded && (
-                            <div className="curriculum-accordion">
-                              {!course.sections || course.sections.length === 0 ? (
-                                <p style={{ color: '#94a3b8', margin: 0 }}>No sections configured yet.</p>
-                              ) : (
-                                course.sections.map((sec, secIdx) => (
-                                  <div key={sec._id || secIdx} className="curriculum-section-row">
-                                    <div className="curriculum-section-title">
-                                      Section {secIdx + 1}: {sec.title}
-                                    </div>
-                                    {(sec.lessons || []).map((les, lesIdx) => (
-                                      <div key={les._id || lesIdx} className="curriculum-lesson-item">
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                          {les.type === 'video' ? (
-                                            <FiPlay size={13} style={{ color: '#2563eb' }} />
-                                          ) : (
-                                            <FiFileText size={13} style={{ color: '#059669' }} />
-                                          )}
-                                          <span>{les.title}</span>
-                                          {les.isPreview && (
-                                            <span style={{ fontSize: '0.7rem', color: '#16a34a', marginLeft: '0.35rem', fontWeight: 600 }}>
-                                              FREE PREVIEW
-                                            </span>
-                                          )}
-                                        </span>
-                                        <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                                          {les.duration || '10 min'}
-                                        </span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="pending-actions">
-                          <button
-                            type="button"
-                            className="btn-table-action btn-action-primary"
-                            style={{ padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
-                            onClick={() => handleApprove(courseId, course.title)}
-                          >
-                            <FiCheck size={14} style={{ marginRight: '0.35rem' }} />
-                            <span>Approve & Publish Course</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-table-action btn-action-danger"
-                            style={{ padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
-                            onClick={() => handleOpenReject(course)}
-                          >
-                            <FiX size={14} style={{ marginRight: '0.35rem' }} />
-                            <span>Reject Course</span>
-                          </button>
-                          <Link
-                            to={`/courses/${course.slug || courseId}`}
-                            className="btn-table-action"
-                            style={{ padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
-                          >
-                            <span>Preview Course</span>
-                            <FiExternalLink size={12} style={{ marginLeft: '0.35rem' }} />
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
           )}
-        </div>
-      ) : null}
 
-      {/* Tab 2: All Platform Courses */}
-      {!loading && activeTab === 'all_courses' && (
-        <div>
-          {/* Filter Bar */}
-          <div className="admin-filter-bar">
-            <div className="admin-filter-group">
-              <input
-                type="text"
-                placeholder="Search by title, instructor, or category..."
-                value={courseSearch}
-                onChange={(e) => setCourseSearch(e.target.value)}
-                className="admin-search-input"
-              />
-              <select
-                value={courseStatusFilter}
-                onChange={(e) => setCourseStatusFilter(e.target.value)}
-                className="admin-select-input"
+          {/* Platform Overview Strip: Compact summary bar on Transactions tab, 4-col KPI strip otherwise */}
+          {activeTab === 'payments' ? (
+            <section aria-label="Platform summary" className="admin-compact-summary">
+              <div className="compact-summary-item">
+                <span className="compact-summary-label">Pending Reviews</span>
+                <span className="compact-summary-val tabular-nums">{pendingMetric}</span>
+              </div>
+              <div className="compact-summary-item">
+                <span className="compact-summary-label">Live Published</span>
+                <span className="compact-summary-val tabular-nums">{publishedMetric}</span>
+              </div>
+              <div className="compact-summary-item">
+                <span className="compact-summary-label">Total Authored</span>
+                <span className="compact-summary-val tabular-nums">{totalCoursesMetric}</span>
+              </div>
+              <div className="compact-summary-item">
+                <span className="compact-summary-label">Registered Users</span>
+                <span className="compact-summary-val tabular-nums">{totalUsersMetric}</span>
+              </div>
+            </section>
+          ) : (
+            <section aria-label="Platform overview" className="admin-stats-grid">
+              <article
+                className="admin-stat-card admin-stat-clickable"
+                onClick={() => setActiveTab('pending')}
               >
-                <option value="all">All Statuses ({allCourses.length})</option>
-                <option value="published">Published</option>
-                <option value="pending_review">Under Review</option>
-                <option value="draft">Draft</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-              Showing <strong>{filteredCourses.length}</strong> of {allCourses.length} courses
-            </div>
-          </div>
+                <header className="admin-stat-head">
+                  <span className="admin-stat-label">Pending Reviews</span>
+                  <FiClock size={18} style={{ color: 'var(--color-warning)' }} aria-hidden="true" />
+                </header>
+                <div>
+                  <div className="admin-stat-num tabular-nums">{pendingMetric}</div>
+                  <div className="admin-stat-subtext">Awaiting admin review</div>
+                </div>
+              </article>
 
-          <div className="admin-table-card">
-            <div className="admin-table-wrapper">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Course</th>
-                    <th>Instructor</th>
-                    <th>Category</th>
-                    <th>Price</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCourses.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                        No courses match your filter criteria.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredCourses.map((c) => {
-                      const courseId = c._id || c.id;
-                      const price = typeof c.price === 'number' ? c.price : 0;
-                      return (
-                        <tr key={courseId}>
-                          <td>
-                            <div className="table-course-item">
-                              <img
-                                src={c.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80'}
-                                alt={c.title}
-                                className="table-course-thumb"
-                              />
-                              <div>
-                                <div className="table-course-title" title={c.title}>
-                                  {c.title}
-                                </div>
-                                <div className="table-course-slug">{c.slug || courseId}</div>
+              <article
+                className="admin-stat-card admin-stat-clickable"
+                onClick={() => setActiveTab('all_courses')}
+              >
+                <header className="admin-stat-head">
+                  <span className="admin-stat-label">Live Published Courses</span>
+                  <FiCheckCircle size={18} style={{ color: 'var(--color-success)' }} aria-hidden="true" />
+                </header>
+                <div>
+                  <div className="admin-stat-num tabular-nums">{publishedMetric}</div>
+                  <div className="admin-stat-subtext">Visible in public catalog</div>
+                </div>
+              </article>
+
+              <article
+                className="admin-stat-card admin-stat-clickable"
+                onClick={() => setActiveTab('all_courses')}
+              >
+                <header className="admin-stat-head">
+                  <span className="admin-stat-label">Total Authored Courses</span>
+                  <FiBookOpen size={18} style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
+                </header>
+                <div>
+                  <div className="admin-stat-num tabular-nums">{totalCoursesMetric}</div>
+                  <div className="admin-stat-subtext">Across all instructors</div>
+                </div>
+              </article>
+
+              <article
+                className="admin-stat-card admin-stat-clickable"
+                onClick={() => setActiveTab('users')}
+              >
+                <header className="admin-stat-head">
+                  <span className="admin-stat-label">Registered Users</span>
+                  <FiUsers size={18} style={{ color: 'var(--color-secondary)' }} aria-hidden="true" />
+                </header>
+                <div>
+                  <div className="admin-stat-num tabular-nums">{totalUsersMetric}</div>
+                  <div className="admin-stat-subtext">Students &amp; instructors</div>
+                </div>
+              </article>
+            </section>
+          )}
+
+          {/* Tab 1: Pending Submissions */}
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--color-text-secondary)' }}>
+              Loading platform administration data...
+            </div>
+          ) : activeTab === 'pending' ? (
+            <div>
+              {pendingCourses.length === 0 ? (
+                <section aria-label="Pending submissions queue" className="admin-empty-state">
+                  <div className="admin-empty-circle">
+                    <FiCheckCircle size={24} aria-hidden="true" />
+                  </div>
+                  <div className="admin-empty-copy">
+                    <h2 className="admin-empty-title">All Submissions Reviewed</h2>
+                    <p className="admin-empty-desc">
+                      There are no courses awaiting administrator approval. New instructor curriculum submissions will appear here for review and publication.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setActiveTab('all_courses')}
+                  >
+                    <span>Browse All Platform Courses</span>
+                    <FiArrowRight size={16} aria-hidden="true" />
+                  </button>
+                </section>
+              ) : (
+                <div className="admin-pending-list">
+                  {paginatedPending.items.map((course) => {
+                    const courseId = course._id || course.id;
+                    const isExpanded = expandedCourseId === courseId;
+                    const price = typeof course.price === 'number' ? course.price : 0;
+                    const totalLessons =
+                      course.totalLessons ||
+                      (course.sections || []).reduce((sum, s) => sum + (s.lessons?.length || 0), 0);
+
+                    return (
+                      <article key={courseId} className="admin-pending-card">
+                        <div className="pending-card-top">
+                          <img
+                            src={
+                              course.thumbnail ||
+                              'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80'
+                            }
+                            alt={course.title}
+                            className="pending-thumbnail"
+                          />
+
+                          <div className="pending-card-main">
+                            <div className="pending-badges">
+                              <span className="status-pill status-draft">
+                                {course.category || 'Development'}
+                              </span>
+                              <span className="status-pill status-pending">
+                                <span className="status-dot" aria-hidden="true" />
+                                <span>Under Review</span>
+                              </span>
+                              <span className="status-pill status-active tabular-nums">
+                                {price === 0 ? 'Free Course' : `₹${price.toLocaleString('en-IN')}`}
+                              </span>
+                            </div>
+
+                            <h3 className="pending-title">{course.title}</h3>
+                            <p className="pending-desc">
+                              {course.description || 'No description provided.'}
+                            </p>
+
+                            <div className="pending-meta-grid">
+                              <div className="pending-meta-item">
+                                <FiUser size={14} aria-hidden="true" />
+                                <span>
+                                  Instructor:{' '}
+                                  <strong>{course.instructor?.name || course.instructorName || 'Platform Instructor'}</strong>
+                                  {course.instructor?.email ? ` (${course.instructor.email})` : ''}
+                                </span>
+                              </div>
+                              <div className="pending-meta-item tabular-nums">
+                                <FiBookOpen size={14} aria-hidden="true" />
+                                <span>
+                                  Curriculum: <strong>{course.sections?.length || 0} sections</strong> ({totalLessons} lessons)
+                                </span>
+                              </div>
+                              <div className="pending-meta-item tabular-nums">
+                                <FiCalendar size={14} aria-hidden="true" />
+                                <span>
+                                  Submitted:{' '}
+                                  <strong>
+                                    {course.updatedAt ? new Date(course.updatedAt).toLocaleDateString() : 'Recent'}
+                                  </strong>
+                                </span>
                               </div>
                             </div>
-                          </td>
-                          <td>
-                            <div style={{ fontWeight: 500, color: '#1e293b' }}>
-                              {c.instructor?.name || c.instructorName || 'Platform Instructor'}
-                            </div>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                              {c.instructor?.email || '—'}
-                            </div>
-                          </td>
-                          <td>
-                            <span className="status-pill status-draft">
-                              {c.category || 'General'}
-                            </span>
-                          </td>
-                          <td>
-                            <span style={{ fontWeight: 600, color: price === 0 ? '#16a34a' : '#0f172a' }}>
-                              {price === 0 ? 'Free' : `₹${price.toLocaleString('en-IN')}`}
-                            </span>
-                          </td>
-                          <td>
-                            <span
-                              className={`status-pill ${
-                                c.status === 'published'
-                                  ? 'status-published'
-                                  : c.status === 'pending_review'
-                                  ? 'status-pending'
-                                  : c.status === 'rejected'
-                                  ? 'status-rejected'
-                                  : 'status-draft'
-                              }`}
-                            >
-                              <span className="status-dot"></span>
-                              {c.status === 'pending_review' ? 'Under Review' : c.status}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'right' }}>
-                            <div className="admin-action-btn-group" style={{ justifyContent: 'flex-end' }}>
-                              {c.status === 'pending_review' && (
-                                <button
-                                  type="button"
-                                  className="btn-table-action btn-action-primary"
-                                  onClick={() => handleApprove(courseId, c.title)}
-                                >
-                                  Approve
-                                </button>
-                              )}
-                              <Link
-                                to={`/courses/${c.slug || courseId}`}
-                                className="btn-table-action"
-                              >
-                                View →
-                              </Link>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Tab 3: Categories */}
-      {!loading && activeTab === 'categories' && (
-        <div>
-          <div className="admin-filter-bar">
-            <div className="admin-filter-group">
-              <input
-                type="text"
-                placeholder="Search categories by name or slug..."
-                value={categorySearch}
-                onChange={(e) => setCategorySearch(e.target.value)}
-                className="admin-search-input"
-              />
-              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                Showing <strong>{filteredCategories.length}</strong> of {categories.length} categories
-              </div>
-            </div>
-            <button
-              type="button"
-              className="btn btn-primary"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', padding: '0.5rem 1rem' }}
-              onClick={handleOpenCreateCategory}
-            >
-              <span>＋</span> Add Category
-            </button>
-          </div>
-
-          <div className="admin-table-card">
-            <div className="admin-table-wrapper">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Category Name</th>
-                    <th>Slug</th>
-                    <th>Description</th>
-                    <th>Assigned Courses</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCategories.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                        {categories.length === 0
-                          ? 'No categories found. Click "Add Category" to create your first one.'
-                          : 'No categories match your search.'}
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredCategories.map((cat) => {
-                      const catId = cat._id || cat.id;
-                      const hasCourses = (cat.courseCount || 0) > 0;
-                      return (
-                        <tr key={catId}>
-                          <td style={{ fontWeight: 600, color: '#0f172a' }}>{cat.name}</td>
-                          <td>
-                            <code style={{ fontSize: '0.78rem', backgroundColor: '#f1f5f9', padding: '0.2rem 0.45rem', borderRadius: '4px', color: '#475569' }}>
-                              {cat.slug}
-                            </code>
-                          </td>
-                          <td style={{ color: '#64748b', fontSize: '0.85rem', maxWidth: '300px' }}>
-                            {cat.description || '—'}
-                          </td>
-                          <td>
-                            <span className="status-pill status-draft">
-                              {cat.courseCount || 0} course{cat.courseCount === 1 ? '' : 's'}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={`status-pill ${cat.isActive !== false ? 'status-active' : 'status-inactive'}`}>
-                              <span className="status-dot"></span>
-                              {cat.isActive !== false ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'right' }}>
-                            <div className="admin-action-btn-group" style={{ justifyContent: 'flex-end' }}>
+                            <div style={{ marginTop: '0.65rem' }}>
                               <button
                                 type="button"
-                                className="btn-table-action"
-                                onClick={() => handleOpenEditCategory(cat)}
+                                className="curriculum-accordion-btn"
+                                onClick={() => setExpandedCourseId(isExpanded ? null : courseId)}
                               >
-                                Edit
+                                {isExpanded ? 'Hide Curriculum Details' : 'Inspect Curriculum & Lessons'}
                               </button>
+
+                              {isExpanded && (
+                                <div className="curriculum-accordion">
+                                  {!course.sections || course.sections.length === 0 ? (
+                                    <p style={{ color: 'var(--color-text-secondary)', margin: 0 }}>
+                                      No sections configured yet.
+                                    </p>
+                                  ) : (
+                                    course.sections.map((sec, secIdx) => (
+                                      <div key={sec._id || secIdx} className="curriculum-section-row">
+                                        <div className="curriculum-section-title">
+                                          Section {secIdx + 1}: {sec.title}
+                                        </div>
+                                        {(sec.lessons || []).map((les, lesIdx) => (
+                                          <div key={les._id || lesIdx} className="curriculum-lesson-item">
+                                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                                              {les.type === 'video' ? (
+                                                <FiPlay size={13} style={{ color: 'var(--color-secondary)' }} aria-hidden="true" />
+                                              ) : (
+                                                <FiFileText size={13} style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
+                                              )}
+                                              <span>{les.title}</span>
+                                              {les.isPreview && (
+                                                <span className="status-pill status-published" style={{ marginLeft: '0.25rem' }}>
+                                                  Free Preview
+                                                </span>
+                                              )}
+                                            </span>
+                                            <span className="tabular-nums" style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                                              {les.duration || '10 min'}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="pending-actions">
                               <button
                                 type="button"
-                                className="btn-table-action"
-                                onClick={() => handleToggleCategoryActive(cat)}
+                                className="btn-table-action btn-action-primary"
+                                onClick={() => handleApprove(courseId, course.title)}
                               >
-                                {cat.isActive !== false ? 'Deactivate' : 'Activate'}
+                                <FiCheck size={14} aria-hidden="true" />
+                                <span>Approve &amp; Publish Course</span>
                               </button>
                               <button
                                 type="button"
                                 className="btn-table-action btn-action-danger"
-                                disabled={hasCourses}
-                                title={
-                                  hasCourses
-                                    ? `Cannot delete category assigned to ${cat.courseCount} course(s). Deactivate instead.`
-                                    : 'Delete category'
-                                }
-                                onClick={() => handleDeleteCategory(cat)}
+                                onClick={() => handleOpenReject(course)}
                               >
-                                Delete
+                                <FiX size={14} aria-hidden="true" />
+                                <span>Reject Course</span>
                               </button>
+                              <Link to={`/courses/${course.slug || courseId}`} className="btn-table-action">
+                                <span>Preview Course</span>
+                                <FiExternalLink size={12} aria-hidden="true" />
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                  <Pagination
+                    currentPage={paginatedPending.currentPage}
+                    totalItems={paginatedPending.totalItems}
+                    pageSize={6}
+                    onPageChange={setPendingPage}
+                    itemLabel="submissions"
+                  />
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {/* Tab 2: All Platform Courses */}
+          {!loading && activeTab === 'all_courses' && (
+            <div className="admin-section-stack">
+              <div className="admin-filter-bar">
+                <div className="admin-filter-group">
+                  <SearchBar
+                    value={courseSearch}
+                    onChange={(val) => {
+                      setCourseSearch(val);
+                      setCoursesPage(1);
+                    }}
+                    placeholder="Search by title, instructor, or category..."
+                    ariaLabel="Search platform courses"
+                  />
+                  <select
+                    value={courseStatusFilter}
+                    onChange={(e) => {
+                      setCourseStatusFilter(e.target.value);
+                      setCoursesPage(1);
+                    }}
+                    className="admin-select-input"
+                  >
+                    <option value="all">All Statuses ({allCourses.length})</option>
+                    <option value="published">Published</option>
+                    <option value="pending_review">Under Review</option>
+                    <option value="draft">Draft</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+                <div className="admin-filter-count tabular-nums">
+                  Showing <strong>{filteredCourses.length}</strong> of {allCourses.length} courses
+                </div>
+              </div>
+
+              <div className="admin-table-card">
+                <div className="admin-table-wrapper">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Course</th>
+                        <th>Instructor</th>
+                        <th>Category</th>
+                        <th style={{ textAlign: 'right' }}>Price</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCourses.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
+                            No courses match your filter criteria.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedCourses.items.map((c) => {
+                          const courseId = c._id || c.id;
+                          const price = typeof c.price === 'number' ? c.price : 0;
+                          return (
+                            <tr key={courseId}>
+                              <td>
+                                <div className="table-course-item">
+                                  <img
+                                    src={
+                                      c.thumbnail ||
+                                      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80'
+                                    }
+                                    alt={c.title}
+                                    className="table-course-thumb"
+                                  />
+                                  <div>
+                                    <div className="table-course-title" title={c.title}>
+                                      {c.title}
+                                    </div>
+                                    <div className="table-course-slug">{c.slug || courseId}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>
+                                  {c.instructor?.name || c.instructorName || 'Platform Instructor'}
+                                </div>
+                                <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)' }}>
+                                  {c.instructor?.email || '—'}
+                                </div>
+                              </td>
+                              <td>
+                                <span className="status-pill status-draft">
+                                  {c.category || 'General'}
+                                </span>
+                              </td>
+                              <td className="tabular-nums" style={{ textAlign: 'right', fontWeight: 600 }}>
+                                <span style={{ color: price === 0 ? 'var(--color-success)' : 'var(--color-text-main)' }}>
+                                  {price === 0 ? 'Free' : `₹${price.toLocaleString('en-IN')}`}
+                                </span>
+                              </td>
+                              <td>
+                                <span
+                                  className={`status-pill ${
+                                    c.status === 'published'
+                                      ? 'status-published'
+                                      : c.status === 'pending_review'
+                                      ? 'status-pending'
+                                      : c.status === 'rejected'
+                                      ? 'status-rejected'
+                                      : 'status-draft'
+                                  }`}
+                                >
+                                  <span className="status-dot" aria-hidden="true" />
+                                  <span>{c.status === 'pending_review' ? 'Under Review' : c.status}</span>
+                                </span>
+                              </td>
+                              <td style={{ textAlign: 'right' }}>
+                                <div className="admin-action-btn-group" style={{ justifyContent: 'flex-end' }}>
+                                  {c.status === 'pending_review' && (
+                                    <button
+                                      type="button"
+                                      className="btn-table-action btn-action-primary"
+                                      onClick={() => handleApprove(courseId, c.title)}
+                                    >
+                                      Approve
+                                    </button>
+                                  )}
+                                  <Link to={`/courses/${c.slug || courseId}`} className="btn-table-action">
+                                    <span>View</span>
+                                    <FiArrowRight size={13} aria-hidden="true" />
+                                  </Link>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <Pagination
+                  currentPage={paginatedCourses.currentPage}
+                  totalItems={paginatedCourses.totalItems}
+                  pageSize={10}
+                  onPageChange={setCoursesPage}
+                  itemLabel="courses"
+                  className="pagination-embedded"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: Categories */}
+          {!loading && activeTab === 'categories' && (
+            <div className="admin-section-stack">
+              <div className="admin-filter-bar">
+                <div className="admin-filter-group">
+                  <SearchBar
+                    value={categorySearch}
+                    onChange={(val) => {
+                      setCategorySearch(val);
+                      setCategoriesPage(1);
+                    }}
+                    placeholder="Search categories by name or slug..."
+                    ariaLabel="Search categories"
+                  />
+                  <div className="admin-filter-count tabular-nums">
+                    Showing <strong>{filteredCategories.length}</strong> of {categories.length} categories
+                  </div>
+                </div>
+                <button type="button" className="btn btn-primary" onClick={handleOpenCreateCategory}>
+                  <FiPlus size={16} aria-hidden="true" />
+                  <span>Add Category</span>
+                </button>
+              </div>
+
+              <div className="admin-table-card">
+                <div className="admin-table-wrapper">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Category Name</th>
+                        <th>Slug</th>
+                        <th>Description</th>
+                        <th>Assigned Courses</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCategories.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
+                            {categories.length === 0
+                              ? 'No categories found. Click "Add Category" to create your first one.'
+                              : 'No categories match your search.'}
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedCategories.items.map((cat) => {
+                          const catId = cat._id || cat.id;
+                          const hasCourses = (cat.courseCount || 0) > 0;
+                          return (
+                            <tr key={catId}>
+                              <td style={{ fontWeight: 600 }}>{cat.name}</td>
+                              <td>
+                                <code className="admin-code-chip">{cat.slug}</code>
+                              </td>
+                              <td style={{ color: 'var(--color-text-secondary)', maxWidth: '300px' }}>
+                                {cat.description || '—'}
+                              </td>
+                              <td>
+                                <span className="status-pill status-draft tabular-nums">
+                                  {cat.courseCount || 0} course{cat.courseCount === 1 ? '' : 's'}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`status-pill ${cat.isActive !== false ? 'status-active' : 'status-inactive'}`}>
+                                  <span className="status-dot" aria-hidden="true" />
+                                  <span>{cat.isActive !== false ? 'Active' : 'Inactive'}</span>
+                                </span>
+                              </td>
+                              <td style={{ textAlign: 'right' }}>
+                                <div className="admin-action-btn-group" style={{ justifyContent: 'flex-end' }}>
+                                  <button
+                                    type="button"
+                                    className="btn-table-action"
+                                    onClick={() => handleOpenEditCategory(cat)}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn-table-action"
+                                    onClick={() => handleToggleCategoryActive(cat)}
+                                  >
+                                    {cat.isActive !== false ? 'Deactivate' : 'Activate'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn-table-action btn-action-danger"
+                                    disabled={hasCourses}
+                                    title={
+                                      hasCourses
+                                        ? `Cannot delete category assigned to ${cat.courseCount} course(s). Deactivate instead.`
+                                        : 'Delete category'
+                                    }
+                                    onClick={() => handleDeleteCategory(cat)}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <Pagination
+                  currentPage={paginatedCategories.currentPage}
+                  totalItems={paginatedCategories.totalItems}
+                  pageSize={10}
+                  onPageChange={setCategoriesPage}
+                  itemLabel="categories"
+                  className="pagination-embedded"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Tab 4: Users */}
+          {!loading && activeTab === 'users' && (
+            <div className="admin-section-stack">
+              <div className="admin-filter-bar">
+                <div className="admin-filter-group">
+                  <SearchBar
+                    value={userSearch}
+                    onChange={(val) => {
+                      setUserSearch(val);
+                      setUsersPage(1);
+                    }}
+                    placeholder="Search by name or email..."
+                    ariaLabel="Search users"
+                  />
+                  <select
+                    value={userRoleFilter}
+                    onChange={(e) => {
+                      setUserRoleFilter(e.target.value);
+                      setUsersPage(1);
+                    }}
+                    className="admin-select-input"
+                  >
+                    <option value="all">All Roles ({users.length})</option>
+                    <option value="student">Students</option>
+                    <option value="instructor">Teachers / Instructors</option>
+                    <option value="admin">Administrators</option>
+                  </select>
+                  <div className="admin-filter-count tabular-nums">
+                    Showing <strong>{filteredUsers.length}</strong> of {users.length} users
+                  </div>
+                </div>
+                <button type="button" className="btn btn-primary" onClick={handleOpenCreateUser}>
+                  <FiPlus size={16} aria-hidden="true" />
+                  <span>Add Student / Teacher</span>
+                </button>
+              </div>
+
+              <div className="admin-table-card">
+                <div className="admin-table-wrapper">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Activity &amp; Courses</th>
+                        <th>Joined</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: 'right' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredUsers.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
+                            No users match your search criteria.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedUsers.items.map((u) => {
+                          const uId = u._id || u.id;
+                          const isCurrentAdmin = user && (user.id === uId || user._id === uId);
+                          const hasCourses = u.role === 'instructor' && (u.coursesAuthored || 0) > 0;
+
+                          return (
+                            <tr key={uId}>
+                              <td>
+                                <div className="user-cell">
+                                  <div className={`user-avatar-circle role-${u.role || 'student'}`}>
+                                    {u.name ? u.name.charAt(0).toUpperCase() : 'U'}
+                                  </div>
+                                  <div>
+                                    <div style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>
+                                      {u.name}
+                                      {isCurrentAdmin && (
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--color-secondary)', marginLeft: '0.4rem', fontWeight: 600 }}>
+                                          (You)
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)' }}>
+                                      {u.email}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <span
+                                  className={`status-pill ${
+                                    u.role === 'instructor'
+                                      ? 'status-pending'
+                                      : u.role === 'admin'
+                                      ? 'status-rejected'
+                                      : 'status-published'
+                                  }`}
+                                >
+                                  <span className="status-dot" aria-hidden="true" />
+                                  <span>
+                                    {u.role === 'instructor'
+                                      ? 'Teacher / Instructor'
+                                      : u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                                  </span>
+                                </span>
+                              </td>
+                              <td>
+                                {u.role === 'instructor' ? (
+                                  <span className="status-pill status-draft tabular-nums">
+                                    {u.coursesAuthored || 0} course{u.coursesAuthored === 1 ? '' : 's'} authored
+                                  </span>
+                                ) : u.role === 'student' ? (
+                                  <span className="status-pill status-draft tabular-nums">
+                                    {u.coursesEnrolled || 0} course{u.coursesEnrolled === 1 ? '' : 's'} enrolled
+                                  </span>
+                                ) : (
+                                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>
+                                    Platform Administrator
+                                  </span>
+                                )}
+                              </td>
+                              <td className="tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
+                                {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recent'}
+                              </td>
+                              <td>
+                                <span className={`status-pill ${u.isActive !== false ? 'status-active' : 'status-inactive'}`}>
+                                  <span className="status-dot" aria-hidden="true" />
+                                  <span>{u.isActive !== false ? 'Active' : 'Inactive'}</span>
+                                </span>
+                              </td>
+                              <td style={{ textAlign: 'right' }}>
+                                <div className="admin-action-btn-group" style={{ justifyContent: 'flex-end' }}>
+                                  <button
+                                    type="button"
+                                    className="btn-table-action btn-action-danger"
+                                    disabled={isCurrentAdmin || hasCourses}
+                                    title={
+                                      isCurrentAdmin
+                                        ? 'Cannot delete your own admin account'
+                                        : hasCourses
+                                        ? `Cannot delete instructor with ${u.coursesAuthored} active courses`
+                                        : `Delete ${u.role}`
+                                    }
+                                    onClick={() => handleDeleteUser(u)}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <Pagination
+                  currentPage={paginatedUsers.currentPage}
+                  totalItems={paginatedUsers.totalItems}
+                  pageSize={10}
+                  onPageChange={setUsersPage}
+                  itemLabel="users"
+                  className="pagination-embedded"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Tab 5: Transactions & Revenue Ledger */}
+          {!loading && activeTab === 'payments' && (
+            <div className="admin-section-stack">
+              {/* Revenue KPI Cards */}
+              <section aria-label="Revenue metrics" className="admin-stats-grid">
+                <article className="admin-stat-card">
+                  <header className="admin-stat-head">
+                    <span className="admin-stat-label">Total Realized Revenue</span>
+                    <FiDollarSign size={18} style={{ color: 'var(--color-secondary)' }} aria-hidden="true" />
+                  </header>
+                  <div>
+                    <div className="admin-stat-num tabular-nums" style={{ color: 'var(--color-secondary)' }}>
+                      ₹{(paymentSummary.totalRevenue || 0).toLocaleString('en-IN')}
+                    </div>
+                    <div className="admin-stat-subtext">From successful course enrollments</div>
+                  </div>
+                </article>
+
+                <article className="admin-stat-card">
+                  <header className="admin-stat-head">
+                    <span className="admin-stat-label">Successful Payments</span>
+                    <FiCheckCircle size={18} style={{ color: 'var(--color-success)' }} aria-hidden="true" />
+                  </header>
+                  <div>
+                    <div className="admin-stat-num tabular-nums">
+                      {paymentSummary.successfulPayments || 0}
+                    </div>
+                    <div className="admin-stat-subtext">Verified gateway transactions</div>
+                  </div>
+                </article>
+
+                <article className="admin-stat-card">
+                  <header className="admin-stat-head">
+                    <span className="admin-stat-label">Created / In-Progress</span>
+                    <FiClock size={18} style={{ color: 'var(--color-warning)' }} aria-hidden="true" />
+                  </header>
+                  <div>
+                    <div className="admin-stat-num tabular-nums" style={{ color: 'var(--color-warning)' }}>
+                      {paymentSummary.pendingPayments || 0}
+                    </div>
+                    <div className="admin-stat-subtext">Awaiting checkout completion</div>
+                  </div>
+                </article>
+
+                <article className="admin-stat-card">
+                  <header className="admin-stat-head">
+                    <span className="admin-stat-label">Failed / Declined</span>
+                    <FiXCircle size={18} style={{ color: 'var(--color-danger)' }} aria-hidden="true" />
+                  </header>
+                  <div>
+                    <div className="admin-stat-num tabular-nums" style={{ color: 'var(--color-danger)' }}>
+                      {paymentSummary.failedPayments || 0}
+                    </div>
+                    <div className="admin-stat-subtext">Payment attempt failed or cancelled</div>
+                  </div>
+                </article>
+              </section>
+
+              {/* Filter Toolbar */}
+              <section aria-label="Transaction filters" className="admin-filter-bar">
+                <SearchBar
+                  value={paymentSearch}
+                  onChange={(val) => {
+                    setPaymentSearch(val);
+                    setPaymentsPage(1);
+                  }}
+                  placeholder="Search order ID, payment ID, or learner..."
+                  ariaLabel="Search transactions"
+                  className="admin-search-wide"
+                />
+
+                <div role="tablist" aria-label="Transaction status filter" className="admin-status-segmented">
+                  {[
+                    { key: 'all', label: `All (${payments.length})` },
+                    { key: 'paid', label: `Paid (${paymentSummary.successfulPayments || 0})` },
+                    { key: 'created', label: `Created (${paymentSummary.pendingPayments || 0})` },
+                    { key: 'failed', label: `Failed (${paymentSummary.failedPayments || 0})` }
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      role="tab"
+                      aria-selected={paymentStatusFilter === tab.key}
+                      className={`segmented-btn tabular-nums ${paymentStatusFilter === tab.key ? 'active' : ''}`}
+                      onClick={() => {
+                        setPaymentStatusFilter(tab.key);
+                        setPaymentsPage(1);
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Transactions Table */}
+              <div className="admin-table-card">
+                <div className="admin-table-wrapper">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Date &amp; Time</th>
+                        <th>Learner</th>
+                        <th>Course</th>
+                        <th style={{ textAlign: 'right' }}>Amount</th>
+                        <th>Order &amp; Payment IDs</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredPayments.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" style={{ padding: '3.5rem 1.5rem', textAlign: 'center' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                              <div className="admin-empty-circle">
+                                <FiCreditCard size={22} aria-hidden="true" />
+                              </div>
+                              <h4 className="admin-empty-title">No transactions found</h4>
+                              <p className="admin-empty-desc">
+                                {paymentSearch || paymentStatusFilter !== 'all'
+                                  ? 'No payment records match your search or status filter.'
+                                  : 'When students purchase paid courses via Razorpay, transaction receipts and revenue will appear here.'}
+                              </p>
                             </div>
                           </td>
                         </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
+                      ) : (
+                        paginatedPayments.items.map((p) => {
+                          const statusClass =
+                            p.status === 'paid'
+                              ? 'status-active'
+                              : p.status === 'failed'
+                              ? 'status-rejected'
+                              : 'status-pending';
 
-      {/* Tab 4: Users (Students & Teachers/Instructors) */}
-      {!loading && activeTab === 'users' && (
-        <div>
-          <div className="admin-filter-bar">
-            <div className="admin-filter-group">
-              <input
-                type="text"
-                placeholder="Search by name or email..."
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                className="admin-search-input"
-              />
-              <select
-                value={userRoleFilter}
-                onChange={(e) => setUserRoleFilter(e.target.value)}
-                className="admin-select-input"
-              >
-                <option value="all">All Roles ({users.length})</option>
-                <option value="student">Students</option>
-                <option value="instructor">Teachers / Instructors</option>
-                <option value="admin">Administrators</option>
-              </select>
-              <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                Showing <strong>{filteredUsers.length}</strong> of {users.length} users
-              </div>
-            </div>
-            <button
-              type="button"
-              className="btn btn-primary"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', padding: '0.5rem 1rem' }}
-              onClick={handleOpenCreateUser}
-            >
-              <span>＋</span> Add Student / Teacher
-            </button>
-          </div>
+                          const learnerName = p.user?.name || 'Learner';
+                          const learnerEmail = p.user?.email || 'N/A';
+                          const courseTitle = p.course?.title || 'Course';
 
-          <div className="admin-table-card">
-            <div className="admin-table-wrapper">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>User</th>
-                    <th>Role</th>
-                    <th>Activity & Courses</th>
-                    <th>Joined</th>
-                    <th>Status</th>
-                    <th style={{ textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                        No users match your search criteria.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredUsers.map((u) => {
-                      const uId = u._id || u.id;
-                      const isCurrentAdmin = user && (user.id === uId || user._id === uId);
-                      const hasCourses = u.role === 'instructor' && (u.coursesAuthored || 0) > 0;
-
-                      return (
-                        <tr key={uId}>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                              <div
-                                style={{
-                                  width: '36px',
-                                  height: '36px',
-                                  borderRadius: '50%',
-                                  backgroundColor:
-                                    u.role === 'instructor'
-                                      ? '#ede9fe'
-                                      : u.role === 'admin'
-                                      ? '#fee2e2'
-                                      : '#e0f2fe',
-                                  color:
-                                    u.role === 'instructor'
-                                      ? '#6d28d9'
-                                      : u.role === 'admin'
-                                      ? '#b91c1c'
-                                      : '#0369a1',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontWeight: 700,
-                                  fontSize: '0.85rem',
-                                  flexShrink: 0
-                                }}
-                              >
-                                {u.name ? u.name.charAt(0).toUpperCase() : 'U'}
-                              </div>
-                              <div>
-                                <div style={{ fontWeight: 600, color: '#0f172a' }}>
-                                  {u.name}
-                                  {isCurrentAdmin && (
-                                    <span style={{ fontSize: '0.7rem', color: '#2563eb', marginLeft: '0.4rem', fontWeight: 500 }}>
-                                      (You)
+                          return (
+                            <tr key={p._id || p.orderId}>
+                              <td className="tabular-nums" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+                                {p.createdAt ? new Date(p.createdAt).toLocaleString() : 'Recent'}
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 600, color: 'var(--color-text-main)' }}>{learnerName}</div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{learnerEmail}</div>
+                              </td>
+                              <td style={{ maxWidth: '240px' }}>
+                                <div className="table-course-title" title={courseTitle}>
+                                  {courseTitle}
+                                </div>
+                              </td>
+                              <td className="tabular-nums" style={{ textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                                ₹{(p.amount || 0).toLocaleString('en-IN')}
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <span className="mono-code" style={{ color: 'var(--color-text-main)' }}>
+                                    Ord: {p.orderId || 'N/A'}
+                                  </span>
+                                  {p.paymentId && (
+                                    <span className="mono-code" style={{ color: 'var(--color-text-secondary)' }}>
+                                      Pay: {p.paymentId}
                                     </span>
                                   )}
                                 </div>
-                                <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{u.email}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span
-                              className={`status-pill ${
-                                u.role === 'instructor'
-                                  ? 'status-pending'
-                                  : u.role === 'admin'
-                                  ? 'status-rejected'
-                                  : 'status-published'
-                              }`}
-                            >
-                              <span className="status-dot"></span>
-                              {u.role === 'instructor' ? 'Teacher / Instructor' : u.role.charAt(0).toUpperCase() + u.role.slice(1)}
-                            </span>
-                          </td>
-                          <td>
-                            {u.role === 'instructor' ? (
-                              <span className="status-pill status-draft">
-                                🎓 {u.coursesAuthored || 0} course{u.coursesAuthored === 1 ? '' : 's'} authored
-                              </span>
-                            ) : u.role === 'student' ? (
-                              <span className="status-pill status-draft">
-                                📚 {u.coursesEnrolled || 0} course{u.coursesEnrolled === 1 ? '' : 's'} enrolled
-                              </span>
-                            ) : (
-                              <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Platform Administrator</span>
-                            )}
-                          </td>
-                          <td style={{ fontSize: '0.825rem', color: '#64748b' }}>
-                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Recent'}
-                          </td>
-                          <td>
-                            <span className={`status-pill ${u.isActive !== false ? 'status-active' : 'status-inactive'}`}>
-                              <span className="status-dot"></span>
-                              {u.isActive !== false ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'right' }}>
-                            <div className="admin-action-btn-group" style={{ justifyContent: 'flex-end' }}>
-                              <button
-                                type="button"
-                                className="btn-table-action btn-action-danger"
-                                disabled={isCurrentAdmin || hasCourses}
-                                title={
-                                  isCurrentAdmin
-                                    ? 'Cannot delete your own admin account'
-                                    : hasCourses
-                                    ? `Cannot delete instructor with ${u.coursesAuthored} active courses`
-                                    : `Delete ${u.role}`
-                                }
-                                onClick={() => handleDeleteUser(u)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 5: Transactions & Revenue Ledger */}
-      {!loading && activeTab === 'payments' && (
-        <div>
-          {/* Revenue & Payment Summary Metrics */}
-          <div className="admin-stats-grid" style={{ marginBottom: '1.75rem' }}>
-            <div className="admin-stat-card">
-              <div>
-                <div className="admin-stat-num" style={{ color: '#16a34a' }}>
-                  ₹{(paymentSummary.totalRevenue || 0).toLocaleString('en-IN')}
-                </div>
-                <div className="admin-stat-label">Total Realized Revenue</div>
-                <div className="admin-stat-subtext">From successful course enrollments</div>
-              </div>
-              <div className="admin-stat-icon stat-icon-published">
-                <FiDollarSign size={22} />
-              </div>
-            </div>
-
-            <div className="admin-stat-card">
-              <div>
-                <div className="admin-stat-num">{paymentSummary.successfulPayments || 0}</div>
-                <div className="admin-stat-label">Successful Payments</div>
-                <div className="admin-stat-subtext">Verified gateway transactions</div>
-              </div>
-              <div className="admin-stat-icon stat-icon-total">
-                <FiCheckCircle size={22} />
-              </div>
-            </div>
-
-            <div className="admin-stat-card">
-              <div>
-                <div className="admin-stat-num" style={{ color: '#d97706' }}>
-                  {paymentSummary.pendingPayments || 0}
-                </div>
-                <div className="admin-stat-label">Created / In-Progress</div>
-                <div className="admin-stat-subtext">Awaiting checkout completion</div>
-              </div>
-              <div className="admin-stat-icon stat-icon-pending">
-                <FiClock size={22} />
-              </div>
-            </div>
-
-            <div className="admin-stat-card">
-              <div>
-                <div className="admin-stat-num" style={{ color: '#dc2626' }}>
-                  {paymentSummary.failedPayments || 0}
-                </div>
-                <div className="admin-stat-label">Failed / Declined</div>
-                <div className="admin-stat-subtext">Payment attempt failed or cancelled</div>
-              </div>
-              <div className="admin-stat-icon" style={{ backgroundColor: '#fef2f2', color: '#dc2626' }}>
-                <FiXCircle size={22} />
-              </div>
-            </div>
-          </div>
-
-          {/* Filter Bar */}
-          <div className="admin-filter-bar">
-            <div className="admin-filter-group">
-              <input
-                type="text"
-                placeholder="Search by order ID, payment ID, learner name, email, or course..."
-                value={paymentSearch}
-                onChange={(e) => setPaymentSearch(e.target.value)}
-                className="admin-search-input"
-                style={{ width: '420px' }}
-              />
-              {paymentSearch && (
-                <button
-                  type="button"
-                  onClick={() => setPaymentSearch('')}
-                  style={{
-                    marginLeft: '-2.2rem',
-                    background: 'none',
-                    border: 'none',
-                    color: '#94a3b8',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem'
-                  }}
-                  title="Clear search"
-                >
-                  <FiX size={14} />
-                </button>
-              )}
-            </div>
-
-            <div className="admin-filter-group">
-              <div className="admin-status-segmented">
-                <button
-                  type="button"
-                  className={`segmented-btn ${paymentStatusFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setPaymentStatusFilter('all')}
-                >
-                  All ({payments.length})
-                </button>
-                <button
-                  type="button"
-                  className={`segmented-btn ${paymentStatusFilter === 'paid' ? 'active' : ''}`}
-                  onClick={() => setPaymentStatusFilter('paid')}
-                >
-                  Paid ({paymentSummary.successfulPayments || 0})
-                </button>
-                <button
-                  type="button"
-                  className={`segmented-btn ${paymentStatusFilter === 'created' ? 'active' : ''}`}
-                  onClick={() => setPaymentStatusFilter('created')}
-                >
-                  Created ({paymentSummary.pendingPayments || 0})
-                </button>
-                <button
-                  type="button"
-                  className={`segmented-btn ${paymentStatusFilter === 'failed' ? 'active' : ''}`}
-                  onClick={() => setPaymentStatusFilter('failed')}
-                >
-                  Failed ({paymentSummary.failedPayments || 0})
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Payments Table */}
-          <div className="admin-table-container">
-            <div className="admin-table-scroll">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Date & Time</th>
-                    <th>Learner</th>
-                    <th>Course</th>
-                    <th>Amount</th>
-                    <th>Order & Payment IDs</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPayments.length === 0 ? (
-                    <tr>
-                      <td colSpan="6">
-                        <div className="admin-empty-state" style={{ padding: '3.5rem 1rem' }}>
-                          <div className="empty-state-icon">💳</div>
-                          <h4 className="empty-state-title">No transactions found</h4>
-                          <p className="empty-state-subtitle">
-                            {paymentSearch || paymentStatusFilter !== 'all'
-                              ? 'No payment records match your search or status filter.'
-                              : 'When students purchase paid courses via Razorpay, transaction receipts and revenue will appear here.'}
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredPayments.map((p) => {
-                      const statusClass =
-                        p.status === 'paid'
-                          ? 'status-active'
-                          : p.status === 'failed'
-                          ? 'status-rejected'
-                          : 'status-pending';
-
-                      const learnerName = p.user?.name || 'Learner';
-                      const learnerEmail = p.user?.email || 'N/A';
-                      const courseTitle = p.course?.title || 'Course';
-
-                      return (
-                        <tr key={p._id || p.orderId}>
-                          <td style={{ fontSize: '0.825rem', color: '#64748b', whiteSpace: 'nowrap' }}>
-                            {p.createdAt ? new Date(p.createdAt).toLocaleString() : 'Recent'}
-                          </td>
-                          <td>
-                            <div style={{ fontWeight: 600, color: '#0f172a' }}>{learnerName}</div>
-                            <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{learnerEmail}</div>
-                          </td>
-                          <td style={{ maxWidth: '240px' }}>
-                            <div style={{ fontWeight: 500, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {courseTitle}
-                            </div>
-                          </td>
-                          <td style={{ whiteSpace: 'nowrap' }}>
-                            <strong style={{ color: p.status === 'paid' ? '#166534' : '#0f172a' }}>
-                              ₹{(p.amount || 0).toLocaleString('en-IN')}
-                            </strong>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                              <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#475569' }}>
-                                Ord: <strong>{p.orderId || 'N/A'}</strong>
-                              </span>
-                              {p.paymentId && (
-                                <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#2563eb' }}>
-                                  Pay: {p.paymentId}
+                              </td>
+                              <td>
+                                <span className={`status-pill ${statusClass}`}>
+                                  <span className="status-dot" aria-hidden="true" />
+                                  <span>{p.status ? p.status.toUpperCase() : 'UNKNOWN'}</span>
                                 </span>
-                              )}
-                            </div>
-                          </td>
-                          <td>
-                            <span className={`status-pill ${statusClass}`}>
-                              <span className="status-dot"></span>
-                              {p.status ? p.status.toUpperCase() : 'UNKNOWN'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Category Modal (Create / Edit) */}
-      {categoryModal && (
-        <div className="admin-modal-overlay">
-          <div className="admin-modal-card">
-            <div className="admin-modal-header">
-              <h3 className="admin-modal-title">
-                {categoryModal.mode === 'create' ? 'Create New Category' : `Edit Category "${categoryModal.data.name}"`}
-              </h3>
-              <button
-                type="button"
-                className="admin-modal-close"
-                onClick={() => setCategoryModal(null)}
-                aria-label="Close dialog"
-              >
-                <FiX size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleSaveCategory}>
-              <div className="admin-modal-body">
-                <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-                  Categories organize curriculum in the public catalogue and instructor studio.
-                </p>
-
-                <div className="form-field-group">
-                  <label className="form-field-label">Category Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Mobile Development"
-                    value={categoryModal.data.name}
-                    onChange={(e) =>
-                      setCategoryModal({
-                        ...categoryModal,
-                        data: { ...categoryModal.data, name: e.target.value }
-                      })
-                    }
-                    className="form-field-input"
-                  />
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-
-                <div className="form-field-group">
-                  <label className="form-field-label">Description</label>
-                  <textarea
-                    rows="3"
-                    placeholder="Brief description of courses in this category..."
-                    value={categoryModal.data.description}
-                    onChange={(e) =>
-                      setCategoryModal({
-                        ...categoryModal,
-                        data: { ...categoryModal.data, description: e.target.value }
-                      })
-                    }
-                    className="form-field-textarea"
-                  />
-                </div>
-
-                <div className="form-checkbox-row">
-                  <input
-                    type="checkbox"
-                    id="catIsActive"
-                    checked={categoryModal.data.isActive}
-                    onChange={(e) =>
-                      setCategoryModal({
-                        ...categoryModal,
-                        data: { ...categoryModal.data, isActive: e.target.checked }
-                      })
-                    }
-                  />
-                  <label htmlFor="catIsActive" style={{ fontSize: '0.85rem', color: '#334155', cursor: 'pointer' }}>
-                    Active (visible in public filter pills and instructor studio)
-                  </label>
-                </div>
+                <Pagination
+                  currentPage={paginatedPayments.currentPage}
+                  totalItems={paginatedPayments.totalItems}
+                  pageSize={10}
+                  onPageChange={setPaymentsPage}
+                  itemLabel="transactions"
+                  className="pagination-embedded"
+                />
               </div>
-
-              <div className="admin-modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  onClick={() => setCategoryModal(null)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  {categoryModal.mode === 'create' ? 'Create Category' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Add User Modal */}
-      {userModalOpen && (
-        <div className="admin-modal-overlay">
-          <div className="admin-modal-card">
-            <div className="admin-modal-header">
-              <h3 className="admin-modal-title">Add Student or Teacher</h3>
-              <button
-                type="button"
-                className="admin-modal-close"
-                onClick={() => setUserModalOpen(false)}
-                aria-label="Close dialog"
-              >
-                <FiX size={18} />
-              </button>
             </div>
-            <form onSubmit={handleCreateUser}>
-              <div className="admin-modal-body">
-                <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-                  Create an authenticated platform account for a student or teacher/instructor.
-                </p>
+          )}
 
-                <div className="form-field-group">
-                  <label className="form-field-label">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. John Doe"
-                    value={newUserData.name}
-                    onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
-                    className="form-field-input"
-                  />
-                </div>
-
-                <div className="form-field-group">
-                  <label className="form-field-label">Email Address *</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="e.g. user@platform.com"
-                    value={newUserData.email}
-                    onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
-                    className="form-field-input"
-                  />
-                </div>
-
-                <div className="form-field-group">
-                  <label className="form-field-label">Password * (min 6 characters)</label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="Enter secure password..."
-                    value={newUserData.password}
-                    onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
-                    className="form-field-input"
-                  />
-                </div>
-
-                <div className="form-field-group">
-                  <label className="form-field-label">Account Role *</label>
-                  <select
-                    value={newUserData.role}
-                    onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value })}
-                    className="form-field-input"
+          {/* Category Modal */}
+          {categoryModal && (
+            <div className="admin-modal-overlay">
+              <div className="admin-modal-card" role="dialog" aria-modal="true">
+                <div className="admin-modal-header">
+                  <h3 className="admin-modal-title">
+                    {categoryModal.mode === 'create'
+                      ? 'Create New Category'
+                      : `Edit Category "${categoryModal.data.name}"`}
+                  </h3>
+                  <button
+                    type="button"
+                    className="admin-modal-close"
+                    onClick={() => setCategoryModal(null)}
+                    aria-label="Close dialog"
                   >
-                    <option value="student">Student (Learn courses & track progress)</option>
-                    <option value="instructor">Teacher / Instructor (Author & manage courses)</option>
-                  </select>
+                    <FiX size={18} />
+                  </button>
                 </div>
-              </div>
+                <form onSubmit={handleSaveCategory}>
+                  <div className="admin-modal-body">
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                      Categories organize curriculum in the public catalogue and instructor studio.
+                    </p>
 
-              <div className="admin-modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  onClick={() => setUserModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  Create Account
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                    <div className="form-field-group">
+                      <label className="form-field-label">Category Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Mobile Development"
+                        value={categoryModal.data.name}
+                        onChange={(e) =>
+                          setCategoryModal({
+                            ...categoryModal,
+                            data: { ...categoryModal.data, name: e.target.value }
+                          })
+                        }
+                        className="form-field-input"
+                      />
+                    </div>
 
-      {/* Course Rejection Modal */}
-      {rejectingCourse && (
-        <div className="admin-modal-overlay">
-          <div className="admin-modal-card">
-            <div className="admin-modal-header">
-              <h3 className="admin-modal-title">Reject Course Submission</h3>
-              <button
-                type="button"
-                className="admin-modal-close"
-                onClick={() => setRejectingCourse(null)}
-                aria-label="Close dialog"
-              >
-                <FiX size={18} />
-              </button>
+                    <div className="form-field-group">
+                      <label className="form-field-label">Description</label>
+                      <textarea
+                        rows="3"
+                        placeholder="Brief description of courses in this category..."
+                        value={categoryModal.data.description}
+                        onChange={(e) =>
+                          setCategoryModal({
+                            ...categoryModal,
+                            data: { ...categoryModal.data, description: e.target.value }
+                          })
+                        }
+                        className="form-field-textarea"
+                      />
+                    </div>
+
+                    <div className="form-checkbox-row">
+                      <input
+                        type="checkbox"
+                        id="catIsActive"
+                        checked={categoryModal.data.isActive}
+                        onChange={(e) =>
+                          setCategoryModal({
+                            ...categoryModal,
+                            data: { ...categoryModal.data, isActive: e.target.checked }
+                          })
+                        }
+                      />
+                      <label htmlFor="catIsActive" style={{ fontSize: '0.85rem', color: 'var(--color-text-main)', cursor: 'pointer' }}>
+                        Active (visible in public filter pills and instructor studio)
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="admin-modal-footer">
+                    <button type="button" className="btn btn-outline" onClick={() => setCategoryModal(null)}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                      {categoryModal.mode === 'create' ? 'Create Category' : 'Save Changes'}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-            <form onSubmit={handleConfirmReject}>
-              <div className="admin-modal-body">
-                <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                  Please provide feedback explaining to the educator why "<strong>{rejectingCourse.title}</strong>" cannot be approved at this time:
-                </p>
-                <div className="form-field-group">
-                  <textarea
-                    rows="4"
-                    required
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    placeholder="e.g. Please add at least 3 lessons and provide a clearer course summary before re-submitting."
-                    className="form-field-textarea"
-                  />
-                </div>
-              </div>
+          )}
 
-              <div className="admin-modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  onClick={() => setRejectingCourse(null)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  style={{ backgroundColor: '#dc2626', borderColor: '#dc2626' }}
-                >
-                  Confirm Rejection
-                </button>
+          {/* Add User Modal */}
+          {userModalOpen && (
+            <div className="admin-modal-overlay">
+              <div className="admin-modal-card" role="dialog" aria-modal="true">
+                <div className="admin-modal-header">
+                  <h3 className="admin-modal-title">Add Student or Teacher</h3>
+                  <button
+                    type="button"
+                    className="admin-modal-close"
+                    onClick={() => setUserModalOpen(false)}
+                    aria-label="Close dialog"
+                  >
+                    <FiX size={18} />
+                  </button>
+                </div>
+                <form onSubmit={handleCreateUser}>
+                  <div className="admin-modal-body">
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                      Create an authenticated platform account for a student or teacher/instructor.
+                    </p>
+
+                    <div className="form-field-group">
+                      <label className="form-field-label">Full Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. John Doe"
+                        value={newUserData.name}
+                        onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
+                        className="form-field-input"
+                      />
+                    </div>
+
+                    <div className="form-field-group">
+                      <label className="form-field-label">Email Address *</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="e.g. user@platform.com"
+                        value={newUserData.email}
+                        onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                        className="form-field-input"
+                      />
+                    </div>
+
+                    <div className="form-field-group">
+                      <label className="form-field-label">Password * (min 6 characters)</label>
+                      <input
+                        type="password"
+                        required
+                        minLength={6}
+                        placeholder="Enter secure password..."
+                        value={newUserData.password}
+                        onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                        className="form-field-input"
+                      />
+                    </div>
+
+                    <div className="form-field-group">
+                      <label className="form-field-label">Account Role *</label>
+                      <select
+                        value={newUserData.role}
+                        onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value })}
+                        className="form-field-input"
+                      >
+                        <option value="student">Student (Learn courses &amp; track progress)</option>
+                        <option value="instructor">Teacher / Instructor (Author &amp; manage courses)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="admin-modal-footer">
+                    <button type="button" className="btn btn-outline" onClick={() => setUserModalOpen(false)}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary">
+                      Create Account
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
-          </div>
+            </div>
+          )}
+
+          {/* Course Rejection Modal */}
+          {rejectingCourse && (
+            <div className="admin-modal-overlay">
+              <div className="admin-modal-card" role="dialog" aria-modal="true">
+                <div className="admin-modal-header">
+                  <h3 className="admin-modal-title">Reject Course Submission</h3>
+                  <button
+                    type="button"
+                    className="admin-modal-close"
+                    onClick={() => setRejectingCourse(null)}
+                    aria-label="Close dialog"
+                  >
+                    <FiX size={18} />
+                  </button>
+                </div>
+                <form onSubmit={handleConfirmReject}>
+                  <div className="admin-modal-body">
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                      Please provide feedback explaining to the educator why &ldquo;<strong>{rejectingCourse.title}</strong>&rdquo; cannot be approved at this time:
+                    </p>
+                    <div className="form-field-group">
+                      <textarea
+                        rows="4"
+                        required
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        placeholder="e.g. Please add at least 3 lessons and provide a clearer course summary before re-submitting."
+                        className="form-field-textarea"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="admin-modal-footer">
+                    <button type="button" className="btn btn-outline" onClick={() => setRejectingCourse(null)}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-danger">
+                      Confirm Rejection
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
-      )}
       </main>
     </div>
   );

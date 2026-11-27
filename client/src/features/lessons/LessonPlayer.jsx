@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { FiPlay, FiFileText, FiCheck } from 'react-icons/fi';
+import { FiPlay, FiFileText, FiCheck, FiArrowLeft } from 'react-icons/fi';
 import { api, formatEmbedUrl, isDirectVideo } from '../../services/api';
 import './LessonPlayer.css';
 
@@ -19,7 +19,6 @@ export default function LessonPlayer() {
         if (!active) return;
         setCourse(courseData);
         setCompletedLessonIds(Array.isArray(progressData) ? progressData : []);
-        // Default to first lesson in first section
         const firstLesson = courseData?.sections?.[0]?.lessons?.[0];
         if (firstLesson) {
           setActiveLesson(firstLesson);
@@ -38,7 +37,6 @@ export default function LessonPlayer() {
     };
   }, [courseId]);
 
-  // Flattened list of all lessons for linear navigation
   const allLessons = useMemo(() => {
     if (!course?.sections) return [];
     return course.sections.flatMap((sec) =>
@@ -69,41 +67,57 @@ export default function LessonPlayer() {
     ? Math.round((completedLessonIds.length / allLessons.length) * 100)
     : 0;
 
-  if (loading) return <div style={{ padding: '4rem', textAlign: 'center' }}>Loading classroom...</div>;
-  if (error || !course) {
+  if (loading) {
     return (
-      <div style={{ padding: '4rem', textAlign: 'center' }}>
-        <h2 style={{ marginBottom: '1rem' }}>{error || 'Course not found.'}</h2>
-        <Link to="/dashboard" className="btn btn-outline">Back to My Learning</Link>
+      <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+        Loading classroom...
       </div>
     );
   }
 
+  if (error || !course) {
+    return (
+      <div className="container gate-card-wrap">
+        <div className="gate-card">
+          <h2 style={{ marginBottom: '1rem' }}>{error || 'Course not found.'}</h2>
+          <Link to="/dashboard" className="btn btn-outline">
+            Back to My Learning
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const activeLessonVideoUrl = formatEmbedUrl(
+    activeLesson?.embedUrl || activeLesson?.videoUrl || activeLesson?.url || ''
+  );
+
   return (
     <div className="player-layout">
-      {/* Main player area */}
       <section className="player-main">
         <header className="player-header">
           <div>
-            <Link to="/dashboard" style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
-              &larr; Back to My Learning
+            <Link to="/dashboard" className="player-back-link">
+              <FiArrowLeft size={14} aria-hidden="true" />
+              <span>Back to My Learning</span>
             </Link>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginTop: '0.25rem' }}>
+            <h1 className="player-lesson-title">
               {activeLesson?.title || 'Select a lesson'}
             </h1>
           </div>
 
           <div className="player-nav-btns">
             <button
+              type="button"
               className={`btn ${isCompleted ? 'btn-outline' : 'btn-primary'}`}
               onClick={handleToggleComplete}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
-              {isCompleted ? <FiCheck size={16} /> : null}
+              {isCompleted ? <FiCheck size={15} aria-hidden="true" /> : null}
               <span>{isCompleted ? 'Completed' : 'Mark as Complete'}</span>
             </button>
 
             <button
+              type="button"
               className="btn btn-outline"
               disabled={!prevLesson}
               onClick={() => setActiveLesson(prevLesson)}
@@ -111,6 +125,7 @@ export default function LessonPlayer() {
               Previous
             </button>
             <button
+              type="button"
               className="btn btn-primary"
               disabled={!nextLesson}
               onClick={() => setActiveLesson(nextLesson)}
@@ -120,42 +135,34 @@ export default function LessonPlayer() {
           </div>
         </header>
 
-        {(() => {
-          const activeLessonVideoUrl = formatEmbedUrl(activeLesson?.embedUrl || activeLesson?.videoUrl || activeLesson?.url || '');
-          return activeLesson?.type === 'video' ? (
-            <div className="video-frame-container">
-              {isDirectVideo(activeLessonVideoUrl) ? (
-                <video
-                  src={activeLessonVideoUrl}
-                  controls
-                  playsInline
-                />
-              ) : (
-                <iframe
-                  src={activeLessonVideoUrl}
-                  title={activeLesson?.title || 'Lesson Video'}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allowFullScreen
-                />
-              )}
-            </div>
-          ) : (
-            <article className="text-lesson-card">
-              <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: 'var(--color-primary)' }}>
-                Lesson Reading & Instructions
-              </h2>
-              <p>{activeLesson?.content || 'No text content available for this lesson.'}</p>
-            </article>
-          );
-        })()}
+        {activeLesson?.type === 'video' ? (
+          <div className="video-frame-container">
+            {isDirectVideo(activeLessonVideoUrl) ? (
+              <video src={activeLessonVideoUrl} controls playsInline />
+            ) : (
+              <iframe
+                src={activeLessonVideoUrl}
+                title={activeLesson?.title || 'Lesson Video'}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            )}
+          </div>
+        ) : (
+          <article className="text-lesson-card">
+            <h2 className="text-lesson-heading">Lesson Reading &amp; Instructions</h2>
+            <p className="text-lesson-body">
+              {activeLesson?.content || 'No text content available for this lesson.'}
+            </p>
+          </article>
+        )}
       </section>
 
-      {/* Curriculum & progress sidebar */}
-      <aside className="player-sidebar">
+      <aside className="player-sidebar" aria-label="Course curriculum">
         <div className="sidebar-header">
-          <h2 style={{ fontSize: '1rem', fontWeight: 700 }}>{course.title}</h2>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
+          <h2 className="sidebar-course-title">{course.title}</h2>
+          <div className="sidebar-progress-meta tabular-nums">
             <span>Progress</span>
             <span>{progressPercent}% completed</span>
           </div>
@@ -177,18 +184,23 @@ export default function LessonPlayer() {
                   return (
                     <button
                       key={lesKey}
+                      type="button"
                       className={`sidebar-lesson-item ${active ? 'active' : ''}`}
                       onClick={() => setActiveLesson(lesson)}
                     >
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span className="sidebar-lesson-label">
                         {lesson.type === 'video' ? (
-                          <FiPlay size={13} style={{ color: '#2563eb', flexShrink: 0 }} />
+                          <FiPlay size={13} className="lesson-icon-video" aria-hidden="true" />
                         ) : (
-                          <FiFileText size={13} style={{ color: '#059669', flexShrink: 0 }} />
+                          <FiFileText size={13} className="lesson-icon-text" aria-hidden="true" />
                         )}
                         <span>{lesson.title}</span>
                       </span>
-                      {completed && <span className="completed-check"><FiCheck size={13} /></span>}
+                      {completed && (
+                        <span className="completed-check" aria-label="Completed">
+                          <FiCheck size={14} />
+                        </span>
+                      )}
                     </button>
                   );
                 })}

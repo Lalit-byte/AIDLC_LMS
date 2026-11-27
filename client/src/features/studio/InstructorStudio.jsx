@@ -1,8 +1,23 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { FiLock, FiHome, FiPlusSquare, FiBook, FiBookOpen, FiUsers, FiTrendingUp, FiPlay, FiFileText, FiX } from 'react-icons/fi';
+import {
+  FiLock,
+  FiHome,
+  FiPlusSquare,
+  FiPlus,
+  FiBook,
+  FiBookOpen,
+  FiUsers,
+  FiTrendingUp,
+  FiPlay,
+  FiFileText,
+  FiFolder,
+  FiX
+} from 'react-icons/fi';
 import { useAuth } from '../../context/useAuth';
 import { api, formatEmbedUrl } from '../../services/api';
+import Pagination from '../../components/Pagination';
+import { paginateItems } from '../../components/paginationUtils';
 import './InstructorStudio.css';
 
 const defaultCourse = () => ({
@@ -43,6 +58,10 @@ export default function InstructorStudio() {
   const [availableCategories, setAvailableCategories] = useState(['Development', 'Cloud', 'Design', 'Business']);
   const [courseSubTab, setCourseSubTab] = useState('published');
   const [selectedCourseEnrolled, setSelectedCourseEnrolled] = useState('all');
+  const [enrolmentsPage, setEnrolmentsPage] = useState(1);
+  const [myCoursesPage, setMyCoursesPage] = useState(1);
+  const [rosterCoursePage, setRosterCoursePage] = useState(1);
+  const [rosterStudentPages, setRosterStudentPages] = useState({});
 
   const loadDashboard = useCallback(() => {
     api.getInstructorDashboard()
@@ -69,7 +88,7 @@ export default function InstructorStudio() {
 
   if (authLoading) {
     return (
-      <div className="container" style={{ padding: '4rem', textAlign: 'center' }}>
+      <div className="container" style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
         Loading studio...
       </div>
     );
@@ -77,13 +96,13 @@ export default function InstructorStudio() {
 
   if (!isAuthenticated || (user?.role !== 'instructor' && user?.role !== 'admin')) {
     return (
-      <div className="container" style={{ padding: '5rem 1.5rem', textAlign: 'center' }}>
-        <div style={{ maxWidth: '480px', margin: '0 auto', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '2.5rem', boxShadow: 'var(--shadow-sm)' }}>
-          <div style={{ marginBottom: '1rem', color: 'var(--color-primary)' }}>
-            <FiLock size={48} />
+      <div className="container gate-card-wrap">
+        <div className="gate-card">
+          <div className="gate-icon-circle">
+            <FiLock size={22} aria-hidden="true" />
           </div>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>Instructor Access Only</h2>
-          <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', fontSize: '0.9375rem', lineHeight: 1.5 }}>
+          <h2 style={{ fontSize: '1.375rem', marginBottom: '0.5rem' }}>Instructor Access Only</h2>
+          <p style={{ color: 'var(--color-text-secondary)', marginBottom: '1.5rem', fontSize: '0.875rem', lineHeight: 1.5 }}>
             Instructor Studio is reserved for teachers and course instructors. Students do not have access to this area.
           </p>
           <Link to="/" className="btn btn-primary">
@@ -99,6 +118,15 @@ export default function InstructorStudio() {
   const publishedCourses = (courses || []).filter((c) => c.status === 'published');
   const draftCourses = (courses || []).filter((c) => c.status !== 'published');
   const publishedCoursesCount = publishedCourses.length;
+
+  const paginatedLatestEnrolments = paginateItems(latestEnrolments, enrolmentsPage, 10);
+  const paginatedPublishedCourses = paginateItems(publishedCourses, myCoursesPage, 9);
+  const paginatedDraftCourses = paginateItems(draftCourses, myCoursesPage, 9);
+  const filteredRosterCourses =
+    selectedCourseEnrolled === 'all'
+      ? publishedCourses
+      : publishedCourses.filter((c) => String(c._id || c.id) === String(selectedCourseEnrolled));
+  const paginatedRosterCourses = paginateItems(filteredRosterCourses, rosterCoursePage, 5);
 
   const handleStartNewCourse = () => {
     setEditingCourse(defaultCourse());
@@ -229,694 +257,859 @@ export default function InstructorStudio() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'published':
-        return <span className="badge badge-published">Published</span>;
+        return (
+          <span className="status-dot-badge badge-published">
+            <span className="status-dot-indicator dot-published" aria-hidden="true" />
+            <span>Published</span>
+          </span>
+        );
       case 'pending_review':
-        return <span className="badge badge-pending">Under Review</span>;
+        return (
+          <span className="status-dot-badge badge-pending">
+            <span className="status-dot-indicator dot-pending" aria-hidden="true" />
+            <span>Under Review</span>
+          </span>
+        );
       default:
-        return <span className="badge badge-draft">Draft</span>;
+        return (
+          <span className="status-dot-badge badge-draft">
+            <span className="status-dot-indicator dot-draft" aria-hidden="true" />
+            <span>Draft</span>
+          </span>
+        );
     }
   };
 
   return (
     <div className="educator-container">
       {/* Left Sidebar Navigation */}
-      <aside className="educator-sidebar">
-        <div className="educator-nav">
+      <aside className="educator-sidebar" aria-label="Instructor studio navigation">
+        <nav className="educator-nav">
           <button
+            type="button"
             className={`educator-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
           >
-            <span className="educator-nav-icon">
-              <FiHome size={20} />
-            </span>
+            <FiHome size={18} className="educator-nav-icon" aria-hidden="true" />
             <span>Dashboard</span>
           </button>
 
           <button
+            type="button"
             className={`educator-nav-item ${activeTab === 'add_course' ? 'active' : ''}`}
             onClick={handleStartNewCourse}
           >
-            <span className="educator-nav-icon">
-              <FiPlusSquare size={20} />
-            </span>
+            <FiPlusSquare size={18} className="educator-nav-icon" aria-hidden="true" />
             <span>Add Course</span>
           </button>
 
           <button
+            type="button"
             className={`educator-nav-item ${activeTab === 'my_courses' ? 'active' : ''}`}
             onClick={() => setActiveTab('my_courses')}
           >
-            <span className="educator-nav-icon">
-              <FiBook size={20} />
-            </span>
+            <FiBook size={18} className="educator-nav-icon" aria-hidden="true" />
             <span>My Courses</span>
           </button>
 
           <button
+            type="button"
             className={`educator-nav-item ${activeTab === 'student_enrolled' ? 'active' : ''}`}
             onClick={() => setActiveTab('student_enrolled')}
           >
-            <span className="educator-nav-icon">
-              <FiUsers size={20} />
-            </span>
+            <FiUsers size={18} className="educator-nav-icon" aria-hidden="true" />
             <span>Student Enrolled</span>
           </button>
-        </div>
+        </nav>
       </aside>
 
       {/* Main Content Area */}
       <main className="educator-main">
-        {notification && (
-          <div style={{ backgroundColor: '#dcfce7', color: '#15803d', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.5rem', fontWeight: 500 }}>
-            {notification}
-          </div>
-        )}
-
-        {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center' }}>Loading educator workspace...</div>
-        ) : activeTab === 'dashboard' ? (
-          <div>
-            {/* Stat Cards */}
-            <div className="educator-stats-grid">
-              <div className="educator-stat-card">
-                <div className="stat-icon-wrapper stat-icon-blue">
-                  <FiUsers size={28} color="#2563eb" />
-                </div>
-                <div>
-                  <div className="stat-value">{stats.totalEnrolments}</div>
-                  <div className="stat-label">Total Enrolments</div>
-                </div>
-              </div>
-
-              <div className="educator-stat-card">
-                <div className="stat-icon-wrapper stat-icon-cyan">
-                  <FiBookOpen size={28} color="#2563eb" />
-                </div>
-                <div>
-                  <div className="stat-value">
-                    {isAdmin ? stats.totalCourses : publishedCoursesCount}
-                  </div>
-                  <div className="stat-label">
-                    {isAdmin ? 'Total Courses' : 'Published Courses'}
-                  </div>
-                </div>
-              </div>
-
-              <div className="educator-stat-card">
-                <div className="stat-icon-wrapper stat-icon-money">
-                  <FiTrendingUp size={28} color="#2563eb" />
-                </div>
-                <div>
-                  <div className="stat-value">₹{(stats.totalEarnings || 0).toLocaleString('en-IN')}</div>
-                  <div className="stat-label">Total Revenue</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Latest Enrolments Section */}
-            <section className="educator-table-section">
-              <h2 className="educator-section-title">Latest Enrolments</h2>
-              <div className="educator-table-container">
-                <table className="educator-table">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '60px' }}>#</th>
-                      <th>Student Name</th>
-                      <th>Course Title</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {!latestEnrolments || latestEnrolments.length === 0 ? (
-                      <tr>
-                        <td colSpan="3" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                          No enrollments recorded yet.
-                        </td>
-                      </tr>
-                    ) : (
-                      latestEnrolments.map((enrol, idx) => (
-                        <tr key={enrol.id || idx}>
-                          <td style={{ fontWeight: 600 }}>{enrol.index || idx + 1}</td>
-                          <td style={{ fontWeight: 500 }}>{enrol.studentName}</td>
-                          <td>{enrol.courseTitle}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </div>
-        ) : activeTab === 'add_course' ? (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>
-                {editingCourse.id ? `Edit Course: ${editingCourse.title}` : 'Add New Course'}
-              </h2>
+        <div className="educator-main-inner">
+          {notification && (
+            <div className="studio-toast">
+              <span>{notification}</span>
               <button
                 type="button"
-                className="btn btn-outline"
-                onClick={() => setActiveTab('my_courses')}
+                className="studio-toast-close"
+                onClick={() => setNotification('')}
+                aria-label="Dismiss notification"
               >
-                Cancel
+                <FiX size={16} />
               </button>
             </div>
+          )}
 
-            <form onSubmit={handleSaveCourse} style={{ maxWidth: '800px' }}>
-              <div className="form-group">
-                <label>Course Title</label>
-                <input
-                  type="text"
-                  required
-                  value={editingCourse.title}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
-                  placeholder="e.g. Master React and Node.js"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Short Description</label>
-                <textarea
-                  rows="3"
-                  required
-                  value={editingCourse.description}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, description: e.target.value })}
-                  placeholder="What will students learn?"
-                />
-              </div>
-
-              <div className="form-row-2col">
-                <div className="form-group">
-                  <label>Category</label>
-                  <select
-                    value={editingCourse.category}
-                    onChange={(e) => setEditingCourse({ ...editingCourse, category: e.target.value })}
-                  >
-                    {Array.from(new Set([...availableCategories, editingCourse.category].filter(Boolean))).map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
+          {loading ? (
+            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+              Loading educator workspace...
+            </div>
+          ) : activeTab === 'dashboard' ? (
+            <div className="studio-stack">
+              <header className="studio-page-header">
+                <div>
+                  <h1 className="studio-page-title">Dashboard</h1>
+                  <p className="studio-page-subtitle">
+                    Monitor course enrolments, published catalog inventory, and realized revenue.
+                  </p>
                 </div>
+                <button type="button" className="btn btn-primary" onClick={handleStartNewCourse}>
+                  <FiPlus size={16} aria-hidden="true" />
+                  <span>Add Course</span>
+                </button>
+              </header>
 
-                <div className="form-group">
-                  <label>Course Price (₹ INR)</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="e.g. 499 (0 for Free)"
-                    value={editingCourse.price !== undefined && editingCourse.price !== null ? editingCourse.price : ''}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/[^0-9]/g, '');
-                      setEditingCourse({ ...editingCourse, price: val });
-                    }}
+              {/* Editorial Hairline KPI Cards */}
+              <section className="educator-stats-grid" aria-label="Instructor overview">
+                <article className="educator-stat-card">
+                  <header className="stat-card-header">
+                    <span className="stat-label">Total Enrolments</span>
+                    <FiUsers size={18} style={{ color: 'var(--color-secondary)' }} aria-hidden="true" />
+                  </header>
+                  <div>
+                    <div className="stat-value tabular-nums">{stats.totalEnrolments}</div>
+                    <div className="stat-subtext">Across all authored courses</div>
+                  </div>
+                </article>
+
+                <article className="educator-stat-card">
+                  <header className="stat-card-header">
+                    <span className="stat-label">
+                      {isAdmin ? 'Total Courses' : 'Published Courses'}
+                    </span>
+                    <FiBookOpen size={18} style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
+                  </header>
+                  <div>
+                    <div className="stat-value tabular-nums">
+                      {isAdmin ? stats.totalCourses : publishedCoursesCount}
+                    </div>
+                    <div className="stat-subtext">
+                      {isAdmin ? 'Authored on platform' : 'Live in public catalogue'}
+                    </div>
+                  </div>
+                </article>
+
+                <article className="educator-stat-card">
+                  <header className="stat-card-header">
+                    <span className="stat-label">Total Revenue</span>
+                    <FiTrendingUp size={18} style={{ color: 'var(--color-success)' }} aria-hidden="true" />
+                  </header>
+                  <div>
+                    <div className="stat-value stat-value-revenue tabular-nums">
+                      ₹{(stats.totalEarnings || 0).toLocaleString('en-IN')}
+                    </div>
+                    <div className="stat-subtext">Verified course sales</div>
+                  </div>
+                </article>
+              </section>
+
+              {/* Latest Enrolments Section */}
+              <section className="educator-table-section">
+                <h2 className="educator-section-title">Latest Enrolments</h2>
+                <div className="educator-table-container">
+                  <table className="educator-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '60px' }}>#</th>
+                        <th>Student Name</th>
+                        <th>Course Title</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {!latestEnrolments || latestEnrolments.length === 0 ? (
+                        <tr>
+                          <td colSpan="3" style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-secondary)' }}>
+                            No enrollments recorded yet.
+                          </td>
+                        </tr>
+                      ) : (
+                        paginatedLatestEnrolments.items.map((enrol, idx) => (
+                          <tr key={enrol.id || idx}>
+                            <td className="tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
+                              {enrol.index || (paginatedLatestEnrolments.currentPage - 1) * 10 + idx + 1}
+                            </td>
+                            <td style={{ fontWeight: 600 }}>{enrol.studentName}</td>
+                            <td>{enrol.courseTitle}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                  <Pagination
+                    currentPage={paginatedLatestEnrolments.currentPage}
+                    totalItems={paginatedLatestEnrolments.totalItems}
+                    pageSize={10}
+                    onPageChange={setEnrolmentsPage}
+                    itemLabel="enrolments"
+                    className="pagination-embedded"
                   />
                 </div>
-              </div>
+              </section>
+            </div>
+          ) : activeTab === 'add_course' ? (
+            <div className="studio-stack">
+              <header className="studio-page-header">
+                <div>
+                  <h1 className="studio-page-title">
+                    {editingCourse.id ? `Edit Course: ${editingCourse.title}` : 'Add New Course'}
+                  </h1>
+                  <p className="studio-page-subtitle">
+                    Configure course metadata, pricing, and structured curriculum sections.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setActiveTab('my_courses')}
+                >
+                  Cancel
+                </button>
+              </header>
 
-              <div className="form-group">
-                <label>Thumbnail Image URL</label>
-                <input
-                  type="url"
-                  value={editingCourse.thumbnail}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, thumbnail: e.target.value })}
-                  placeholder="https://..."
-                />
-              </div>
-
-              {/* Curriculum Builder */}
-              <div className="curriculum-builder">
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '0.75rem' }}>Curriculum Builder</h3>
-
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+              <form onSubmit={handleSaveCourse} className="studio-form-card">
+                <div className="form-group">
+                  <label htmlFor="course-title">Course Title</label>
                   <input
+                    id="course-title"
                     type="text"
-                    placeholder="New section title (e.g. Introduction)"
-                    value={newSectionTitle}
-                    onChange={(e) => setNewSectionTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddSection();
-                      }
-                    }}
-                    style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}
+                    required
+                    value={editingCourse.title}
+                    onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
+                    placeholder="e.g. Master React and Node.js"
                   />
-                  <button type="button" className="btn btn-outline" onClick={handleAddSection}>
-                    + Add Section
-                  </button>
                 </div>
 
-                {(editingCourse.sections || []).length === 0 ? (
-                  <p style={{ color: '#94a3b8', fontSize: '0.875rem' }}>No sections added yet. Add your first section above.</p>
-                ) : (
-                  editingCourse.sections.map((section) => {
-                    const secId = String(section.id || section._id);
-                    return (
-                      <div key={secId} className="section-builder-card">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                          <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, margin: 0 }}>
-                            📁 {section.title} ({section.lessons?.length || 0} lessons)
-                          </h4>
-                          <button
-                            type="button"
-                            className="btn btn-outline"
-                            onClick={() => handleDeleteSection(secId)}
-                            style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', color: '#ef4444', borderColor: '#fca5a5' }}
-                            title="Remove section"
-                          >
-                            Remove
-                          </button>
-                        </div>
+                <div className="form-group">
+                  <label htmlFor="course-desc">Short Description</label>
+                  <textarea
+                    id="course-desc"
+                    rows="3"
+                    required
+                    value={editingCourse.description}
+                    onChange={(e) => setEditingCourse({ ...editingCourse, description: e.target.value })}
+                    placeholder="What will students learn?"
+                  />
+                </div>
 
-                        {(section.lessons || []).map((lsn) => {
-                          const lsnId = String(lsn.id || lsn._id);
-                          return (
-                            <div key={lsnId} className="builder-lesson-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                                {lsn.type === 'video' ? (
-                                  <FiPlay size={13} style={{ color: '#2563eb' }} />
-                                ) : (
-                                  <FiFileText size={13} style={{ color: '#059669' }} />
-                                )}
-                                <span>{lsn.title} ({lsn.duration || 'N/A'})</span>
+                <div className="form-row-2col">
+                  <div className="form-group">
+                    <label htmlFor="course-cat">Category</label>
+                    <select
+                      id="course-cat"
+                      value={editingCourse.category}
+                      onChange={(e) => setEditingCourse({ ...editingCourse, category: e.target.value })}
+                    >
+                      {Array.from(new Set([...availableCategories, editingCourse.category].filter(Boolean))).map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="course-price">Course Price (₹ INR)</label>
+                    <input
+                      id="course-price"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="e.g. 499 (0 for Free)"
+                      value={editingCourse.price !== undefined && editingCourse.price !== null ? editingCourse.price : ''}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setEditingCourse({ ...editingCourse, price: val });
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="course-thumb">Thumbnail Image URL</label>
+                  <input
+                    id="course-thumb"
+                    type="url"
+                    value={editingCourse.thumbnail}
+                    onChange={(e) => setEditingCourse({ ...editingCourse, thumbnail: e.target.value })}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                {/* Curriculum Builder */}
+                <div className="curriculum-builder">
+                  <h3 className="curriculum-builder-title">Curriculum Builder</h3>
+
+                  <div className="curriculum-add-row">
+                    <input
+                      type="text"
+                      placeholder="New section title (e.g. Introduction)"
+                      value={newSectionTitle}
+                      onChange={(e) => setNewSectionTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddSection();
+                        }
+                      }}
+                      className="studio-input"
+                    />
+                    <button type="button" className="btn btn-outline" onClick={handleAddSection}>
+                      <FiPlus size={15} aria-hidden="true" />
+                      <span>Add Section</span>
+                    </button>
+                  </div>
+
+                  {(editingCourse.sections || []).length === 0 ? (
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
+                      No sections added yet. Add your first section above.
+                    </p>
+                  ) : (
+                    editingCourse.sections.map((section) => {
+                      const secId = String(section.id || section._id);
+                      return (
+                        <div key={secId} className="section-builder-card">
+                          <div className="section-builder-head">
+                            <h4 className="section-builder-title">
+                              <FiFolder size={15} style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
+                              <span>
+                                {section.title} ({section.lessons?.length || 0} lessons)
                               </span>
-                              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                {lsn.isPreview && <span className="badge badge-published" style={{ fontSize: '0.7rem' }}>Preview</span>}
+                            </h4>
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-remove-sm"
+                              onClick={() => handleDeleteSection(secId)}
+                              title="Remove section"
+                            >
+                              Remove
+                            </button>
+                          </div>
+
+                          {(section.lessons || []).map((lsn) => {
+                            const lsnId = String(lsn.id || lsn._id);
+                            return (
+                              <div key={lsnId} className="builder-lesson-row">
+                                <span className="builder-lesson-label">
+                                  {lsn.type === 'video' ? (
+                                    <FiPlay size={13} style={{ color: 'var(--color-secondary)' }} aria-hidden="true" />
+                                  ) : (
+                                    <FiFileText size={13} style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
+                                  )}
+                                  <span>
+                                    {lsn.title} ({lsn.duration || 'N/A'})
+                                  </span>
+                                </span>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                  {lsn.isPreview && (
+                                    <span className="status-dot-badge badge-published">Preview</span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteLesson(secId, lsnId)}
+                                    style={{ color: 'var(--color-text-subtle)', display: 'inline-flex', alignItems: 'center' }}
+                                    title="Remove lesson"
+                                    aria-label="Remove lesson"
+                                  >
+                                    <FiX size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {activeSectionId === secId ? (
+                            <div className="lesson-inline-editor">
+                              <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                                <label style={{ fontSize: '0.8rem' }}>Lesson Title</label>
+                                <input
+                                  type="text"
+                                  value={newLesson.title}
+                                  onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddLesson(secId);
+                                    }
+                                  }}
+                                  placeholder="e.g. Architecture Overview"
+                                />
+                              </div>
+
+                              <div className="form-row-2col" style={{ gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                  <label style={{ fontSize: '0.8rem' }}>Type</label>
+                                  <select
+                                    value={newLesson.type}
+                                    onChange={(e) => setNewLesson({ ...newLesson, type: e.target.value })}
+                                  >
+                                    <option value="video">Video Embed</option>
+                                    <option value="text">Text / Reading</option>
+                                  </select>
+                                </div>
+                                <div className="form-group" style={{ marginBottom: 0 }}>
+                                  <label style={{ fontSize: '0.8rem' }}>Duration</label>
+                                  <input
+                                    type="text"
+                                    value={newLesson.duration}
+                                    onChange={(e) => setNewLesson({ ...newLesson, duration: e.target.value })}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleAddLesson(secId);
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              </div>
+
+                              {newLesson.type === 'video' ? (
+                                <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                                  <label style={{ fontSize: '0.8rem' }}>Embed Video URL (YouTube / Vimeo)</label>
+                                  <input
+                                    type="url"
+                                    value={newLesson.embedUrl}
+                                    onChange={(e) => setNewLesson({ ...newLesson, embedUrl: e.target.value })}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleAddLesson(secId);
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                                  <label style={{ fontSize: '0.8rem' }}>Lesson Content</label>
+                                  <textarea
+                                    rows="2"
+                                    value={newLesson.content}
+                                    onChange={(e) => setNewLesson({ ...newLesson, content: e.target.value })}
+                                  />
+                                </div>
+                              )}
+
+                              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                <input
+                                  type="checkbox"
+                                  id={`previewCheck-${secId}`}
+                                  checked={newLesson.isPreview}
+                                  onChange={(e) => setNewLesson({ ...newLesson, isPreview: e.target.checked })}
+                                />
+                                <label htmlFor={`previewCheck-${secId}`} style={{ fontSize: '0.8rem', cursor: 'pointer' }}>
+                                  Allow Free Preview
+                                </label>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <button
                                   type="button"
-                                  onClick={() => handleDeleteLesson(secId, lsnId)}
-                                  style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
-                                  title="Remove lesson"
+                                  className="btn btn-primary"
+                                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                                  onClick={() => handleAddLesson(secId)}
                                 >
-                                  <FiX size={14} />
+                                  Save Lesson
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-outline"
+                                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                                  onClick={() => setActiveSectionId(null)}
+                                >
+                                  Cancel
                                 </button>
                               </div>
                             </div>
-                          );
-                        })}
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-outline"
+                              style={{ marginTop: '0.75rem', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                              onClick={() => setActiveSectionId(secId)}
+                            >
+                              + Add Lesson to Section
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
 
-                        {activeSectionId === secId ? (
-                          <div style={{ marginTop: '0.75rem', padding: '0.75rem', backgroundColor: '#f1f5f9', borderRadius: 'var(--radius-sm)' }}>
-                            <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-                              <label style={{ fontSize: '0.8rem' }}>Lesson Title</label>
-                              <input
-                                type="text"
-                                value={newLesson.title}
-                                onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    handleAddLesson(secId);
-                                  }
-                                }}
-                                placeholder="e.g. Architecture Overview"
-                              />
-                            </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+                  <button type="button" className="btn btn-outline" onClick={() => setActiveTab('my_courses')}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    {editingCourse.id ? 'Update Course' : 'Create Course'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : activeTab === 'my_courses' ? (
+            <div className="studio-stack">
+              <header className="studio-page-header">
+                <div>
+                  <h1 className="studio-page-title">My Courses</h1>
+                  <p className="studio-page-subtitle">
+                    Manage, edit, and review your authored courses.
+                  </p>
+                </div>
+                <button type="button" className="btn btn-primary" onClick={handleStartNewCourse}>
+                  <FiPlus size={16} aria-hidden="true" />
+                  <span>Add Course</span>
+                </button>
+              </header>
 
-                            <div className="form-row-2col" style={{ gap: '0.5rem', marginBottom: '0.5rem' }}>
-                              <div>
-                                <label style={{ fontSize: '0.8rem', display: 'block' }}>Type</label>
-                                <select
-                                  value={newLesson.type}
-                                  onChange={(e) => setNewLesson({ ...newLesson, type: e.target.value })}
-                                  style={{ width: '100%', padding: '0.4rem' }}
-                                >
-                                  <option value="video">Video Embed</option>
-                                  <option value="text">Text / Reading</option>
-                                </select>
-                              </div>
-                              <div>
-                                <label style={{ fontSize: '0.8rem', display: 'block' }}>Duration</label>
-                                <input
-                                  type="text"
-                                  value={newLesson.duration}
-                                  onChange={(e) => setNewLesson({ ...newLesson, duration: e.target.value })}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      e.preventDefault();
-                                      handleAddLesson(secId);
-                                    }
-                                  }}
-                                />
-                              </div>
-                            </div>
-
-                            {newLesson.type === 'video' ? (
-                              <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-                                <label style={{ fontSize: '0.8rem' }}>Embed Video URL (YouTube / Vimeo)</label>
-                                <input
-                                  type="url"
-                                  value={newLesson.embedUrl}
-                                  onChange={(e) => setNewLesson({ ...newLesson, embedUrl: e.target.value })}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      e.preventDefault();
-                                      handleAddLesson(secId);
-                                    }
-                                  }}
-                                />
-                              </div>
-                            ) : (
-                              <div className="form-group" style={{ marginBottom: '0.5rem' }}>
-                                <label style={{ fontSize: '0.8rem' }}>Lesson Content</label>
-                                <textarea
-                                  rows="2"
-                                  value={newLesson.content}
-                                  onChange={(e) => setNewLesson({ ...newLesson, content: e.target.value })}
-                                />
-                              </div>
-                            )}
-
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.75rem' }}>
-                              <input
-                                type="checkbox"
-                                id={`previewCheck-${secId}`}
-                                checked={newLesson.isPreview}
-                                onChange={(e) => setNewLesson({ ...newLesson, isPreview: e.target.checked })}
-                              />
-                              <label htmlFor={`previewCheck-${secId}`} style={{ fontSize: '0.8rem', cursor: 'pointer' }}>
-                                Allow Free Preview
-                              </label>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <button
-                                type="button"
-                                className="btn btn-primary"
-                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                                onClick={() => handleAddLesson(secId)}
-                              >
-                                Save Lesson
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-outline"
-                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                                onClick={() => setActiveSectionId(null)}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            className="btn btn-outline"
-                            style={{ marginTop: '0.5rem', padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
-                            onClick={() => setActiveSectionId(secId)}
-                          >
-                            + Add Lesson to Section
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })
+              {/* Filter Strip */}
+              <div className="studio-filter-strip">
+                <button
+                  type="button"
+                  className={`studio-filter-pill ${courseSubTab === 'published' ? 'active' : ''}`}
+                  onClick={() => {
+                    setCourseSubTab('published');
+                    setMyCoursesPage(1);
+                  }}
+                >
+                  Published Courses ({publishedCourses.length})
+                </button>
+                {draftCourses.length > 0 && (
+                  <button
+                    type="button"
+                    className={`studio-filter-pill ${courseSubTab === 'drafts' ? 'active' : ''}`}
+                    onClick={() => {
+                      setCourseSubTab('drafts');
+                      setMyCoursesPage(1);
+                    }}
+                  >
+                    Drafts &amp; Under Review ({draftCourses.length})
+                  </button>
                 )}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-                <button type="button" className="btn btn-outline" onClick={() => setActiveTab('my_courses')}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingCourse.id ? 'Update Course' : 'Create Course'}
-                </button>
-              </div>
-            </form>
-          </div>
-        ) : activeTab === 'my_courses' ? (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>My Courses</h2>
-                <p style={{ color: 'var(--color-text-muted)' }}>Manage, edit, and review your authored courses.</p>
-              </div>
-              <button className="btn btn-primary" onClick={handleStartNewCourse}>
-                + Add Course
-              </button>
-            </div>
-
-            {/* Course Sub Tabs: Published by default, Drafts accessible */}
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.75rem' }}>
-              <button
-                type="button"
-                className={`btn ${courseSubTab === 'published' ? 'btn-primary' : 'btn-outline'}`}
-                style={{ padding: '0.4rem 1rem', fontSize: '0.875rem' }}
-                onClick={() => setCourseSubTab('published')}
-              >
-                Published Courses ({publishedCourses.length})
-              </button>
-              {draftCourses.length > 0 && (
-                <button
-                  type="button"
-                  className={`btn ${courseSubTab === 'drafts' ? 'btn-primary' : 'btn-outline'}`}
-                  style={{ padding: '0.4rem 1rem', fontSize: '0.875rem' }}
-                  onClick={() => setCourseSubTab('drafts')}
-                >
-                  Drafts & Under Review ({draftCourses.length})
-                </button>
-              )}
-            </div>
-
-            {courseSubTab === 'published' ? (
-              publishedCourses.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '4rem 1rem', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-lg)' }}>
-                  <p style={{ marginBottom: '1rem', color: 'var(--color-text-muted)' }}>You have no published courses yet.</p>
-                  <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-                    <button className="btn btn-primary" onClick={handleStartNewCourse}>
-                      Create your first course
-                    </button>
-                    {draftCourses.length > 0 && (
-                      <button className="btn btn-outline" onClick={() => setCourseSubTab('drafts')}>
-                        View Drafts ({draftCourses.length})
+              {courseSubTab === 'published' ? (
+                publishedCourses.length === 0 ? (
+                  <div className="studio-empty-card">
+                    <p style={{ color: 'var(--color-text-secondary)' }}>You have no published courses yet.</p>
+                    <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <button type="button" className="btn btn-primary" onClick={handleStartNewCourse}>
+                        Create your first course
                       </button>
-                    )}
+                      {draftCourses.length > 0 && (
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          onClick={() => {
+                            setCourseSubTab('drafts');
+                            setMyCoursesPage(1);
+                          }}
+                        >
+                          View Drafts ({draftCourses.length})
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <section className="studio-grid" aria-label="Published courses">
+                      {paginatedPublishedCourses.items.map((course) => {
+                      const courseId = course._id || course.id;
+                      const price = typeof course.price === 'number' ? course.price : 0;
+                      const enrolledCount =
+                        course.enrolledCount ||
+                        allEnrolments.filter(
+                          (e) => String(e.courseId) === String(courseId) || e.courseTitle === course.title
+                        ).length;
+                      const salesAmount = course.totalEarnings || 0;
+
+                      return (
+                        <article key={courseId} className="studio-card">
+                          <header className="studio-card-top">
+                            <div className="studio-card-meta-row">
+                              <span className="studio-card-category">{course.category}</span>
+                              {getStatusBadge(course.status)}
+                            </div>
+                            <h2 className="studio-card-title">{course.title}</h2>
+                            <p className="studio-card-desc">
+                              {course.description || 'No description provided.'}
+                            </p>
+                          </header>
+
+                          <div className="studio-metrics-box">
+                            <div className="studio-metric-item">
+                              <span className="studio-metric-label">Sections</span>
+                              <span className="studio-metric-val tabular-nums">{course.sections?.length || 0}</span>
+                            </div>
+                            <div className="studio-metric-item">
+                              <span className="studio-metric-label">Price</span>
+                              <span className="studio-metric-val tabular-nums">
+                                {price === 0 ? 'Free' : `₹${price.toLocaleString('en-IN')}`}
+                              </span>
+                            </div>
+                            <div className="studio-metric-item">
+                              <span className="studio-metric-label">Students</span>
+                              <span className="studio-metric-val tabular-nums">{enrolledCount}</span>
+                            </div>
+                            <div className="studio-metric-item">
+                              <span className="studio-metric-label">Sales</span>
+                              <span
+                                className={`studio-metric-val tabular-nums ${
+                                  salesAmount > 0 ? 'text-teal' : 'text-muted'
+                                }`}
+                              >
+                                ₹{salesAmount.toLocaleString('en-IN')}
+                              </span>
+                            </div>
+                          </div>
+
+                          <footer className="studio-card-actions">
+                            <button
+                              type="button"
+                              className="btn btn-outline"
+                              onClick={() => handleEditCourse(course)}
+                            >
+                              Edit / Curriculum
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              onClick={() => {
+                                setSelectedCourseEnrolled(courseId);
+                                setActiveTab('student_enrolled');
+                              }}
+                            >
+                              View Students
+                            </button>
+                          </footer>
+                        </article>
+                      );
+                    })}
+                    </section>
+                    <Pagination
+                      currentPage={paginatedPublishedCourses.currentPage}
+                      totalItems={paginatedPublishedCourses.totalItems}
+                      pageSize={9}
+                      onPageChange={setMyCoursesPage}
+                      itemLabel="courses"
+                    />
+                  </>
+                )
               ) : (
-                <div className="studio-grid">
-                  {publishedCourses.map((course) => {
+                <>
+                  <section className="studio-grid" aria-label="Draft and pending courses">
+                    {paginatedDraftCourses.items.map((course) => {
                     const courseId = course._id || course.id;
                     const price = typeof course.price === 'number' ? course.price : 0;
-                    const enrolledCount = course.enrolledCount || allEnrolments.filter((e) => String(e.courseId) === String(courseId) || e.courseTitle === course.title).length;
-                    const salesAmount = course.totalEarnings || 0;
-
                     return (
                       <article key={courseId} className="studio-card">
-                        <div className="studio-card-header">
-                          <div>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
-                              {course.category}
-                            </span>
-                            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0.25rem 0' }}>{course.title}</h3>
+                        <header className="studio-card-top">
+                          <div className="studio-card-meta-row">
+                            <span className="studio-card-category">{course.category}</span>
+                            {getStatusBadge(course.status)}
                           </div>
-                          {getStatusBadge(course.status)}
+                          <h2 className="studio-card-title">{course.title}</h2>
+                          <p className="studio-card-desc">
+                            {course.description || 'No description provided.'}
+                          </p>
+                        </header>
+
+                        <div className="studio-metrics-box">
+                          <div className="studio-metric-item">
+                            <span className="studio-metric-label">Sections</span>
+                            <span className="studio-metric-val tabular-nums">{course.sections?.length || 0}</span>
+                          </div>
+                          <div className="studio-metric-item">
+                            <span className="studio-metric-label">Price</span>
+                            <span className="studio-metric-val tabular-nums">
+                              {price === 0 ? 'Free' : `₹${price.toLocaleString('en-IN')}`}
+                            </span>
+                          </div>
                         </div>
 
-                        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1.25rem', flex: 1 }}>
-                          {course.description || 'No description provided.'}
-                        </p>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-                          <div>Sections: <strong style={{ color: 'var(--color-text-main)' }}>{course.sections?.length || 0}</strong></div>
-                          <div>Price: <strong style={{ color: 'var(--color-text-main)' }}>{price === 0 ? 'Free' : `₹${price.toLocaleString('en-IN')}`}</strong></div>
-                          <div>Students: <strong style={{ color: '#4f46e5' }}>👥 {enrolledCount}</strong></div>
-                          <div>Sales: <strong style={{ color: '#16a34a' }}>💰 ₹{salesAmount.toLocaleString('en-IN')}</strong></div>
-                        </div>
-
-                        <div className="studio-card-actions">
+                        <footer className="studio-card-actions">
                           <button
+                            type="button"
                             className="btn btn-outline"
-                            style={{ flex: 1 }}
                             onClick={() => handleEditCourse(course)}
                           >
                             Edit / Curriculum
                           </button>
-                          <button
-                            className="btn btn-primary"
-                            style={{ flex: 1 }}
-                            onClick={() => {
-                              setSelectedCourseEnrolled(courseId);
-                              setActiveTab('student_enrolled');
-                            }}
-                          >
-                            View Students
-                          </button>
-                        </div>
+                          {course.status === 'draft' && (
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              onClick={() => handleSubmitForReview(courseId)}
+                            >
+                              Submit Review
+                            </button>
+                          )}
+                        </footer>
                       </article>
                     );
                   })}
-                </div>
-              )
-            ) : (
-              <div className="studio-grid">
-                {draftCourses.map((course) => {
-                  const courseId = course._id || course.id;
-                  const price = typeof course.price === 'number' ? course.price : 0;
-                  return (
-                    <article key={courseId} className="studio-card">
-                      <div className="studio-card-header">
-                        <div>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-text-muted)', textTransform: 'uppercase' }}>
-                            {course.category}
-                          </span>
-                          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0.25rem 0' }}>{course.title}</h3>
-                        </div>
-                        {getStatusBadge(course.status)}
-                      </div>
-
-                      <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '1.25rem', flex: 1 }}>
-                        {course.description || 'No description provided.'}
-                      </p>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
-                        <span>Sections: <strong>{course.sections?.length || 0}</strong></span>
-                        <span>Price: <strong>{price === 0 ? 'Free' : `₹${price.toLocaleString('en-IN')}`}</strong></span>
-                      </div>
-
-                      <div className="studio-card-actions">
-                        <button
-                          className="btn btn-outline"
-                          style={{ flex: 1 }}
-                          onClick={() => handleEditCourse(course)}
-                        >
-                          Edit / Curriculum
-                        </button>
-                        {course.status === 'draft' && (
-                          <button
-                            className="btn btn-primary"
-                            onClick={() => handleSubmitForReview(courseId)}
-                          >
-                            Submit Review
-                          </button>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        ) : (
-          /* Student Enrolled Section */
-          <section className="educator-table-section">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-              <div>
-                <h2 className="educator-section-title" style={{ margin: 0 }}>Enrolled Students on Each Course</h2>
-                <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
-                  Review enrolled learners, course progress, and enrolment dates across your published courses.
-                </p>
-              </div>
-
-              {publishedCourses.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <label htmlFor="course-select-filter" style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
-                    Filter by Course:
-                  </label>
-                  <select
-                    id="course-select-filter"
-                    value={selectedCourseEnrolled}
-                    onChange={(e) => setSelectedCourseEnrolled(e.target.value)}
-                    style={{ padding: '0.45rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', fontSize: '0.875rem', backgroundColor: '#ffffff' }}
-                  >
-                    <option value="all">All Courses ({allEnrolments.length} total students)</option>
-                    {publishedCourses.map((c) => {
-                      const cId = c._id || c.id;
-                      const count = allEnrolments.filter((e) => String(e.courseId) === String(cId) || e.courseTitle === c.title).length;
-                      return (
-                        <option key={cId} value={cId}>
-                          {c.title} ({count} enrolled)
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
+                  </section>
+                  <Pagination
+                    currentPage={paginatedDraftCourses.currentPage}
+                    totalItems={paginatedDraftCourses.totalItems}
+                    pageSize={9}
+                    onPageChange={setMyCoursesPage}
+                    itemLabel="courses"
+                  />
+                </>
               )}
             </div>
+          ) : (
+            /* Student Enrolled Section */
+            <div className="studio-stack">
+              <header className="studio-page-header studio-page-header-end">
+                <div>
+                  <h1 className="studio-page-title">Enrolled Students on Each Course</h1>
+                  <p className="studio-page-subtitle">
+                    Review enrolled learners, course progress, and enrolment dates across your published courses.
+                  </p>
+                </div>
 
-            {publishedCourses.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3.5rem 1rem', border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-lg)' }}>
-                <p style={{ color: 'var(--color-text-muted)', marginBottom: '1rem' }}>No published courses found. Once your courses are published and students enroll, they will appear here.</p>
-                <button className="btn btn-primary" onClick={handleStartNewCourse}>
-                  Create a Course
-                </button>
-              </div>
-            ) : (
-              (selectedCourseEnrolled === 'all'
-                ? publishedCourses
-                : publishedCourses.filter((c) => String(c._id || c.id) === String(selectedCourseEnrolled))
-              ).map((course) => {
-                const courseId = course._id || course.id;
-                const courseEnrolments = allEnrolments.filter(
-                  (e) => String(e.courseId) === String(courseId) || e.courseTitle === course.title
-                );
-
-                return (
-                  <div key={courseId} style={{ marginBottom: '2rem', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                    <div style={{ padding: '1rem 1.25rem', backgroundColor: '#f8fafc', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                      <div>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#6366f1', textTransform: 'uppercase' }}>
-                          {course.category}
-                        </span>
-                        <h3 style={{ fontSize: '1.125rem', fontWeight: 700, margin: '0.15rem 0 0 0', color: '#0f172a' }}>
-                          {course.title}
-                        </h3>
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                        <span className="badge badge-published" style={{ fontSize: '0.8125rem', padding: '0.3rem 0.6rem' }}>
-                          👥 {courseEnrolments.length} Enrolled
-                        </span>
-                        {course.price > 0 && (
-                          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#16a34a' }}>
-                            Sales: ₹{((course.totalEarnings || 0)).toLocaleString('en-IN')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="educator-table-container" style={{ border: 'none', borderRadius: 0 }}>
-                      <table className="educator-table">
-                        <thead>
-                          <tr>
-                            <th style={{ width: '60px' }}>#</th>
-                            <th>Student Name</th>
-                            <th>Student Email</th>
-                            <th>Enrolled Date</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {courseEnrolments.length === 0 ? (
-                            <tr>
-                              <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                                No students enrolled in this course yet.
-                              </td>
-                            </tr>
-                          ) : (
-                            courseEnrolments.map((enrol, idx) => (
-                              <tr key={enrol.id || idx}>
-                                <td style={{ fontWeight: 600 }}>{idx + 1}</td>
-                                <td style={{ fontWeight: 500 }}>{enrol.studentName}</td>
-                                <td style={{ color: '#64748b' }}>{enrol.studentEmail || '-'}</td>
-                                <td style={{ color: '#64748b' }}>
-                                  {enrol.enrolledAt ? new Date(enrol.enrolledAt).toLocaleDateString() : '-'}
-                                </td>
-                                <td>
-                                  <span className="badge badge-published" style={{ textTransform: 'capitalize' }}>
-                                    {enrol.status || 'Active'}
-                                  </span>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
+                {publishedCourses.length > 0 && (
+                  <div className="studio-course-filter">
+                    <label htmlFor="course-select-filter">Filter by Course</label>
+                    <select
+                      id="course-select-filter"
+                      value={selectedCourseEnrolled}
+                      onChange={(e) => {
+                        setSelectedCourseEnrolled(e.target.value);
+                        setRosterCoursePage(1);
+                      }}
+                      className="studio-select"
+                    >
+                      <option value="all">All Courses ({allEnrolments.length} total students)</option>
+                      {publishedCourses.map((c) => {
+                        const cId = c._id || c.id;
+                        const count = allEnrolments.filter(
+                          (e) => String(e.courseId) === String(cId) || e.courseTitle === c.title
+                        ).length;
+                        return (
+                          <option key={cId} value={cId}>
+                            {c.title} ({count})
+                          </option>
+                        );
+                      })}
+                    </select>
                   </div>
-                );
-              })
-            )}
-          </section>
-        )}
+                )}
+              </header>
+
+              {publishedCourses.length === 0 ? (
+                <div className="studio-empty-card">
+                  <p style={{ color: 'var(--color-text-secondary)' }}>
+                    No published courses found. Once your courses are published and students enroll, they will appear here.
+                  </p>
+                  <button type="button" className="btn btn-primary" onClick={handleStartNewCourse}>
+                    Create a Course
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {paginatedRosterCourses.items.map((course) => {
+                    const courseId = course._id || course.id;
+                    const courseEnrolments = allEnrolments.filter(
+                      (e) => String(e.courseId) === String(courseId) || e.courseTitle === course.title
+                    );
+                    const paginatedStudents = paginateItems(
+                      courseEnrolments,
+                      rosterStudentPages[courseId] || 1,
+                      10
+                    );
+
+                    return (
+                      <section key={courseId} className="roster-section">
+                        <header className="roster-header">
+                          <div>
+                            <span className="roster-category">{course.category}</span>
+                            <h2 className="roster-title">{course.title}</h2>
+                          </div>
+                          <div className="roster-meta">
+                            {courseEnrolments.length > 0 ? (
+                              <span className="status-dot-badge badge-published tabular-nums">
+                                <span className="status-dot-indicator dot-published" aria-hidden="true" />
+                                <span>{courseEnrolments.length} Enrolled</span>
+                              </span>
+                            ) : (
+                              <span className="status-dot-badge badge-draft tabular-nums">
+                                <span>0 Enrolled</span>
+                              </span>
+                            )}
+                            {course.price > 0 && (
+                              <span
+                                className={`roster-sales tabular-nums ${
+                                  (course.totalEarnings || 0) > 0 ? 'text-teal' : 'text-muted'
+                                }`}
+                              >
+                                Sales: ₹{(course.totalEarnings || 0).toLocaleString('en-IN')}
+                              </span>
+                            )}
+                          </div>
+                        </header>
+
+                        {courseEnrolments.length === 0 ? (
+                          <div className="roster-empty">
+                            No students enrolled in this course yet.
+                          </div>
+                        ) : (
+                          <div className="educator-table-container roster-table-wrap">
+                            <table className="educator-table">
+                              <thead>
+                                <tr>
+                                  <th style={{ width: '56px' }}>#</th>
+                                  <th>Student Name</th>
+                                  <th>Student Email</th>
+                                  <th>Enrolled Date</th>
+                                  <th>Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {paginatedStudents.items.map((enrol, idx) => (
+                                  <tr key={enrol.id || idx}>
+                                    <td className="tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
+                                      {(paginatedStudents.currentPage - 1) * 10 + idx + 1}
+                                    </td>
+                                    <td style={{ fontWeight: 600 }}>{enrol.studentName}</td>
+                                    <td style={{ color: 'var(--color-text-secondary)' }}>{enrol.studentEmail || '-'}</td>
+                                    <td className="tabular-nums" style={{ color: 'var(--color-text-secondary)' }}>
+                                      {enrol.enrolledAt ? new Date(enrol.enrolledAt).toLocaleDateString() : '-'}
+                                    </td>
+                                    <td>
+                                      <span className="status-dot-badge badge-published">
+                                        <span className="status-dot-indicator dot-published" aria-hidden="true" />
+                                        <span>{enrol.status || 'Active'}</span>
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                            <Pagination
+                              currentPage={paginatedStudents.currentPage}
+                              totalItems={paginatedStudents.totalItems}
+                              pageSize={10}
+                              onPageChange={(nextPage) =>
+                                setRosterStudentPages((prev) => ({ ...prev, [courseId]: nextPage }))
+                              }
+                              itemLabel="students"
+                              className="pagination-embedded"
+                            />
+                          </div>
+                        )}
+                      </section>
+                    );
+                  })}
+                  <Pagination
+                    currentPage={paginatedRosterCourses.currentPage}
+                    totalItems={paginatedRosterCourses.totalItems}
+                    pageSize={5}
+                    onPageChange={setRosterCoursePage}
+                    itemLabel="courses"
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

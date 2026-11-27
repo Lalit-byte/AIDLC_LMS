@@ -1,6 +1,18 @@
 {
   "version": 2,
   "skills": {
+    "agentation": {
+      "source": "benjitaylor/agentation",
+      "sourceType": "github",
+      "skillPath": "skills/agentation/SKILL.md",
+      "computedHash": "25951380db60f312979ce4e7940c2999eb6a806c3780c2a6359f17fbd17f0e86"
+    },
+    "agentation-self-driving": {
+      "source": "benjitaylor/agentation",
+      "sourceType": "github",
+      "skillPath": "skills/agentation-self-driving/SKILL.md",
+      "computedHash": "9d82ab8d7059a83f756e6934fd4a4dfac942243e27854dc967f969d68dfb736d"
+    },
     "archify": {
       "source": "tt-a1i/archify",
       "commit": "44781293f38728baf04dbad33ce1a0cef8c39cca",

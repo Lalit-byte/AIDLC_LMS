@@ -41,22 +41,22 @@ export default function CourseCard({ course, actionLabel, actionUrl }) {
         <div className="course-meta">
           <span className="course-category">{categoryName || 'General'}</span>
           {lessonsCount ? (
-            <span className="course-lessons-badge">
-              <FiBookOpen size={12} style={{ marginRight: '0.25rem' }} />
-              {lessonsCount} lessons
+            <span className="course-lessons-badge tabular-nums">
+              <FiBookOpen size={12} style={{ marginRight: '0.25rem' }} aria-hidden="true" />
+              {`${lessonsCount} lessons`}
             </span>
           ) : null}
         </div>
 
         <h3 className="course-title">{course.title}</h3>
-        {instructor ? <div className="course-instructor">By {instructor}</div> : null}
+        {instructor ? <div className="course-instructor">{`By ${instructor}`}</div> : null}
         <p className="course-description">{course.description}</p>
 
         <div className="course-footer">
-          <div className="course-price">
+          <div className="course-price tabular-nums">
             {isFree ? 'Free' : `₹${price.toLocaleString('en-IN')}`}
           </div>
-          <Link to={targetUrl} className="btn btn-outline">
+          <Link to={targetUrl} className="btn btn-primary">
             {targetLabel}
           </Link>
         </div>

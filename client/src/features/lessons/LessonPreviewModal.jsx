@@ -47,8 +47,8 @@ export default function LessonPreviewModal({ lesson, onClose }) {
           </div>
         ) : (
           <div className="preview-text-container">
-            <h4 style={{ marginBottom: '0.75rem', color: 'var(--color-primary)' }}>Lesson Reading</h4>
-            <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, color: 'var(--color-text-main)' }}>
+            <h4 className="preview-reading-heading">Lesson Reading</h4>
+            <div className="preview-reading-body">
               {lesson.content || 'No text content available for this preview.'}
             </div>
           </div>
@@ -58,13 +58,13 @@ export default function LessonPreviewModal({ lesson, onClose }) {
           <div className="preview-header">
             <div>
               <span className="badge badge-paid" style={{ marginBottom: '0.5rem' }}>Free Preview</span>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{lesson.title}</h3>
+              <h3 className="preview-title">{lesson.title}</h3>
             </div>
-            <button className="btn btn-outline" onClick={onClose} style={{ padding: '0.35rem 0.75rem' }}>
+            <button type="button" className="btn btn-outline" onClick={onClose} style={{ padding: '0.35rem 0.75rem' }}>
               Close
             </button>
           </div>
-          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+          <p className="preview-meta tabular-nums">
             Duration: {lesson.duration || 'N/A'} &bull; Type: {(lesson.type || 'video').toUpperCase()}
           </p>
         </div>

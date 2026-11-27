@@ -27,63 +27,64 @@ export default function Register() {
   };
 
   return (
-    <div className="container" style={{ maxWidth: '420px', padding: '5rem 1.5rem' }}>
-      <div style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: '2rem', boxShadow: 'var(--shadow-sm)' }}>
-        <h1 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', textAlign: 'center' }}>Create an Account</h1>
-        <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', marginBottom: '2rem', textAlign: 'center' }}>
+    <div className="auth-page-wrap">
+      <div className="auth-card">
+        <h1 className="auth-card-title">Create an Account</h1>
+        <p className="auth-card-subtitle">
           Join OpenLMS and start learning today
         </p>
 
-        {error && (
-          <div style={{ color: 'var(--color-danger, #ef4444)', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.875rem' }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="auth-error-banner">{error}</div>}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Full name</label>
+            <label htmlFor="register-name" className="studio-field-label">Full name</label>
             <input
+              id="register-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              style={{ width: '100%', padding: '0.625rem 0.75rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}
+              className="studio-input"
               placeholder="Jane Doe"
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Email address</label>
+            <label htmlFor="register-email" className="studio-field-label">Email address</label>
             <input
+              id="register-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{ width: '100%', padding: '0.625rem 0.75rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}
+              className="studio-input"
               placeholder="you@example.com"
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>Password</label>
+            <label htmlFor="register-password" className="studio-field-label">Password</label>
             <input
+              id="register-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
-              style={{ width: '100%', padding: '0.625rem 0.75rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)' }}
+              className="studio-input"
               placeholder="••••••••"
             />
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.5rem' }}>I want to join as</label>
+            <label htmlFor="register-role" className="studio-field-label">I want to join as</label>
             <select
+              id="register-role"
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              style={{ width: '100%', padding: '0.625rem 0.75rem', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-surface)' }}
+              className="studio-input"
+              style={{ backgroundColor: 'var(--color-surface)' }}
             >
               <option value="student">Student (Learn courses)</option>
               <option value="instructor">Teacher / Instructor (Teach courses)</option>
@@ -95,8 +96,11 @@ export default function Register() {
           </button>
         </form>
 
-        <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
-          Already have an account? <Link to="/login" style={{ color: 'var(--color-primary)', fontWeight: 500 }}>Sign in</Link>
+        <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+          Already have an account?{' '}
+          <Link to="/login" style={{ color: 'var(--color-secondary)', fontWeight: 600 }}>
+            Sign in
+          </Link>
         </div>
       </div>
     </div>

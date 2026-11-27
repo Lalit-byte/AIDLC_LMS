@@ -1,27 +1,24 @@
 .course-card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: var(--shadow-xs);
   display: flex;
   flex-direction: column;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+  transition: border-color var(--transition-fast);
 }
 
 .course-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-border-hover);
+  border-color: var(--color-border-strong);
 }
 
 .course-thumbnail-wrapper {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background-color: var(--color-surface-hover);
+  background-color: var(--color-surface-low);
   overflow: hidden;
-  border-bottom: 1px solid var(--color-border-subtle, #f1f5f9);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .course-thumbnail {
@@ -35,7 +32,6 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  box-shadow: var(--shadow-xs);
 }
 
 .course-body {
@@ -59,7 +55,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.075em;
-  color: var(--color-primary);
+  color: var(--color-secondary);
 }
 
 .course-lessons-badge {
@@ -67,11 +63,12 @@
   align-items: center;
   gap: 0.25rem;
   font-size: 0.6875rem;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .course-title {
+  font-family: var(--font-display);
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--color-text-main);
@@ -82,14 +79,14 @@
 
 .course-instructor {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   margin-bottom: 0.4rem;
   font-weight: 500;
 }
 
 .course-description {
   font-size: 0.8125rem;
-  color: #475569;
+  color: var(--color-text-secondary);
   margin-bottom: 0.75rem;
   flex: 1;
   display: -webkit-box;
@@ -104,7 +101,7 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 0.65rem;
-  border-top: 1px solid var(--color-border-subtle, #f1f5f9);
+  border-top: 1px solid var(--color-border);
   margin-top: auto;
 }
 
