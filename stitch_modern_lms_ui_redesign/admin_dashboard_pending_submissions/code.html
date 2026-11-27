@@ -1,0 +1,345 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Pending Submissions | OpenLMS</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">/** @type {import('tailwindcss').Config} */
+globalThis.tailwind = globalThis.tailwind || {};
+globalThis.tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        'success': '#15803D',
+        'on-success': '#FFFFFF',
+        'success-container': '#DCFCE7',
+        'on-success-container': '#14532D',
+        'warning': '#B45309',
+        'on-warning': '#FFFFFF',
+        'warning-container': '#FEF3C7',
+        'on-warning-container': '#78350F',
+        'border-subtle': '#E4E2DF',
+        'border-strong': '#C8C6C4',
+        'light-primary': '#781F00',
+        'light-on-primary': '#FFFFFF',
+        'light-primary-container': '#9A3412',
+        'light-on-primary-container': '#FFFFFF',
+        'light-primary-tint': '#FFEDE8',
+        'light-on-primary-tint': '#5F1600',
+        'light-secondary': '#006A63',
+        'light-on-secondary': '#FFFFFF',
+        'light-secondary-container': '#E6F4F2',
+        'light-on-secondary-container': '#004D47',
+        'light-tertiary': '#004172',
+        'light-on-tertiary': '#FFFFFF',
+        'light-error': '#BA1A1A',
+        'light-on-error': '#FFFFFF',
+        'light-error-container': '#FFDAD6',
+        'light-on-error-container': '#93000A',
+        'light-background': '#FBF9F6',
+        'light-on-background': '#1B1C1A',
+        'light-surface': '#FBF9F6',
+        'light-surface-container-lowest': '#FFFFFF',
+        'light-surface-container-low': '#F5F3F0',
+        'light-surface-container': '#EFEEEB',
+        'light-surface-container-high': '#EAE8E5',
+        'light-surface-container-highest': '#E4E2DF',
+        'light-on-surface': '#1B1C1A',
+        'light-on-surface-variant': '#5E5E5C',
+        'light-outline': '#777775',
+        'light-outline-variant': '#E4E2DF',
+        'dark-primary': '#FFB59F',
+        'dark-on-primary': '#5F1600',
+        'dark-primary-container': '#9A3412',
+        'dark-on-primary-container': '#FFBDA9',
+        'dark-primary-tint': '#3A0A00',
+        'dark-on-primary-tint': '#FFDBD1',
+        'dark-secondary': '#80D5CB',
+        'dark-on-secondary': '#003733',
+        'dark-secondary-container': '#00504A',
+        'dark-on-secondary-container': '#9CF2E8',
+        'dark-tertiary': '#A0CAFF',
+        'dark-on-tertiary': '#003259',
+        'dark-error': '#FFB4AB',
+        'dark-on-error': '#690005',
+        'dark-error-container': '#93000A',
+        'dark-on-error-container': '#FFDAD6',
+        'dark-background': '#131412',
+        'dark-on-background': '#E4E2DF',
+        'dark-surface': '#131412',
+        'dark-surface-container-lowest': '#0E0E0D',
+        'dark-surface-container-low': '#1B1C1A',
+        'dark-surface-container': '#1F201E',
+        'dark-surface-container-high': '#2A2A28',
+        'dark-surface-container-highest': '#343533',
+        'dark-on-surface': '#E4E2DF',
+        'dark-on-surface-variant': '#ACABA8',
+        'dark-outline': '#91918E',
+        'dark-outline-variant': '#30312F',
+      },
+      borderRadius: {
+        'sm': '2px',
+        'DEFAULT': '4px',
+        'md': '6px',
+        'lg': '8px',
+        'full': '9999px',
+      },
+      spacing: {
+        'gutter-xs': '4px',
+        'gutter-sm': '8px',
+        'gutter-md': '16px',
+        'gutter-lg': '24px',
+        'gutter-xl': '32px',
+        'section': '40px',
+        'page-margin': '32px',
+      },
+      fontFamily: {
+        'display': ['"Bricolage Grotesque"', 'sans-serif'],
+        'headline': ['"Bricolage Grotesque"', 'sans-serif'],
+        'title': ['"Plus Jakarta Sans"', 'sans-serif'],
+        'body': ['"Plus Jakarta Sans"', 'sans-serif'],
+        'label': ['"Plus Jakarta Sans"', 'sans-serif'],
+        'mono': ['"Fira Code"', 'monospace'],
+      },
+      fontSize: {
+        'display-lg': ['36px', { lineHeight: '44px', letterSpacing: '-0.5px', fontWeight: '700' }],
+        'display-lg-mobile': ['28px', { lineHeight: '34px', letterSpacing: '-0.25px', fontWeight: '700' }],
+        'headline-lg': ['28px', { lineHeight: '34px', letterSpacing: '-0.35px', fontWeight: '600' }],
+        'headline-md': ['22px', { lineHeight: '28px', letterSpacing: '-0.2px', fontWeight: '600' }],
+        'headline-sm': ['18px', { lineHeight: '24px', letterSpacing: '-0.1px', fontWeight: '600' }],
+        'title-lg': ['16px', { lineHeight: '22px', letterSpacing: '0px', fontWeight: '600' }],
+        'title-md': ['15px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '600' }],
+        'title-sm': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '600' }],
+        'body-lg': ['15px', { lineHeight: '22px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-md': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '400' }],
+        'body-sm': ['13px', { lineHeight: '18px', letterSpacing: '0px', fontWeight: '400' }],
+        'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0px', fontWeight: '500' }],
+        'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.2px', fontWeight: '500' }],
+        'label-sm': ['11px', { lineHeight: '14px', letterSpacing: '0.4px', fontWeight: '600' }],
+        'mono-sm': ['12px', { lineHeight: '16px', letterSpacing: '0px', fontWeight: '400' }],
+      },
+      transitionDuration: {
+        'state-change': '120ms',
+        'surface-enter': '200ms',
+        'surface-exit': '150ms',
+      },
+      transitionDelay: {
+        'state-change': '0ms',
+        'surface-enter': '0ms',
+        'surface-exit': '0ms',
+      },
+      transitionTimingFunction: {
+        'state-change': 'ease-out',
+        'surface-enter': 'cubic-bezier(0.2, 0, 0, 1)',
+        'surface-exit': 'cubic-bezier(0.3, 0, 1, 1)',
+      },
+    },
+  },
+};
+if (typeof module !== 'undefined') module.exports = globalThis.tailwind.config;
+</script>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&amp;family=Fira+Code:wght@400;500&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet">
+  <style>.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons { display: inline-block; width: 1em; height: 1em; line-height: 1 !important; box-sizing: content-box; overflow: hidden; white-space: nowrap; direction: ltr; vertical-align: middle; }</style>
+</head>
+<body class="bg-light-surface text-light-on-surface font-body antialiased">
+  <div class="min-h-[1024px] flex flex-col" data-stitch-vh="min-h-[1024px]===min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <header class="h-[60px] bg-light-surface-container-lowest border-b border-border-subtle px-gutter-lg flex items-center justify-between gap-gutter-lg sticky top-0 z-20">
+      <div class="flex items-center gap-gutter-sm">
+        <div class="w-8 h-8 rounded bg-light-primary text-light-on-primary flex items-center justify-center">
+          <span class="material-symbols-outlined text-[18px]" aria-hidden="true">layers</span>
+        </div>
+        <span class="font-headline text-headline-sm text-light-on-surface tracking-tight" data-design-text-token="headline-sm">OpenLMS</span>
+      </div>
+
+      <nav aria-label="Primary" class="hidden md:flex items-center gap-gutter-xs">
+        <a href="#home" class="px-gutter-md py-gutter-xs rounded font-label text-label-lg text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container-low transition-colors duration-state-change">
+          <span data-design-text-token="label-lg">Home</span>
+        </a>
+        <a href="#courses" class="px-gutter-md py-gutter-xs rounded font-label text-label-lg text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container-low transition-colors duration-state-change">
+          <span data-design-text-token="label-lg">Courses</span>
+        </a>
+        <a href="#my-learning" class="px-gutter-md py-gutter-xs rounded font-label text-label-lg text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container-low transition-colors duration-state-change">
+          <span data-design-text-token="label-lg">My Learning</span>
+        </a>
+        <a href="#instructor-studio" class="px-gutter-md py-gutter-xs rounded font-label text-label-lg text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container-low transition-colors duration-state-change">
+          <span data-design-text-token="label-lg">Instructor Studio</span>
+        </a>
+        <a href="#admin-panel" aria-current="page" class="px-gutter-md py-gutter-xs rounded font-label text-label-lg bg-light-primary-tint text-light-on-primary-tint">
+          <span data-design-text-token="label-lg">Admin Panel</span>
+        </a>
+      </nav>
+
+      <div class="flex items-center gap-gutter-md">
+        <div class="flex flex-col items-end">
+          <span class="font-title text-title-sm text-light-on-surface leading-none" data-design-text-token="title-sm">tanuj</span>
+          <span class="font-label text-label-md text-light-on-surface-variant" data-design-text-token="label-md">Admin</span>
+        </div>
+        <button data-component-id="button-secondary" data-component-type="button" data-component-variant="secondary" type="button" class="inline-flex items-center justify-center gap-gutter-sm px-gutter-md py-gutter-sm rounded bg-light-surface-container-lowest text-light-on-surface border border-border-subtle hover:bg-light-surface-container-low hover:border-border-strong transition-colors duration-state-change">
+          <span class="font-label text-label-lg" data-design-text-token="label-lg">Logout</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Workspace Shell -->
+    <div class="flex-1 flex">
+
+      <!-- Admin Workspace Sidebar -->
+      <aside aria-label="Admin navigation" class="w-72 shrink-0 bg-light-surface-container-low border-r border-border-subtle p-gutter-lg flex flex-col gap-gutter-xl min-h-[1024px]" data-stitch-vh="min-h-[1024px]===min-h-screen">
+        <nav class="flex flex-col gap-gutter-xs">
+          <span class="px-gutter-sm pb-gutter-xs font-label text-label-sm uppercase tracking-wider text-light-on-surface-variant" data-design-text-token="label-sm">Admin Navigation</span>
+
+          <a href="#pending" aria-current="page" class="flex items-center justify-between gap-gutter-sm px-gutter-sm py-gutter-sm rounded bg-light-surface-container-lowest border border-border-subtle text-light-primary">
+            <span class="flex items-center gap-gutter-sm min-w-0">
+              <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">schedule</span>
+              <span class="font-label text-label-lg whitespace-nowrap" data-design-text-token="label-lg">Pending Submissions</span>
+            </span>
+            <span data-component-id="badge-numeric" data-component-type="badge" data-component-variant="numeric" role="status" class="inline-flex items-center justify-center min-w-6 px-gutter-xs py-0.5 rounded bg-light-surface-container text-light-on-surface-variant tabular-nums">
+              <span class="font-label text-label-sm" data-design-text-token="label-sm">0</span>
+            </span>
+          </a>
+
+          <a href="#all-courses" class="flex items-center justify-between gap-gutter-sm px-gutter-sm py-gutter-sm rounded text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container transition-colors duration-state-change">
+            <span class="flex items-center gap-gutter-sm min-w-0">
+              <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">grid_view</span>
+              <span class="font-label text-label-lg whitespace-nowrap" data-design-text-token="label-lg">All Platform Courses</span>
+            </span>
+            <span data-component-id="badge-numeric" data-component-type="badge" data-component-variant="numeric" role="status" class="inline-flex items-center justify-center min-w-6 px-gutter-xs py-0.5 rounded bg-light-surface-container text-light-on-surface-variant tabular-nums">
+              <span class="font-label text-label-sm" data-design-text-token="label-sm">9</span>
+            </span>
+          </a>
+
+          <a href="#categories" class="flex items-center justify-between gap-gutter-sm px-gutter-sm py-gutter-sm rounded text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container transition-colors duration-state-change">
+            <span class="flex items-center gap-gutter-sm min-w-0">
+              <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">sell</span>
+              <span class="font-label text-label-lg whitespace-nowrap" data-design-text-token="label-lg">Categories</span>
+            </span>
+            <span data-component-id="badge-numeric" data-component-type="badge" data-component-variant="numeric" role="status" class="inline-flex items-center justify-center min-w-6 px-gutter-xs py-0.5 rounded bg-light-surface-container text-light-on-surface-variant tabular-nums">
+              <span class="font-label text-label-sm" data-design-text-token="label-sm">4</span>
+            </span>
+          </a>
+
+          <a href="#users" class="flex items-center justify-between gap-gutter-sm px-gutter-sm py-gutter-sm rounded text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container transition-colors duration-state-change">
+            <span class="flex items-center gap-gutter-sm min-w-0">
+              <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">group</span>
+              <span class="font-label text-label-lg whitespace-nowrap" data-design-text-token="label-lg">Users</span>
+            </span>
+            <span data-component-id="badge-numeric" data-component-type="badge" data-component-variant="numeric" role="status" class="inline-flex items-center justify-center min-w-6 px-gutter-xs py-0.5 rounded bg-light-surface-container text-light-on-surface-variant tabular-nums">
+              <span class="font-label text-label-sm" data-design-text-token="label-sm">18</span>
+            </span>
+          </a>
+
+          <a href="#transactions" class="flex items-center justify-between gap-gutter-sm px-gutter-sm py-gutter-sm rounded text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container transition-colors duration-state-change">
+            <span class="flex items-center gap-gutter-sm min-w-0">
+              <span class="material-symbols-outlined text-[18px] shrink-0" aria-hidden="true">payments</span>
+              <span class="font-label text-label-lg whitespace-nowrap" data-design-text-token="label-lg">Transactions &amp; Revenue</span>
+            </span>
+            <span data-component-id="badge-numeric" data-component-type="badge" data-component-variant="numeric" role="status" class="inline-flex items-center justify-center min-w-6 px-gutter-xs py-0.5 rounded bg-light-surface-container text-light-on-surface-variant tabular-nums">
+              <span class="font-label text-label-sm" data-design-text-token="label-sm">22</span>
+            </span>
+          </a>
+        </nav>
+
+        <nav class="flex flex-col gap-gutter-xs pt-gutter-md border-t border-border-subtle">
+          <span class="px-gutter-sm pb-gutter-xs font-label text-label-sm uppercase tracking-wider text-light-on-surface-variant" data-design-text-token="label-sm">Switch Workspace</span>
+          <a href="#student-workspace" class="flex items-center gap-gutter-sm px-gutter-sm py-gutter-sm rounded text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">menu_book</span>
+            <span class="font-label text-label-lg" data-design-text-token="label-lg">Student Workspace</span>
+          </a>
+          <a href="#educator-studio" class="flex items-center gap-gutter-sm px-gutter-sm py-gutter-sm rounded text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">edit_note</span>
+            <span class="font-label text-label-lg" data-design-text-token="label-lg">Educator Studio</span>
+          </a>
+          <a href="#home" class="flex items-center gap-gutter-sm px-gutter-sm py-gutter-sm rounded text-light-on-surface-variant hover:text-light-on-surface hover:bg-light-surface-container transition-colors duration-state-change">
+            <span class="material-symbols-outlined text-[18px]" aria-hidden="true">explore</span>
+            <span class="font-label text-label-lg" data-design-text-token="label-lg">Home</span>
+          </a>
+        </nav>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="flex-1 p-gutter-xl max-w-6xl">
+        <div class="flex flex-col gap-gutter-xl">
+
+          <!-- Page Header -->
+          <header class="flex flex-col gap-gutter-xs">
+            <h1 class="font-headline text-headline-lg text-light-on-surface text-balance" data-design-text-token="headline-lg">Admin Dashboard</h1>
+            <p class="font-body text-body-md text-light-on-surface-variant text-pretty max-w-prose" data-design-text-token="body-md">
+              Review educator course submissions, manage curriculum categories, and monitor platform operations.
+            </p>
+          </header>
+
+          <!-- 4-Column Hairline KPI Strip -->
+          <section aria-label="Platform overview" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter-md items-stretch">
+            <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="h-full bg-light-surface-container-lowest border border-border-subtle rounded p-gutter-lg flex flex-col justify-between gap-gutter-sm">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <span class="font-label text-label-md text-light-on-surface-variant" data-design-text-token="label-md">Pending Reviews</span>
+                <span class="material-symbols-outlined text-[18px] text-warning" aria-hidden="true">schedule</span>
+              </header>
+              <div class="flex flex-col gap-gutter-xs">
+                <p class="font-headline text-headline-lg text-light-on-surface tabular-nums" data-design-text-token="headline-lg">0</p>
+                <p class="font-body text-body-sm text-light-on-surface-variant" data-design-text-token="body-sm">Awaiting admin review</p>
+              </div>
+            </article>
+
+            <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="h-full bg-light-surface-container-lowest border border-border-subtle rounded p-gutter-lg flex flex-col justify-between gap-gutter-sm">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <span class="font-label text-label-md text-light-on-surface-variant" data-design-text-token="label-md">Published Courses</span>
+                <span class="material-symbols-outlined text-[18px] text-success" aria-hidden="true">check_circle</span>
+              </header>
+              <div class="flex flex-col gap-gutter-xs">
+                <p class="font-headline text-headline-lg text-light-on-surface tabular-nums" data-design-text-token="headline-lg">9</p>
+                <p class="font-body text-body-sm text-light-on-surface-variant" data-design-text-token="body-sm">Visible in public catalog</p>
+              </div>
+            </article>
+
+            <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="h-full bg-light-surface-container-lowest border border-border-subtle rounded p-gutter-lg flex flex-col justify-between gap-gutter-sm">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <span class="font-label text-label-md text-light-on-surface-variant" data-design-text-token="label-md">Authored Courses</span>
+                <span class="material-symbols-outlined text-[18px] text-light-primary" aria-hidden="true">menu_book</span>
+              </header>
+              <div class="flex flex-col gap-gutter-xs">
+                <p class="font-headline text-headline-lg text-light-on-surface tabular-nums" data-design-text-token="headline-lg">9</p>
+                <p class="font-body text-body-sm text-light-on-surface-variant" data-design-text-token="body-sm">Across all instructors</p>
+              </div>
+            </article>
+
+            <article data-component-id="card-outlined" data-component-type="card" data-component-variant="outlined" class="h-full bg-light-surface-container-lowest border border-border-subtle rounded p-gutter-lg flex flex-col justify-between gap-gutter-sm">
+              <header class="flex items-center justify-between gap-gutter-sm">
+                <span class="font-label text-label-md text-light-on-surface-variant" data-design-text-token="label-md">Registered Users</span>
+                <span class="material-symbols-outlined text-[18px] text-light-secondary" aria-hidden="true">group</span>
+              </header>
+              <div class="flex flex-col gap-gutter-xs">
+                <p class="font-headline text-headline-lg text-light-on-surface tabular-nums" data-design-text-token="headline-lg">18</p>
+                <p class="font-body text-body-sm text-light-on-surface-variant" data-design-text-token="body-sm">Students &amp; instructors</p>
+              </div>
+            </article>
+          </section>
+
+          <!-- Empty State: All Submissions Reviewed -->
+          <section aria-label="Pending submissions queue" class="bg-light-surface-container-lowest border border-border-subtle rounded p-section flex flex-col items-center justify-center text-center gap-gutter-md">
+            <div class="w-12 h-12 rounded-full bg-light-secondary-container text-light-on-secondary-container flex items-center justify-center">
+              <span class="material-symbols-outlined text-[24px]" aria-hidden="true">task_alt</span>
+            </div>
+            <div class="flex flex-col gap-gutter-xs max-w-md">
+              <h2 class="font-headline text-headline-sm text-light-on-surface" data-design-text-token="headline-sm">All Submissions Reviewed</h2>
+              <p class="font-body text-body-md text-light-on-surface-variant text-pretty" data-design-text-token="body-md">
+                There are no courses awaiting administrator approval. New instructor curriculum submissions will appear here for review and publication.
+              </p>
+            </div>
+            <button data-component-id="button-primary" data-component-type="button" data-component-variant="primary" type="button" class="inline-flex items-center justify-center gap-gutter-sm px-gutter-md py-gutter-sm rounded bg-light-secondary text-light-on-secondary hover:bg-light-on-secondary-container transition-colors duration-state-change">
+              <span class="font-label text-label-lg" data-design-text-token="label-lg">Browse All Platform Courses</span>
+              <span class="material-symbols-outlined text-[18px]" aria-hidden="true">arrow_forward</span>
+            </button>
+          </section>
+
+        </div>
+      </main>
+    </div>
+
+  </div>
+
+
+</body></html>

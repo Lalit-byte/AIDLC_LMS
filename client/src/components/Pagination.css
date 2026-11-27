@@ -1,0 +1,102 @@
+.studio-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.studio-pagination.pagination-embedded {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  border-radius: 0;
+  background-color: var(--color-surface-low);
+}
+
+.pagination-summary {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-text-secondary);
+}
+
+.pagination-summary strong {
+  color: var(--color-text-main);
+  font-weight: 600;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-main);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.pagination-btn:hover:not(:disabled):not(.active) {
+  background-color: var(--color-surface-low);
+  border-color: var(--color-border-strong);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pagination-page-btn {
+  min-width: 32px;
+  padding: 0 8px;
+}
+
+.pagination-page-btn.active {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: var(--color-on-secondary);
+  font-weight: 600;
+}
+
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 32px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+  .studio-pagination {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pagination-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

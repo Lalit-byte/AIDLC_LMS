@@ -26,16 +26,15 @@ export default function Navbar() {
 
   return (
     <header className="navbar">
-      <div className="container navbar-inner">
+      <div className="navbar-inner">
         <Link to="/" className="navbar-brand">
           <span className="navbar-logo-mark" aria-hidden="true">
             <FiLayers size={18} />
           </span>
-          <span className="brand-title">
-            Open<span className="brand-accent">LMS</span>
-          </span>
+          <span className="brand-title">OpenLMS</span>
         </Link>
-        <nav>
+
+        <nav aria-label="Primary">
           <ul className="navbar-links">
             {isAuthenticated && (
               <li>
@@ -74,18 +73,15 @@ export default function Navbar() {
             )}
           </ul>
         </nav>
+
         <div className="navbar-actions">
           {isAuthenticated ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-main)' }}>
-                  {user?.name || 'Account'}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>
-                  {roleLabel}
-                </span>
+            <div className="navbar-user-group">
+              <div className="navbar-user-meta">
+                <span className="navbar-user-name">{user?.name || 'Account'}</span>
+                <span className="navbar-user-role">{roleLabel}</span>
               </div>
-              <button onClick={logout} className="btn btn-outline" style={{ padding: '0.375rem 0.75rem', fontSize: '0.8125rem' }}>
+              <button type="button" onClick={logout} className="btn btn-outline navbar-logout-btn">
                 Logout
               </button>
             </div>
@@ -101,18 +97,17 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile menu toggle button */}
         <button
           type="button"
           className="navbar-toggle-btn"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle navigation menu"
+          aria-expanded={mobileMenuOpen}
         >
           {mobileMenuOpen ? <FiX size={20} /> : <FiMenu size={20} />}
         </button>
       </div>
 
-      {/* Mobile dropdown menu */}
       {mobileMenuOpen && (
         <div className="navbar-mobile-menu">
           <ul className="navbar-mobile-links">
@@ -176,14 +171,13 @@ export default function Navbar() {
 
           <div className="navbar-mobile-actions">
             {isAuthenticated ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{user?.name}</span>
-                  <span className="badge" style={{ backgroundColor: '#e2e8f0', color: '#475569' }}>
-                    {roleLabel}
-                  </span>
+              <div className="navbar-mobile-user-stack">
+                <div className="navbar-mobile-user-row">
+                  <span className="navbar-user-name">{user?.name}</span>
+                  <span className="badge badge-paid">{roleLabel}</span>
                 </div>
                 <button
+                  type="button"
                   onClick={() => {
                     logout();
                     setMobileMenuOpen(false);
@@ -195,7 +189,7 @@ export default function Navbar() {
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
+              <div className="navbar-mobile-auth-stack">
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}

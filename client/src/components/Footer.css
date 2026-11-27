@@ -1,25 +1,55 @@
 .footer {
   background-color: var(--color-surface);
   border-top: 1px solid var(--color-border);
-  padding: 2.25rem 0 1.75rem;
+  padding: 1.5rem 0;
   margin-top: auto;
 }
 
 .footer-inner {
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
-  text-align: center;
+  gap: 0.75rem 1.5rem;
 }
 
 .footer-brand {
-  font-weight: 700;
-  font-size: 1.125rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
   color: var(--color-text-main);
 }
 
 .footer-copy {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+@media (min-width: 961px) {
+  .app-shell:has(.admin-sidebar) .footer {
+    margin-left: 288px;
+  }
+
+  .app-shell:has(.admin-sidebar) .footer .container {
+    max-width: 1216px;
+    margin: 0;
+  }
+}
+
+@media (min-width: 901px) {
+  .app-shell:has(.educator-sidebar) .footer {
+    margin-left: 272px;
+  }
+
+  .app-shell:has(.educator-sidebar) .footer .container {
+    max-width: 1216px;
+    margin: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .footer-inner {
+    flex-direction: column;
+    text-align: center;
+  }
 }

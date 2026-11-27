@@ -16,7 +16,10 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <div
+          className="app-shell"
+          style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}
+        >
           <Navbar />
           <main style={{ flex: 1 }}>
             <Routes>
